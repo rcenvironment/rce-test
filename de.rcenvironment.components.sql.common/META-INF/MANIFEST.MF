@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE SQL Component Common Bundle
+Bundle-SymbolicName: de.rcenvironment.components.sql.common;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Export-Package: de.rcenvironment.rce.components.sql.commons
+Bundle-ClassPath: .
+Bundle-Vendor: DLR
+Bundle-ActivationPolicy: lazy
+Service-Component: OSGI-INF/*.xml
+Require-Bundle: org.eclipse.core.runtime
+Import-Package: de.rcenvironment.rce.configuration

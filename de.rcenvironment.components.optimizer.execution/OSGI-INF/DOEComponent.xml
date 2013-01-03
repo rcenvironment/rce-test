@@ -1,0 +1,33 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" factory="de.rcenvironment.rce.component" name="Design of Experiments">
+
+	<implementation class="de.rcenvironment.rce.components.optimizer.OptimizerComponent"/>
+	<service>
+		<provide interface="de.rcenvironment.rce.component.Registerable"/>
+	</service>
+	
+	<property name="rce.component.name" type="String" value="Design of Experiments"/>
+	
+	<property name="rce.component.group" type="String" value="Under Test"/>
+	
+	<property name="rce.component.class" type="String" value="de.rcenvironment.rce.components.optimizer.OptimizerComponent"/>
+	<property name="rce.component.icon-16" type="String" value="/resources/doe_16.png"/>
+  	<property name="rce.component.icon-32" type="String" value="/resources/doe_32.png"/>
+ 	<property name="rce.component.icon-64" type="String" value="/resources/doe_64.png"/>
+  
+    <reference
+        name="Optimizer Result Service"
+        interface="de.rcenvironment.rce.components.optimizer.commons.OptimizerResultService"
+        cardinality="1..1"
+        bind="bindOptimizerResultService"
+        unbind="unbindOptimizerResultService"
+        policy="dynamic"
+    />
+ <reference name="Distributed Notification Service"
+		interface="de.rcenvironment.rce.notification.DistributedNotificationService"
+		cardinality="1..1"
+		bind="bindDistributedNotificationService"
+		unbind="unbindDistributedNotificationService"
+		policy="dynamic"
+	/>
+    
+</scr:component> 

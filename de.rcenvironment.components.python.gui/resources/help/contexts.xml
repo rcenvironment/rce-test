@@ -1,0 +1,10 @@
+<contexts>
+	<context id="PythonSection" title="Python Component Help">
+		<description>The Python component is used to run a Python script as workflow component within a workflow.</description>
+		<topic href="resources/help/html/usage.xhtml" label="Python component usage" />
+	</context>
+	<context id="PythonComponent_Python" title="Python Component Help">
+		<description>The Python component is used to run a Python script as workflow component within a workflow.</description>
+		<topic href="resources/help/html/usage.xhtml" label="Python component usage" />
+	</context>
+</contexts>

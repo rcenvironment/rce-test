@@ -1,0 +1,60 @@
+ ---
+ Architecture
+ ---
+
+Architecture
+
+* Introduction
+
+ The Python executor is a basic script component that is able to run a script with user defined input and output variables, while using an RCE node's natively installed Python version.
+ This goal is achieved by wrapping the provided python script with some wrapper code to initialize the input variables and return the output variables to the calling executor service (this bundle).
+ 
+ For information on rationale why we chose this approach, check out {{{rationale.xhtml}this document}}.
+
+* Tutorial
+
+ First, get the executor factory for this python executor.
+ This can be done either by querying the service API of OSGi or by injecting the correct bindings into your code as can be seen in <<<SimplePythonExecutorFactory>>>, which can be used as a convenience class.
+ 
+ With an executor factory object, create your PythonExecutor via <<<createExecutor>>>, which takes one <<<PythonExecutionContext>>> object that contains defined input and output bindings, inherited from <<<AbstractVariableExecutionContext>>>, as well as settings for a well-defined native python execution like path to executable, the script to execute and the Python wrapper code from the bundle.
+ 
+ The Python executor object itself is called via the <<<execute>>> method.
+ It checks the existance of all necessary bound variables, and commences work.
+ After finishing, a <<<Future<PythonExecutionResult>>>> is returned that has a blocking <<<get>>> method to asynchronously retrieve the result object.
+ 
+ The result object only allows to get the returned bound output variables.
+
+* Classes
+
+ [PythonExecutionContext.java] Helper class for callers to set up the necessary executor context.
+ 
+  This file is derived from <<<AbstractVariableExecutionContext>>> and provides methods to set the executable path to the python implementation to call, to set the operating system as defined in <<<PythonExecutorFactory.SystemType>>> and to set the script to call.
+ 
+ [PythonExecutionResult.java] The returned result, derived from <<<TypedProperties>>>.
+ 
+  Contains only the parsed output variables. <<TODO>> Think about inheriting the <<<ExecutionResultException>>> class.
+
+ [PythonExecutorFactory.java] Interface for the service's factory to create any number of executors (it's not a OSGi service factory, but a POJO in the service that creates executors).
+ 
+ [SimplePythonExecutorFactory.java] An OSGi service binding version of the factory.
+ 
+ [PythonExecutor.java] The main logic behind the native Python execution.
+  
+  When started, the executor checks first via <<<TypedProperties.hasValidTypes()>>> of the context's super class, if all mandatory parameters have been set, but throws a <<<ExecutionException>>> if not.
+  Then the Python script, taken from the context, is wrapped with initialization and clean-up code, and written to a temporary file in the component's temporary directory.
+  The executor then creates an operating system dependent command line and runs the script.
+  
+  For cleaning up, the wrapper code writes out a special "end of normal stderr" marker to the stderr channel, and then prints all output variables to stderr.
+  This way the executor can separate usual piped output from the wrapped variable contents; stderr is polled for the whole runtime of the Python component.
+  The variables are then parsed and written to the execution context object as a list of <<<BoundVariable>>>s; if an error occurs, a partial result may be returned by the specialized <<<ExecutionResultException>>> (currently not in use).
+  
+ [internal/PythonExecutorFactoryImpl.java] Implementation of the factory, defined in the public interface <<<PythonExecutorFactory>>>.
+ 
+  The factory takes an execution context and returns a Python executor.
+  Additionally the factory detects Python installations on the node and provides static access to them.
+
+ [internal/RegistryUtil.java] Under Windows, this code is used to read out the default Python installation path.
+ 
+ [internal/StreamReader.java] A very lazy not encoding-safe implementation of a stream reader; to be replaced by something better lateron.
+ 
+ [internal/FilteredStderrPipe.java] Used to asynchronously stream the stderr pipe, while separating output variables from usual stderr stream.

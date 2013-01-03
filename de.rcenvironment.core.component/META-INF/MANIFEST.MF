@@ -1,0 +1,28 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Component
+Bundle-SymbolicName: de.rcenvironment.core.component;singleton:=true
+Bundle-Vendor: DLR & Fraunhofer SCAI
+Bundle-Version: 2.4.0.qualifier
+Export-Package: de.rcenvironment.rce.component,
+ de.rcenvironment.rce.component.datatype,
+ de.rcenvironment.rce.component.endpoint,
+ de.rcenvironment.rce.component.scheduler,
+ de.rcenvironment.rce.component.testutils
+Bundle-ManifestVersion: 2
+Import-Package: 
+ de.rcenvironment.commons,
+ de.rcenvironment.commons.variables,
+ de.rcenvironment.core.communication.routing,
+ de.rcenvironment.core.utils.common.security,
+ de.rcenvironment.rce.authentication,
+ de.rcenvironment.rce.authorization,
+ de.rcenvironment.rce.communication,
+ de.rcenvironment.rce.configuration,
+ de.rcenvironment.rce.notification,
+ org.apache.commons.lang3,
+ org.apache.commons.logging;provider=paxlogging,
+ org.osgi.framework,
+ org.osgi.service.component
+Service-Component: OSGI-INF/*.xml
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+DynamicImport-Package: *

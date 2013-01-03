@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+  <extension
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="de.rcenvironment.rce.gui.login.GUIReLoginHandler"
+            id="de.rcenvironment.rce.gui.login.relogin"
+            name="(Re-)Login Command">
+      </command>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="de.rcenvironment.rce.gui.login.relogin"
+            sequence="M1+M2+L"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </key>
+   </extension>
+
+  <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:file">
+            <command
+                  commandId="de.rcenvironment.rce.gui.login.relogin"
+                  label="(Re-)Login..."
+                  style="push">
+            </command>
+      </menuContribution>
+   </extension>
+
+</plugin>

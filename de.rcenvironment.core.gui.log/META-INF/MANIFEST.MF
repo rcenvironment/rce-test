@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core GUI Log
+Bundle-SymbolicName: de.rcenvironment.core.gui.log;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Bundle-Vendor: DLR & Fraunhofer SCAI
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.rcenvironment.core.communication.model,
+ de.rcenvironment.core.communication.routing,
+ de.rcenvironment.core.utils.common.security,
+ de.rcenvironment.rce.communication,
+ de.rcenvironment.rce.communication.callback,
+ de.rcenvironment.rce.log,
+ org.osgi.service.log
+Export-Package: de.rcenvironment.rce.gui.log
+Bundle-Activator: de.rcenvironment.rce.gui.log.internal.Activator

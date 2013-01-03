@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <!-- Preference page -->
+	<extension point="org.eclipse.ui.preferencePages">
+ 		<page id="de.rcenvironment.rce" name="RCE"
+    		class="de.rcenvironment.core.start.gui.internal.PreferencePage">
+   		</page>
+	</extension>
+
+	<!-- RCE perspective -->
+	<extension point="org.eclipse.ui.perspectives">
+		<perspective class="de.rcenvironment.core.start.gui.Perspective"
+			icon="resources/images/perspectiveIcon16.gif" 
+			id="de.rcenvironment.rce" 
+			name="RCE">
+		</perspective>
+	</extension> 
+	
+	<!--  View categories -->
+	<extension point="org.eclipse.ui.views">
+    	<category id="de.rcenvironment.rce" name="RCE"/>
+	</extension>
+	<extension point="org.eclipse.ui.views">
+    	<category id="de.rcenvironment.rce.components" name="RCE Components"/>
+	</extension>
+	
+	<!--  Category in New Wizard -->   
+    <extension point="org.eclipse.ui.newWizards"> 
+        <category id="de.rcenvironment.rce" name="RCE"/> 
+    </extension>
+    <!-- Key bindings -->
+    <extension
+         point="org.eclipse.ui.bindings">
+	<scheme
+		id="de.rcenvironment.core.start.gui.binding"
+		name="RCEnvironment binding scheme"
+		parentId="org.eclipse.ui.defaultAcceleratorConfiguration">
+	</scheme>
+	<key
+		commandId="org.eclipse.ui.edit.copy"
+		sequence="M1+C"
+		schemeId="de.rcenvironment.core.start.gui.binding" />
+	<key
+		commandId="org.eclipse.ui.edit.cut"
+		sequence="M1+X"
+		schemeId="de.rcenvironment.core.start.gui.binding" />
+	<key
+		commandId="org.eclipse.ui.edit.paste"
+		sequence="M1+V"
+		schemeId="de.rcenvironment.core.start.gui.binding" />
+		
+	</extension>
+</plugin>

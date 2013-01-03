@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <!-- Property Sections -->
+   <extension
+         point="org.eclipse.ui.views.properties.tabbed.propertySections">
+      <propertySections
+            contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+           <propertySection
+               tab="workflow.editor.tab.parametricstudy.Properties"
+               class="de.rcenvironment.rce.components.parametricstudy.gui.properties.ParameterStudyComponentSection"
+               id="workflow.editor.tab.Properties.Section.Properties"
+               filter="de.rcenvironment.rce.components.parametricstudy.gui.properties.ParametricStudyComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="workflow.editor.tab.parametricstudy.Parameters"
+               class="de.rcenvironment.rce.components.parametricstudy.gui.properties.ParametersSection"
+               id="workflow.editor.tab.Properties.Section.Parameters"
+               filter="de.rcenvironment.rce.components.parametricstudy.gui.properties.ParametricStudyComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="workflow.editor.tab.parametricstudy.Profiles"
+               class="de.rcenvironment.rce.gui.workflow.editor.properties.PropertyProfilesSection"
+               id="workflow.editor.tab.Properties.Section.Profiles"
+               filter="de.rcenvironment.rce.components.parametricstudy.gui.properties.ParametricStudyComponentFilter"
+               enablesFor="1">
+		 </propertySection>
+      </propertySections>
+   </extension>
+   
+   <!-- Register Property Sections -->
+   <extension
+         point="org.eclipse.ui.views.properties.tabbed.propertyTabs">
+      <propertyTabs
+            contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         <propertyTab
+               label="%properties"
+               category="default"
+               id="workflow.editor.tab.parametricstudy.Properties">
+         </propertyTab>
+         
+         <propertyTab
+               label="%parameters"
+               category="default"
+               afterTab="workflow.editor.tab.parametricstudy.Properties"
+               id="workflow.editor.tab.parametricstudy.Parameters">
+         </propertyTab>
+         <propertyTab
+               label="%profiles"
+               category="default"
+               afterTab="workflow.editor.tab.parametricstudy.Parameters"
+               id="workflow.editor.tab.parametricstudy.Profiles">
+         </propertyTab>
+      </propertyTabs>
+   </extension>
+
+    <!-- Dynamic Help -->
+   <extension point="org.eclipse.help.contexts">
+      <contexts file="resources/help/contexts.xml" plugin="de.rcenvironment.rce.components.parametricstudy" />
+   </extension>
+   
+   <!-- Runtime View -->
+   	<extension
+         point="org.eclipse.ui.views">
+      <view category="de.rcenvironment.rce.components"
+            allowMultiple="true"
+            icon="resources/ps_16.png"
+            class="de.rcenvironment.rce.components.parametricstudy.gui.view.ParametricStudyView"
+            id="de.rcenvironment.rce.components.parametricstudy.gui.view.ParametricStudyView"
+            name="Parametric Study"
+            restorable="false">
+      </view>
+   </extension>
+   
+   <!-- View Location -->
+    <extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension targetID="de.rcenvironment.rce">
+			<view id="de.rcenvironment.rce.components.parametricstudy.gui.view.ParametricStudyView" relationship="stack"
+				relative="de.rcenvironment.rce.Perspective.bottom" visible="false">
+			</view>
+		</perspectiveExtension>
+	</extension>
+    <extension
+         point="de.rcenvironment.rce.gui.workflow.nodeValidators">
+      <validator
+            class="de.rcenvironment.rce.components.parametricstudy.gui.properties.ParametricStudyWorkflowNodeValidator"
+            filter="de.rcenvironment.rce.components.parametricstudy.gui.properties.ParametricStudyComponentFilter">
+      </validator>
+   </extension>
+   <!-- Register Runtime View -->
+   <extension
+         point="de.rcenvironment.rce.gui.workflow.monitoring">
+      <monitor component="de.rcenvironment.rce.components.parametricstudy.*"
+            view="de.rcenvironment.rce.components.parametricstudy.gui.view.ParametricStudyView"
+            default="true">
+      </monitor>
+   </extension>
+  
+</plugin>

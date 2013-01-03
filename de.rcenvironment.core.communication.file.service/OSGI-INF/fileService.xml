@@ -1,0 +1,20 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="File Service">
+	<implementation class="de.rcenvironment.rce.communication.file.service.internal.FileServiceImpl" /> 
+	<service>
+		<provide interface="de.rcenvironment.rce.communication.file.service.internal.FileService"/>
+	</service>
+	
+	<reference bind="bindQueryService"
+ 		cardinality="1..1"
+ 		interface="de.rcenvironment.rce.datamanagement.QueryService"
+ 		name="Query Service"
+ 		policy="dynamic"
+ 	/>
+ 	
+ 	<reference bind="bindFileDataService"
+ 		cardinality="1..1"
+ 		interface="de.rcenvironment.rce.datamanagement.FileDataService"
+ 		name="File Data Service"
+ 		policy="dynamic"
+ 	/>
+</scr:component>

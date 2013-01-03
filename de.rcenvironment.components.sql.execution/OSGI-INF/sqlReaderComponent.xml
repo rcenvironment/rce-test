@@ -1,0 +1,44 @@
+<scr:component
+		xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0"
+		factory="de.rcenvironment.rce.component"
+		name="SQL Reader">
+
+	<implementation class="de.rcenvironment.rce.components.sql.SQLReaderComponent"/>
+	<service>
+		<provide interface="de.rcenvironment.rce.component.Registerable"/>
+	</service>
+	
+    <reference
+	        name="JDBC Service"
+	        interface="de.rcenvironment.rce.components.sql.commons.JDBCService"
+	        cardinality="1..1"
+	        bind="bindJdbcService"
+	        unbind="unbindJdbcService"
+	        policy="dynamic"
+    />
+    
+	<property name="rce.component.configuration" type="String">
+		tableName:java.lang.String:input_${workflowSqlId}
+		sqlQueryInitDo:java.lang.Boolean:false
+        sqlQueryInit:java.lang.String:SELECT * FROM ${tableName}
+		sqlquery:java.lang.String:SELECT * FROM ${tableName}
+	    jdbcProfile:java.lang.String:
+		sqlSetup:java.lang.String:
+		sqlCleanup:java.lang.String:
+		sqlDispose:java.lang.String:
+	</property>
+    
+    <property name="rce.component.outputs" type="String">
+       meta.tableName:java.lang.String
+       meta.sqlSuccess:java.lang.Integer
+    </property>
+    
+	<property name="rce.component.name" type="String" value="SQL Reader"/>
+	
+	<property name="rce.component.group" type="String" value="Data"/>
+	
+	<property name="rce.component.class" type="String" value="de.rcenvironment.rce.components.sql.SQLReaderComponent"/>
+	
+	<property name="rce.component.icon-16" type="String" value="/resources/databasereader_16.png"/>
+    <property name="rce.component.icon-32" type="String" value="/resources/databasereader_32.png"/>
+</scr:component> 

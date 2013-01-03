@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <!-- Property Sections -->
+   <extension
+         point="org.eclipse.ui.views.properties.tabbed.propertySections">
+      <propertySections
+            contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         <propertySection
+               tab="workflow.editor.tab.excel.File"
+               class="de.rcenvironment.rce.components.excel.gui.properties.FileSection"
+               id="workflow.editor.tab.Properties.Section"
+               filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="workflow.editor.tab.excel.Variables"
+               class="de.rcenvironment.rce.components.excel.gui.properties.VariablesSection"
+               id="workflow.editor.tab.Properties.Section"
+               filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="workflow.editor.tab.excel.Macros"
+               class="de.rcenvironment.rce.components.excel.gui.properties.MacrosSection"
+               id="workflow.editor.tab.Properties.Section"
+               filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter"
+               enablesFor="1">
+         </propertySection>
+      </propertySections>
+   </extension>
+   
+   <!-- Register Property Sections -->
+   <extension
+         point="org.eclipse.ui.views.properties.tabbed.propertyTabs">
+      <propertyTabs
+            contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         <propertyTab
+               label="%file"
+               category="default"
+               id="workflow.editor.tab.excel.File">
+         </propertyTab>
+         <propertyTab
+               label="%channels"
+               category="default"
+               afterTab="workflow.editor.tab.excel.File"
+               id="workflow.editor.tab.excel.Variables">
+         </propertyTab>
+         <propertyTab
+               label="%macros"
+               category="default"
+               afterTab="workflow.editor.tab.excel.Variables"
+               id="workflow.editor.tab.excel.Macros">
+         </propertyTab>
+      </propertyTabs>
+   </extension>
+   
+	<!-- Runtime View -->
+   <extension point="org.eclipse.ui.views">
+        <view category="de.rcenvironment.rce.components"
+            allowMultiple="true"
+            name="Excel"
+            icon="resources/excel_16.png"
+            class="de.rcenvironment.rce.components.excel.gui.view.ExcelView"
+            id="de.rcenvironment.rce.components.excel.gui.view.ExcelView"
+            restorable="false">
+        </view>
+    </extension>
+    
+    <!-- Register Runtime View -->
+    <extension point="de.rcenvironment.rce.gui.workflow.monitoring">
+        <monitor component="de.rcenvironment.rce.components.excel.*"
+            view="de.rcenvironment.rce.components.excel.gui.view.ExcelView"
+            default="true">
+        </monitor>
+    </extension>
+    
+    <!-- View Location -->
+    <extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension targetID="de.rcenvironment.rce">
+			<view id="de.rcenvironment.rce.components.excel.*" relationship="stack"
+				relative="de.rcenvironment.rce.Perspective.bottom" visible="false">
+			</view>
+		</perspectiveExtension>
+	</extension>
+   
+    <!-- Dynamic Help -->
+    <extension point="org.eclipse.help.contexts">
+        <contexts 
+            file="resources/contexts.xml">
+         </contexts>
+        <contexts 
+            file="resources/contexts.xml" plugin="de.rcenvironment.rce.components.excel">
+         </contexts>
+     </extension>
+   
+    <!-- Component configuration validator -->
+    <extension
+         point="de.rcenvironment.rce.gui.workflow.nodeValidators">
+      <validator
+            class="de.rcenvironment.rce.components.excel.gui.properties.ExcelMacroWorkflowNodeValidator"
+            filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter">
+      </validator>
+      <validator
+            class="de.rcenvironment.rce.components.excel.gui.properties.ExcelWorkflowNodeValidator"
+            filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter">
+      </validator>
+   </extension>
+  
+  
+</plugin>

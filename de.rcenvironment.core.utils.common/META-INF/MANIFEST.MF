@@ -1,0 +1,34 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core Utils Common
+Bundle-SymbolicName: de.rcenvironment.core.utils.common;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Bundle-Vendor: DLR & Fraunhofer SCAI
+Export-Package: de.rcenvironment.commons,
+ de.rcenvironment.commons.channel,
+ de.rcenvironment.commons.configuration,
+ de.rcenvironment.commons.configuration.annotation,
+ de.rcenvironment.commons.excel,
+ de.rcenvironment.commons.textstream,
+ de.rcenvironment.commons.textstream.receivers,
+ de.rcenvironment.commons.validation,
+ de.rcenvironment.commons.variables,
+ de.rcenvironment.commons.xml,
+ de.rcenvironment.core.utils.common.concurrent,
+ de.rcenvironment.core.utils.common.security
+Import-Package: org.apache.commons.io;version="2.0.1",
+ org.apache.commons.io.input;version="2.0.1",
+ org.apache.commons.io.output;version="2.0.1",
+ org.apache.commons.logging;provider=paxlogging,
+ org.apache.poi.hssf.usermodel;version="3.8.0",
+ org.apache.poi.ss.usermodel;version="3.8.0",
+ org.apache.poi.xssf.usermodel;version="3.8.0",
+ org.codehaus.jackson;version="1.6.0",
+ org.codehaus.jackson.io;version="1.6.0",
+ org.codehaus.jackson.map;version="1.6.0",
+ org.codehaus.jackson.util;version="1.6.0",
+ org.dom4j,
+ org.dom4j.io
+Require-Bundle: org.ops4j.pax.logging.pax-logging-api;bundle-version="1.6.4"

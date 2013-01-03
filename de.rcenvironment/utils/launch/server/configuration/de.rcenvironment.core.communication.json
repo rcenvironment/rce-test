@@ -1,0 +1,5 @@
+{
+	"providedContactPoints": [
+		"activemq-tcp:localhost:20001"
+	]
+}

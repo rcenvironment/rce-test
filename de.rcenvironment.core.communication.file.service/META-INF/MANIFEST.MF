@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Communication File Service
+Bundle-SymbolicName: de.rcenvironment.core.communication.file.service;singleton:=true
+Bundle-Vendor: DLR
+Bundle-Version: 2.4.0.qualifier
+DynamicImport-Package: *
+Bundle-ManifestVersion: 2
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.core.utils.common.security,
+ de.rcenvironment.rce.authentication,
+ de.rcenvironment.rce.authorization,
+ de.rcenvironment.rce.communication,
+ de.rcenvironment.rce.communication.file,
+ de.rcenvironment.rce.communication.file.spi,
+ de.rcenvironment.rce.datamanagement,
+ org.apache.commons.logging;provider=paxlogging,
+ org.osgi.framework
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Service-Component: OSGI-INF/*.xml

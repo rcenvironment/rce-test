@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <!-- Properties example -->
+  <extension
+     point="org.eclipse.ui.views.properties.tabbed.propertyTabs">
+      <propertyTabs
+            contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         <propertyTab
+               label="%configuration"
+               category="default"
+               id="de.rcenvironment.components.pioneer.gui.properties.Pioneer.General">
+         </propertyTab>
+         <propertyTab
+               label="Inputs/Outputs"
+               category="default"
+               afterTab="de.rcenvironment.components.pioneer.gui.properties.Pioneer.General"
+               id="de.rcenvironment.components.pioneer.gui.properties.Pioneer.DynEndpoints">
+         </propertyTab>
+         <propertyTab
+               label="Profiles"
+               category="default"
+               afterTab="de.rcenvironment.components.pioneer.gui.properties.Pioneer.DynEndpoints"
+               id="de.rcenvironment.components.pioneer.gui.properties.Pioneer.Profiles">
+         </propertyTab>
+      </propertyTabs>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.views.properties.tabbed.propertySections">
+      <propertySections
+            contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         <propertySection
+               tab="de.rcenvironment.components.pioneer.gui.properties.Pioneer.General"
+               class="de.rcenvironment.components.pioneer.gui.properties.PioneerSection"
+               id="de.rcenvironment.components.pioneer.gui.properties.PioneerSection"
+               filter="de.rcenvironment.components.pioneer.gui.properties.PioneerFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="de.rcenvironment.components.pioneer.gui.properties.Pioneer.DynEndpoints"
+               class="de.rcenvironment.rce.gui.workflow.editor.properties.DynamicEndpointPropertySection"
+               id="de.rcenvironment.components.pioneer.gui.properties.PioneerDynInOutputSection"
+               filter="de.rcenvironment.components.pioneer.gui.properties.PioneerFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="de.rcenvironment.components.pioneer.gui.properties.Pioneer.Profiles"
+               class="de.rcenvironment.rce.gui.workflow.editor.properties.PropertyProfilesSection"
+               id="de.rcenvironment.components.pioneer.gui.properties.PioneerProfilesSection"
+               filter="de.rcenvironment.components.pioneer.gui.properties.PioneerFilter"
+               enablesFor="1">
+		 </propertySection>
+      </propertySections>
+   </extension>
+   
+   <!-- Monitor View Example -->
+	<extension point="org.eclipse.ui.views">
+		<view 
+			allowMultiple="true"
+			category="de.rcenvironment.rce.components"
+			name="Pioneer"
+			icon="resources/icons/pioneer16.png"
+			class="de.rcenvironment.components.pioneer.gui.view.PioneerView"
+			id="de.rcenvironment.components.pioneer.gui.view.PioneerView"
+			restorable="false"/>
+		<view  
+			allowMultiple="true"
+			category="de.rcenvironment.rce.components"
+			name="Another Pioneer View"
+			icon="resources/icons/pioneer16.png"
+			class="de.rcenvironment.components.pioneer.gui.view.AnotherPioneerView"
+			id="de.rcenvironment.components.pioneer.gui.view.AnotherPioneerView"
+			restorable="false"/>
+	</extension>
+	
+   <extension point="de.rcenvironment.rce.gui.workflow.monitoring">
+         <monitor component="de.rcenvironment.components.pioneer.execute.PioneerComponent.*" 
+            view="de.rcenvironment.components.pioneer.gui.view.PioneerView"/>
+         <monitor component="de.rcenvironment.components.pioneer.execute.PioneerComponent.*" 
+            view="de.rcenvironment.components.pioneer.gui.view.AnotherPioneerView"
+            default="true"/>
+   </extension>
+
+   	<extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension targetID="de.rcenvironment.rce">
+			<view id="de.rcenvironment.components.pioneer.gui.view.PioneerView:*" relationship="stack"
+				relative="de.rcenvironment.rce.Perspective.bottom" visible="false">
+			</view>
+			<view id="de.rcenvironment.components.pioneer.gui.view.AnotherPioneerView:*" relationship="stack"
+				relative="de.rcenvironment.rce.Perspective.bottom" visible="false">
+			</view>
+		</perspectiveExtension>
+	</extension>
+   
+  <!-- Dynamic Help -->
+  <extension point="org.eclipse.help.contexts">
+      <contexts 
+            file="resources/contexts.xml" plugin="de.rcenvironment.samples.component">
+      </contexts>
+   </extension>
+  <extension
+        point="de.rcenvironment.rce.gui.workflow.editorActions">
+     <action
+           component="de.rcenvironment.components.pioneer.execute.PioneerComponent.*"
+           class="de.rcenvironment.components.pioneer.gui.view.SampleWorkflowEditorAction"
+           id="de.rcenvironment.components.pioneer.gui.sampleAction"
+           label="Sample Action"
+           default="true">
+     </action>
+  </extension>
+   <extension
+         point="de.rcenvironment.rce.gui.workflow.nodeValidators">
+      <validator
+            class="de.rcenvironment.components.pioneer.gui.properties.PioneerWorkflowNodeValidator"
+            filter="de.rcenvironment.components.pioneer.gui.properties.PioneerFilter">
+      </validator>
+   </extension>
+</plugin>

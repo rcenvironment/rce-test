@@ -1,0 +1,11 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="DM Workbench Utilities">
+	<implementation class="de.rcenvironment.rce.gui.datamanagement.commons.DataManagementWorkbenchUtils" /> 
+    <reference
+        name="Data Management Service"
+        interface="de.rcenvironment.rce.datamanagement.DataManagementService"
+        cardinality="1..1"
+        bind="bindDataManagementService"
+        unbind="unbindDataManagementService"
+        policy="dynamic"
+    />
+</scr:component>

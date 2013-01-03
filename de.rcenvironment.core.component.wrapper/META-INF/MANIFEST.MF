@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core Wrapper
+Bundle-SymbolicName: de.rcenvironment.core.component.wrapper
+Bundle-Version: 2.4.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.commons.executor,
+ de.rcenvironment.commons.textstream,
+ de.rcenvironment.commons.textstream.receivers,
+ de.rcenvironment.commons.validation,
+ de.rcenvironment.rce.component.datamanagement.stateful,
+ org.apache.commons.io;version="2.0.1",
+ org.apache.commons.logging;provider=paxlogging
+Export-Package: de.rcenvironment.rce.component.wrapper,
+ de.rcenvironment.rce.component.wrapper.impl,
+ de.rcenvironment.rce.component.wrapper.sandboxed
+Bundle-Vendor: DLR

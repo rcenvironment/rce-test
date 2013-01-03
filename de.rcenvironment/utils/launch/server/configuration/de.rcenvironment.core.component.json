@@ -1,0 +1,7 @@
+{
+  "publishAllComponents": true,
+  "publishedComponents": [
+								   "de.rcenvironment.rce.components.optimizer.OptimizerComponent_Optimizer",
+								   "de.rcenvironment.rce.components.parametricstudy.ParametricStudyComponent_Parametric Study"
+								  ]
+}

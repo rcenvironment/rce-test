@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Mail
+Bundle-SymbolicName: de.rcenvironment.core.mail;singleton:=true
+Bundle-Vendor: DLR
+Bundle-Version: 2.4.0.qualifier
+Bundle-ManifestVersion: 2
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Service-Component: OSGI-INF/mailService.xml
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.rce.configuration,
+ jodd.exception,
+ jodd.mail,
+ org.apache.commons.logging;provider=paxlogging
+Require-Bundle: org.eclipse.core.runtime,
+ javax.mail.glassfish;bundle-version="1.4.1"
+Export-Package: de.rcenvironment.rce.mail

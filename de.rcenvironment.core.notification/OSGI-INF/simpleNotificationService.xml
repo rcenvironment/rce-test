@@ -1,0 +1,31 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Simple Notification Service">
+	<implementation class="de.rcenvironment.rce.notification.SimpleNotificationService" />
+	<reference name="Distributed Notification Service"
+ 		interface="de.rcenvironment.rce.notification.DistributedNotificationService"
+ 		cardinality="1..1"
+ 		bind="bindDistributedNotificationService"
+ 		unbind="unbindDistributedNotificationService"
+ 		policy="dynamic"
+ 	/>
+	<reference name="Notification Service"
+ 		interface="de.rcenvironment.rce.notification.NotificationService"
+ 		cardinality="1..1"
+ 		bind="bindNotificationService"
+ 		unbind="unbindNotificationService"
+ 		policy="dynamic"
+ 	/>
+ 	<reference name="Communication Service"
+ 		interface="de.rcenvironment.rce.communication.CommunicationService"
+ 		cardinality="1..1"
+ 		bind="bindCommunicationService"
+ 		unbind="unbindCommunicationService"
+ 		policy="dynamic"
+ 	/>
+ 	<reference name="Platform Service"
+ 		interface="de.rcenvironment.rce.communication.PlatformService"
+ 		cardinality="1..1"
+ 		bind="bindPlatformService"
+ 		unbind="unbindPlatformService"
+ 		policy="dynamic"
+ 	/>
+</scr:component>

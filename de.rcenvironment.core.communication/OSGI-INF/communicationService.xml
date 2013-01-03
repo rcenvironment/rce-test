@@ -1,0 +1,35 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="deactivate" immediate="true" name="Communication Service">
+	<implementation class="de.rcenvironment.rce.communication.internal.CommunicationServiceImpl" />
+	<service>
+		<provide interface="de.rcenvironment.rce.communication.CommunicationService"/>
+		<provide interface="de.rcenvironment.core.communication.routing.NetworkTopologyChangeListener"/>
+	</service>
+	<reference
+		name="Platform Service"
+		interface="de.rcenvironment.rce.communication.PlatformService"
+		cardinality="1..1"
+		bind="bindPlatformService"
+		policy="dynamic"
+	/>
+	<reference
+		name="Remote Service Handler"
+		interface="de.rcenvironment.rce.communication.service.RemoteServiceHandler"
+		cardinality="1..1"
+		bind="bindRemoteServiceHandler"
+		policy="dynamic"
+	/>
+	<reference
+		name="CommunicationManagementService"
+		interface="de.rcenvironment.core.communication.management.CommunicationManagementService"
+		cardinality="1..1"
+		bind="bindCommunicationManagementService"
+		policy="dynamic"
+	/>
+	<reference
+		name="NetworkRoutingService" 
+		interface="de.rcenvironment.core.communication.routing.NetworkRoutingService" 
+		cardinality="1..1" 
+		bind="bindNetworkRoutingService" 
+		policy="dynamic"
+	/>
+</scr:component>

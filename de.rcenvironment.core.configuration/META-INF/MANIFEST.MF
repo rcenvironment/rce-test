@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core Configuration
+Bundle-SymbolicName: de.rcenvironment.core.configuration;singleton:=true
+Bundle-Vendor: DLR & Fraunhofer SCAI
+Bundle-Version: 2.4.0.qualifier
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.rcenvironment.rce.configuration,
+ de.rcenvironment.rce.configuration.testutils
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.rce.configuration.discovery.bootstrap,
+ org.apache.commons.io,
+ org.apache.commons.logging;provider=paxlogging,
+ org.codehaus.jackson,
+ org.codehaus.jackson.map,
+ org.codehaus.jackson.map.type;version="1.6.0",
+ org.eclipse.osgi.util,
+ org.osgi.framework
+Bundle-ClassPath: .
+Service-Component: OSGI-INF/*.xml
+Require-Bundle: org.codehaus.jackson.core

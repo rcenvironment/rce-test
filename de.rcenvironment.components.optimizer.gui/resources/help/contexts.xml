@@ -1,0 +1,10 @@
+<contexts>
+	<context id="AlgorithmSection" title="Optimizer Component Help">
+		<description>The Optimizer Component is used to perform optimizations within a workflow.</description>
+		<topic href="resources/help/html/usage.xhtml" label="Optimizer component usage"></topic>
+	</context>
+	<context id="OptimizerComponent_Optimizer" title="Optimizer Component Help">
+		<description>The Optimizer Component is used to perform optimizations within a workflow.</description>
+		<topic href="resources/help/html/usage.xhtml" label="Optimizer component usage"></topic>
+	</context>
+</contexts>

@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core GUI Workflow Executor
+Bundle-SymbolicName: de.rcenvironment.core.gui.workflow.executor;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Bundle-Vendor: DLR
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.ui.views.properties.tabbed,
+ org.eclipse.core.runtime
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.core.component.executor,
+ de.rcenvironment.gui.commons,
+ de.rcenvironment.rce.component,
+ de.rcenvironment.rce.component.workflow,
+ de.rcenvironment.rce.gui.workflow.editor.properties,
+ de.rcenvironment.rce.gui.workflow.editor.validator,
+ org.apache.commons.io;version="2.0.1",
+ org.apache.commons.logging;version="1.0.4",
+ org.eclipse.core.resources
+Export-Package: de.rcenvironment.core.gui.workflow.executor.properties

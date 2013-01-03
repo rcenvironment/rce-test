@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+	<!-- Category Log -->
+	<extension 
+		point="org.eclipse.ui.views">
+  		<view
+        category="de.rcenvironment.rce"
+        class="de.rcenvironment.rce.gui.log.internal.LogView"
+        icon="resources/images/log.gif"
+        id="de.rcenvironment.rce.gui.log.LogView"
+        name="Log">
+  </view>
+	</extension>
+
+	<!-- Log view part of Default Perspective -->
+   <extension point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension targetID="de.rcenvironment.rce">
+         <view id="de.rcenvironment.rce.gui.log.LogView"
+         	relationship="stack"
+            relative="de.rcenvironment.rce.Perspective.bottom">
+         </view>
+      </perspectiveExtension>
+   </extension>
+
+</plugin>

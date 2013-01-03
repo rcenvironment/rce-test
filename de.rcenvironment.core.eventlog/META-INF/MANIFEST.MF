@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core Event Log
+Bundle-SymbolicName: de.rcenvironment.core.eventlog
+Bundle-Version: 2.4.0.qualifier
+Import-Package: org.apache.commons.logging
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.rcenvironment.rce.eventlog
+Bundle-Vendor: DLR

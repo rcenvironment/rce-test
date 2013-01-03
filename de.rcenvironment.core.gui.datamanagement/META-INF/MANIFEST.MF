@@ -1,0 +1,26 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core GUI Datamanagement
+Bundle-SymbolicName: de.rcenvironment.core.gui.datamanagement;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Bundle-ActivationPolicy: lazy
+Bundle-Vendor: DLR
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.gui.commons,
+ de.rcenvironment.rce.authentication,
+ de.rcenvironment.rce.authorization,
+ de.rcenvironment.rce.component.datamanagement.history,
+ de.rcenvironment.rce.datamanagement,
+ de.rcenvironment.rce.datamanagement.commons,
+ org.apache.commons.io;version="2.0.1",
+ org.apache.commons.logging;provider=paxlogging,
+ org.eclipse.compare,
+ org.eclipse.compare.structuremergeviewer
+Export-Package: de.rcenvironment.rce.gui.datamanagement.browser.spi,
+ de.rcenvironment.rce.gui.datamanagement.commons
+Service-Component: OSGI-INF/*.xml
+Require-Bundle: org.eclipse.jface,
+ org.eclipse.core.runtime,
+ org.eclipse.ui.workbench
+

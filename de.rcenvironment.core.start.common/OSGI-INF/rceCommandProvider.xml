@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="RCECommandProvider">
+   <implementation class="de.rcenvironment.core.start.common.RCECommandProvider"/>
+   <service>
+      <provide interface="org.eclipse.osgi.framework.console.CommandProvider"/>
+   </service>
+   
+   <reference
+   		bind="bindCommunicationService"
+   		interface="de.rcenvironment.rce.communication.CommunicationService"
+   		name="Communication Service"
+   />
+   	
+</scr:component>

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Tests
+Bundle-SymbolicName: de.rcenvironment.components.simplewrapper.common.tests
+Bundle-Version: 2.4.0.qualifier
+Fragment-Host: de.rcenvironment.components.simplewrapper.common 
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: de.rcenvironment.core.utils.testing

@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Notification
+Bundle-SymbolicName: de.rcenvironment.core.notification;singleton:=true
+Bundle-Vendor: DLR & Fraunhofer SCAI
+Bundle-Version: 2.4.0.qualifier
+Bundle-ClassPath: .
+Bundle-ManifestVersion: 2
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.core.utils.common.security,
+ de.rcenvironment.rce.communication,
+ de.rcenvironment.rce.communication.callback,
+ org.apache.commons.logging;provider=paxlogging,
+ org.osgi.framework
+Export-Package: de.rcenvironment.rce.notification
+Service-Component: OSGI-INF/*.xml

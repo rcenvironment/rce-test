@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Authorization XML
+Bundle-SymbolicName: de.rcenvironment.core.authorization.xml;singleton:=true
+Bundle-Vendor: DLR & Fraunhofer SCAI
+Bundle-Version: 2.4.0.qualifier
+Bundle-ManifestVersion: 2
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.commons.xml,
+ de.rcenvironment.rce.authorization,
+ de.rcenvironment.rce.authorization.rbac,
+ de.rcenvironment.rce.configuration,
+ org.apache.commons.logging;provider=paxlogging,
+ org.dom4j,
+ org.osgi.framework
+Bundle-ClassPath: .
+Service-Component: OSGI-INF/xmlAuthorizationStore.xml

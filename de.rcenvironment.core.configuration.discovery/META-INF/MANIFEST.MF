@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core Communication Discovery
+Bundle-SymbolicName: de.rcenvironment.core.configuration.discovery;singleton:=true
+Bundle-Vendor: DLR
+Bundle-Version: 2.4.0.qualifier
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.rcenvironment.rce.configuration.discovery.bootstrap,
+ de.rcenvironment.rce.configuration.discovery.client,
+ de.rcenvironment.rce.configuration.discovery.server
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.rce.jetty,
+ org.apache.commons.logging,
+ org.osgi.framework
+Bundle-ClassPath: .
+Service-Component: OSGI-INF/*.xml
+Bundle-Activator: de.rcenvironment.rce.configuration.discovery.internal.Activator

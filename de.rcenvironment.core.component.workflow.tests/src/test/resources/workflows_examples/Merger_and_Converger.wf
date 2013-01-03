@@ -1,0 +1,163 @@
+{
+  "identifier" : "41507644-24f5-4260-93da-daaab5618735",
+  "workflowVersion" : "1",
+  "nodes" : [ {
+    "identifier" : "3ae2177b-31cb-4200-9d2a-46671ad2fad7",
+    "name" : "Merger-1",
+    "location" : "564:183",
+    "component" : {
+      "identifier" : "de.rcenvironment.components.merger.execution.MergerComponent_Merger"
+    },
+    "configuration" : [ "Merged:java.lang.Integer:2" ],
+    "addInput" : [ "In_001:java.lang.Double", "In_002:java.lang.Double" ],
+    "addOutput" : [ "Merged:java.lang.Double" ]
+  }, {
+    "identifier" : "bf549e2c-c26f-48bf-8d60-f92ab7881aea",
+    "name" : "Parametric Study-1",
+    "location" : "820:183",
+    "component" : {
+      "identifier" : "de.rcenvironment.rce.components.parametricstudy.ParametricStudyComponent_Parametric Study"
+    },
+    "configuration" : [ "FromValue:java.lang.Double:5.0", "StepSize:java.lang.Double:1.0", "ToValue:java.lang.Double:5.0" ],
+    "addInput" : [ "x:java.lang.Double" ]
+  }, {
+    "identifier" : "f925a4dd-4771-45d0-a791-727acd55a02a",
+    "name" : "Converger",
+    "location" : "423:52",
+    "component" : {
+      "identifier" : "de.rcenvironment.components.converger.execution.ConvergerComponent_Converger"
+    },
+    "configuration" : [ "epsR:java.lang.Double:6.0E-6", "epsA:java.lang.Double:6.0E-6" ],
+    "addInput" : [ "z:java.lang.Double", "y:java.lang.Double", "x:java.lang.Double" ],
+    "addOutput" : [ "z:java.lang.Double", "y:java.lang.Double", "x:java.lang.Double" ],
+    "inputMetaData" : {
+      "z" : [ "startValue:java.lang.Double:1.0", "hasStartValue:java.lang.Boolean:true" ],
+      "y" : [ "startValue:java.lang.Double:NaN", "hasStartValue:java.lang.Boolean:false" ],
+      "x" : [ "startValue:java.lang.Double:NaN", "hasStartValue:java.lang.Boolean:false" ]
+    },
+    "outputMetaData" : {
+      "z" : [ "startValue:java.lang.Double:1.0", "hasStartValue:java.lang.Boolean:true" ],
+      "y" : [ "startValue:java.lang.Double:NaN", "hasStartValue:java.lang.Boolean:false" ],
+      "x" : [ "startValue:java.lang.Double:NaN", "hasStartValue:java.lang.Boolean:false" ]
+    }
+  }, {
+    "identifier" : "0b32f1e8-a742-4595-b418-2a727c959f4d",
+    "name" : "Merger",
+    "location" : "270:183",
+    "component" : {
+      "identifier" : "de.rcenvironment.components.merger.execution.MergerComponent_Merger"
+    },
+    "configuration" : [ "Merged:java.lang.Integer:2" ],
+    "addInput" : [ "In_001:java.lang.Double", "In_002:java.lang.Double" ],
+    "addOutput" : [ "Merged:java.lang.Double" ]
+  }, {
+    "identifier" : "5fb49030-52d3-4e9a-af2f-e5cc1eee334d",
+    "name" : "Python-1",
+    "location" : "687:52",
+    "component" : {
+      "identifier" : "de.rcenvironment.rce.components.python.PythonComponent_Python"
+    },
+    "configuration" : [ "remote path of existing script:java.lang.String:", "placeholder2:java.lang.String:${myPlaceholder2}", "placeholder:java.lang.String:${global.myPlaceholder.*}", "usage of script:java.lang.String:NEW", "placeholder1:java.lang.String:${myPlaceholder1}", "pythonInstallation:java.lang.String:${pathPlaceholder}", "placeholder3:java.lang.String:${*.myPlaceholder3}", "placeholder4:java.lang.String:${global.myPlaceholder4}", "debug:java.lang.Boolean:false", "script:java.lang.String:print 'y = ' + repr(y)\r\ng = 0.5 * y", "remote upload path of new script:java.lang.String:" ],
+    "addInput" : [ "y:java.lang.Double" ],
+    "addOutput" : [ "g:java.lang.Double" ],
+    "inputMetaData" : {
+      "y" : [ "usage:java.lang.String:required" ]
+    }
+  }, {
+    "identifier" : "eb64767c-9e0d-45a3-9c5c-f353c7951a4f",
+    "name" : "Python-2",
+    "location" : "424:330",
+    "component" : {
+      "identifier" : "de.rcenvironment.rce.components.python.PythonComponent_Python"
+    },
+    "configuration" : [ "remote path of existing script:java.lang.String:", "placeholder2:java.lang.String:${myPlaceholder2}", "placeholder:java.lang.String:${global.myPlaceholder.*}", "usage of script:java.lang.String:NEW", "placeholder1:java.lang.String:${myPlaceholder1}", "pythonInstallation:java.lang.String:${pathPlaceholder}", "placeholder3:java.lang.String:${*.myPlaceholder3}", "placeholder4:java.lang.String:${global.myPlaceholder4}", "debug:java.lang.Boolean:false", "script:java.lang.String:print 'z = ' + repr(k)\r\nh = 0.5 * k", "remote upload path of new script:java.lang.String:" ],
+    "addInput" : [ "k:java.lang.Double" ],
+    "addOutput" : [ "h:java.lang.Double" ],
+    "inputMetaData" : {
+      "k" : [ "usage:java.lang.String:required" ]
+    }
+  }, {
+    "identifier" : "474fa2f3-b501-4dd4-b479-3b2ac0243005",
+    "name" : "Parametric Study",
+    "location" : "31:184",
+    "component" : {
+      "identifier" : "de.rcenvironment.rce.components.parametricstudy.ParametricStudyComponent_Parametric Study"
+    },
+    "configuration" : [ "FromValue:java.lang.Double:1.0", "StepSize:java.lang.Double:1.0", "ToValue:java.lang.Double:1.0" ],
+    "addInput" : [ "x:java.lang.Double" ]
+  }, {
+    "identifier" : "c180b9f3-b0c6-42ae-afb7-465c1c7b3a95",
+    "name" : "Python",
+    "location" : "161:52",
+    "component" : {
+      "identifier" : "de.rcenvironment.rce.components.python.PythonComponent_Python"
+    },
+    "configuration" : [ "remote path of existing script:java.lang.String:", "placeholder2:java.lang.String:${myPlaceholder2}", "placeholder:java.lang.String:${global.myPlaceholder.*}", "usage of script:java.lang.String:NEW", "placeholder1:java.lang.String:${myPlaceholder1}", "pythonInstallation:java.lang.String:${pathPlaceholder}", "placeholder3:java.lang.String:${*.myPlaceholder3}", "placeholder4:java.lang.String:${global.myPlaceholder4}", "debug:java.lang.Boolean:false", "script:java.lang.String:print 'x = ' + repr(x)\r\nf = x * 0.5", "remote upload path of new script:java.lang.String:" ],
+    "addInput" : [ "x:java.lang.Double" ],
+    "addOutput" : [ "f:java.lang.Double" ],
+    "inputMetaData" : {
+      "x" : [ "usage:java.lang.String:required" ]
+    }
+  } ],
+  "connections" : [ {
+    "source" : "c180b9f3-b0c6-42ae-afb7-465c1c7b3a95",
+    "output" : "f",
+    "target" : "f925a4dd-4771-45d0-a791-727acd55a02a",
+    "input" : "x"
+  }, {
+    "source" : "5fb49030-52d3-4e9a-af2f-e5cc1eee334d",
+    "output" : "g",
+    "target" : "f925a4dd-4771-45d0-a791-727acd55a02a",
+    "input" : "y"
+  }, {
+    "source" : "f925a4dd-4771-45d0-a791-727acd55a02a",
+    "output" : "z",
+    "target" : "eb64767c-9e0d-45a3-9c5c-f353c7951a4f",
+    "input" : "k"
+  }, {
+    "source" : "eb64767c-9e0d-45a3-9c5c-f353c7951a4f",
+    "output" : "h",
+    "target" : "f925a4dd-4771-45d0-a791-727acd55a02a",
+    "input" : "z"
+  }, {
+    "source" : "5fb49030-52d3-4e9a-af2f-e5cc1eee334d",
+    "output" : "g",
+    "target" : "bf549e2c-c26f-48bf-8d60-f92ab7881aea",
+    "input" : "x"
+  }, {
+    "source" : "c180b9f3-b0c6-42ae-afb7-465c1c7b3a95",
+    "output" : "f",
+    "target" : "474fa2f3-b501-4dd4-b479-3b2ac0243005",
+    "input" : "x"
+  }, {
+    "source" : "0b32f1e8-a742-4595-b418-2a727c959f4d",
+    "output" : "Merged",
+    "target" : "c180b9f3-b0c6-42ae-afb7-465c1c7b3a95",
+    "input" : "x"
+  }, {
+    "source" : "474fa2f3-b501-4dd4-b479-3b2ac0243005",
+    "output" : "DesignVariable",
+    "target" : "0b32f1e8-a742-4595-b418-2a727c959f4d",
+    "input" : "In_001"
+  }, {
+    "source" : "f925a4dd-4771-45d0-a791-727acd55a02a",
+    "output" : "x",
+    "target" : "0b32f1e8-a742-4595-b418-2a727c959f4d",
+    "input" : "In_002"
+  }, {
+    "source" : "f925a4dd-4771-45d0-a791-727acd55a02a",
+    "output" : "y",
+    "target" : "3ae2177b-31cb-4200-9d2a-46671ad2fad7",
+    "input" : "In_001"
+  }, {
+    "source" : "3ae2177b-31cb-4200-9d2a-46671ad2fad7",
+    "output" : "Merged",
+    "target" : "5fb49030-52d3-4e9a-af2f-e5cc1eee334d",
+    "input" : "y"
+  }, {
+    "source" : "bf549e2c-c26f-48bf-8d60-f92ab7881aea",
+    "output" : "DesignVariable",
+    "target" : "3ae2177b-31cb-4200-9d2a-46671ad2fad7",
+    "input" : "In_002"
+  } ]
+}

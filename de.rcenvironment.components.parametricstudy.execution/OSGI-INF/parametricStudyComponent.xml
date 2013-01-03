@@ -1,0 +1,36 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" factory="de.rcenvironment.rce.component" name="Parametric Study">
+
+	<implementation class="de.rcenvironment.rce.components.parametricstudy.ParametricStudyComponent"/>
+	<service>
+		<provide interface="de.rcenvironment.rce.component.Registerable"/>
+	</service>
+	
+	<property name="rce.component.name" type="String" value="Parametric Study"/>
+	
+	<property name="rce.component.group" type="String" value="Studies"/>
+	
+	<property name="rce.component.class" type="String" value="de.rcenvironment.rce.components.parametricstudy.ParametricStudyComponent"/>
+	
+	<property name="rce.component.icon-16" type="String" value="/resources/ps_16.png"/>
+    <property name="rce.component.icon-32" type="String" value="/resources/ps_32.png"/>
+    
+    <property name="rce.component.outputs" type="String">
+       DesignVariable:java.lang.Double
+    </property>
+    
+    <property name="rce.component.configuration" type="String">
+        FromValue:java.lang.Double
+        ToValue:java.lang.Double
+        StepSize:java.lang.Double
+    </property>
+    
+    <reference
+        name="Parametric Study Service"
+        interface="de.rcenvironment.rce.components.parametricstudy.commons.ParametricStudyService"
+        cardinality="1..1"
+        bind="bindParametricStudyService"
+        unbind="unbindParametricStudyService"
+        policy="dynamic"
+    />
+    
+</scr:component> 

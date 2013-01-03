@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+
+  <!-- Dynamic Help -->
+  <extension point="org.eclipse.help.contexts">
+      <contexts 
+            file="resources/contexts.xml" plugin="de.rcenvironment.rce.components.optimizer">
+      </contexts>
+   </extension>
+
+</plugin>
+   

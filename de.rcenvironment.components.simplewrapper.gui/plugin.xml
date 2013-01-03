@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <!-- Property Tabs -->
+  <extension point="org.eclipse.ui.views.properties.tabbed.propertyTabs">
+      <propertyTabs contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         <propertyTab
+               label="%preprocessing"
+               category="default"
+               id="workflow.editor.tab.simplewrapper.PreProcessing">
+         </propertyTab>
+		 <propertyTab
+               label="%execution"
+               category="default"
+               afterTab="workflow.editor.tab.simplewrapper.PreProcessing"
+               id="workflow.editor.tab.simplewrapper.Command">
+         </propertyTab>
+         <propertyTab
+               label="%postprocessing"
+               category="default"
+               afterTab="workflow.editor.tab.simplewrapper.Command"
+               id="workflow.editor.tab.simplewrapper.PostProcessing">
+         </propertyTab>
+         <propertyTab
+               label="%inoutputs"
+               category="default"
+               id="workflow.editor.tab.simplewrapper.InOutput"
+               afterTab="workflow.editor.tab.simplewrapper.Configuration">
+         </propertyTab>
+         <propertyTab
+               label="%profiles"
+               category="default"
+               afterTab="workflow.editor.tab.simplewrapper.InOutput"
+               id="workflow.editor.tab.simplewrapper.Profiles">
+         </propertyTab>
+      </propertyTabs>
+   </extension>
+   
+   <!-- Property Sections -->
+   <extension
+         point="org.eclipse.ui.views.properties.tabbed.propertySections">
+      <propertySections
+            contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+		 <propertySection
+               tab="workflow.editor.tab.simplewrapper.PreProcessing"
+               class="de.rcenvironment.core.gui.workflow.scripting.properties.PreProcessingComponentSection"
+               id="workflow.editor.tab.simplewrapper.Section.PreProcessing"
+               filter="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="workflow.editor.tab.simplewrapper.Command"
+               class="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperComponentSection"
+               id="workflow.editor.tab.simplewrapper.Section.Command"
+               filter="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="workflow.editor.tab.simplewrapper.PostProcessing"
+               class="de.rcenvironment.core.gui.workflow.scripting.properties.PostProcessingComponentSection"
+               id="workflow.editor.tab.simplewrapper.Section.PostProcessing"
+               filter="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="workflow.editor.tab.simplewrapper.InOutput"
+               class="de.rcenvironment.rce.gui.workflow.editor.properties.AdvancedDynamicEndpointPropertySection"
+               id="workflow.editor.tab.simplewrapper.Section.InOutput"
+               filter="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="workflow.editor.tab.simplewrapper.Profiles"
+               class="de.rcenvironment.rce.gui.workflow.editor.properties.PropertyProfilesSection"
+               id="workflow.editor.tab.simplewrapper.Section.Profiles"
+               filter="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperComponentFilter"
+               enablesFor="1">
+		 </propertySection>
+      </propertySections>
+   </extension>
+   <extension
+         point="de.rcenvironment.rce.gui.workflow.nodeValidators">
+      <validator
+            class="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperWorkflowNodeValidator"
+            filter="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperComponentFilter">
+      </validator>
+      <validator
+            class="de.rcenvironment.core.gui.workflow.scripting.properties.PreProcessingWorkflowNodeValidator"
+            filter="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperComponentFilter">
+      </validator>
+      <validator
+            class="de.rcenvironment.core.gui.workflow.scripting.properties.PostProcessingWorkflowNodeValidator"
+            filter="de.rcenvironment.rce.components.gui.simplewrapper.properties.SimpleWrapperComponentFilter">
+      </validator>
+   </extension>
+   
+   <!-- Dynamic Help -->
+   <extension point="org.eclipse.help.contexts">
+      <contexts file="resources/help/contexts.xml" plugin="de.rcenvironment.rce.components.simplewrapper"/>
+   </extension>
+   
+   
+   
+   
+</plugin>

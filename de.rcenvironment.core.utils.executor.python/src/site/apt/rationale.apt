@@ -1,0 +1,73 @@
+ ---
+ Development of a universal (Python) script component for RCE
+ ---
+
+Development of a universal (Python) script component for RCE
+
+* Python Knowledge
+
+ [Note] This was created to gather rationale about the process of creating a native python script component for RCE/Chameleon.
+  It was unknown then how to bind variables to the user-provided script.
+
+ * The interpreter can execute files of any name (.py, .123, .x) -> renaming is not an issue
+ 
+ * The interpreter allows start up python code before the interpreter is in the read-eval-print-loop (REPL), here we could set variables in a dynamically set startup script (%PYTHONSTARTUP%)
+  * Could fail to ever reach the interpreter loop, and how to detect when the output variables are all finally set?
+
+* Rationale
+
+ * What use cases do we have?
+ 
+  [[1]]. Simple script edited within the integration IDE to steer a workflow or test things out within the project
+  
+   * Why not Jython?
+   
+    [[1]]. Because its feasibility is not certain (indexing of Java jars everytime? Does the interpreter find all dependencies when started from within OSGi?)
+    
+	[[1]]. Compatibility is an issue
+    
+	[[1]]. Numpy and co. don't work
+    
+	[[1]]. Memory limitations
+    
+	[[1]]. Speed?
+    
+	[[1]]. Available version: only 2.1 and 2.5beta currently
+    
+   * CPython must be called
+   
+    [[1]]. Per native API calls
+    
+	 * we didn't find a reliable way to bind values to the interpreter, there is an API to create new items within the Python interpreter which isn't exactly what we need)
+     
+	[[1]]. per command line (as a normal executable)
+    
+	 * works always
+     
+	 * has exit code
+     
+	 * allows to pipe channels (stdin/out/err)
+     
+  [[1]]. Existing (complex) scripts -> Integrate as a tool available for others
+  
+   * not yet started on this
+   
+ * OS-independence:
+ 
+  [ALL] Use executable path to find python starter (PATH environment variable, implemented, works on Win)
+  
+  [WIN] Use registry to find the location (implemented, works on Win)
+  
+  [UNIX] Use env script if found to locate executable (/usr/bin/env python, TODO)
+  
+ * Wrapper around original script
+ 
+  [Pro] Control over variable init and write out (implemented, works)
+  
+  [Con] Modifies existing script, could create namespace and module loading issues, we might run into situations of hanging executable and non-parseable results
+  
+   * need to copy to another location, where dependencies may not be meet any longer
+   
+    * we need to be able to execute the same script at the same time several times including use of temp files, therefore copying is not allowed to be an issue, and is essentially the same as for any wrapped tool
+    
+	* we could rename the original file temporarily and replace it by the wrapped one -> needs write rights (not always given), difficult to clean up, some scripts check their filename

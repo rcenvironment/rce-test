@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Converger Component Execution
+Bundle-SymbolicName: de.rcenvironment.components.converger.execution;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Import-Package: de.rcenvironment.components.converger.common,
+ de.rcenvironment.rce.component,
+ de.rcenvironment.rce.component.endpoint,
+ de.rcenvironment.rce.component.scheduler,
+ de.rcenvironment.rce.components.parametricstudy.commons,
+ org.apache.commons.logging;provider=paxlogging
+Export-Package: de.rcenvironment.components.converger.execution
+Service-Component: OSGI-INF/*.xml
+RCE-Component: true
+Bundle-ClassPath: .
+Bundle-Vendor: DLR
+Bundle-ActivationPolicy: lazy

@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Tests
+Bundle-SymbolicName: de.rcenvironment.core.component.tests
+Bundle-Version: 2.4.0.qualifier
+Fragment-Host: de.rcenvironment.core.component
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: de.rcenvironment.core.utils.testing
+Import-Package: de.rcenvironment.rce.communication.testutils,
+ de.rcenvironment.rce.configuration.testutils

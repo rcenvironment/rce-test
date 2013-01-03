@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            name="Network View"            
+            icon="icons/network.png"
+            category="de.rcenvironment.rce"
+            class="de.rcenvironment.core.gui.communication.views.NetworkView"
+            id="de.rcenvironment.core.gui.communication.views.NetworkView">
+      </view>
+   </extension>
+
+</plugin>

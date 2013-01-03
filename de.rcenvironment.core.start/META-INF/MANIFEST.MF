@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCEnvironment Core Start Bundle
+Bundle-SymbolicName: de.rcenvironment.core.start;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Bundle-Vendor: DLR
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.rcenvironment.core.start.common,
+ de.rcenvironment.core.start.gui,
+ de.rcenvironment.core.start.headless,
+ de.rcenvironment.rce.authentication
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime
+Bundle-ActivationPolicy: lazy
+Export-Package: de.rcenvironment.core.start
+Bundle-Localization: plugin

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <!-- Property Sections -->
+   <extension point="org.eclipse.ui.views.properties.tabbed.propertySections">
+      <propertySections contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         
+         <propertySection
+               tab="workflow.editor.tab.python.Script"
+               class="de.rcenvironment.rce.components.gui.python.properties.ScriptSection"
+               id="workflow.editor.tab.Properties.Section.Script"
+               filter="de.rcenvironment.rce.components.gui.python.properties.PythonComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         
+         <propertySection
+               tab="workflow.editor.tab.python.InputsOutputs"
+               class="de.rcenvironment.rce.gui.workflow.editor.properties.AdvancedDynamicEndpointPropertySection"
+               id="workflow.editor.tab.Properties.Section.InputsOutputs"
+               filter="de.rcenvironment.rce.components.gui.python.properties.PythonComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         
+         <propertySection
+               tab="workflow.editor.tab.python.Profiles"
+               class="de.rcenvironment.rce.gui.workflow.editor.properties.PropertyProfilesSection"
+               id="workflow.editor.tab.Properties.Section.Profiles"
+               filter="de.rcenvironment.rce.components.gui.python.properties.PythonComponentFilter"
+               enablesFor="1">
+		 </propertySection>
+         
+      </propertySections>
+   </extension>
+   
+   <!-- Register Property Sections -->
+   <extension point="org.eclipse.ui.views.properties.tabbed.propertyTabs">
+      <propertyTabs contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         
+         <propertyTab
+         	   label="%script"
+               category="default"
+               id="workflow.editor.tab.python.Script">
+         </propertyTab>
+         
+         <propertyTab
+               label="Inputs/Outputs"
+               category="default"
+               afterTab="workflow.editor.tab.python.Script"
+               id="workflow.editor.tab.python.InputsOutputs">
+         </propertyTab>
+         
+         <propertyTab
+               label="%profiles"
+               category="default"
+               afterTab="workflow.editor.tab.python.InputsOutputs"
+               id="workflow.editor.tab.python.Profiles">
+         </propertyTab>
+         
+     </propertyTabs>
+   </extension>
+   
+   <!-- Workflow data browser node -->
+   <extension point="de.rcenvironment.rce.gui.datamanagement.browser.historysubtreebuilder">
+      <builder class="de.rcenvironment.components.python.gui.dm.PythonHistoryObjectSubTreeBuilder" />
+   </extension>
+
+   <!-- Dynamic Help -->
+   <extension point="org.eclipse.help.contexts">
+      <contexts file="resources/help/contexts.xml" plugin="de.rcenvironment.rce.components.python" />
+   </extension>
+   
+   <!-- Editor action -->
+   <extension
+        point="de.rcenvironment.rce.gui.workflow.editorActions">
+     <action
+           component="de.rcenvironment.rce.components.python.PythonComponent.*"
+           class="de.rcenvironment.rce.components.gui.python.EditScriptWorkflowEditorAction"
+           id="de.rcenvironment.rce.components.python.EditAction"
+           label="%edit"
+           default="true">
+     </action>
+  </extension>
+  <extension
+       point="de.rcenvironment.rce.gui.workflow.nodeValidators">
+    <validator
+          class="de.rcenvironment.rce.components.gui.python.properties.PythonWorkflowNodeValidator"
+          filter="de.rcenvironment.rce.components.gui.python.properties.PythonComponentFilter">
+    </validator>
+  </extension>
+</plugin>

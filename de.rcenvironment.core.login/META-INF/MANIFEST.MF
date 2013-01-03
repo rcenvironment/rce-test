@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Login
+Bundle-SymbolicName: de.rcenvironment.core.login;singleton:=true
+Bundle-Vendor: DLR & Fraunhofer SCAI
+Bundle-Version: 2.4.0.qualifier
+Export-Package: de.rcenvironment.rce.login
+Bundle-ManifestVersion: 2
+Bundle-ClassPath: .
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.rce.authentication,
+ de.rcenvironment.rce.configuration,
+ de.rcenvironment.rce.notification,
+ org.apache.commons.logging;provider=paxlogging,
+ org.globus.gsi
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: org.eclipse.core.runtime
+Service-Component: OSGI-INF/serviceHandler.xml

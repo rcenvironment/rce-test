@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Jetty
+Bundle-SymbolicName: de.rcenvironment.core.jetty;singleton:=true
+Bundle-Vendor: DLR
+Bundle-Version: 2.4.0.qualifier
+Export-Package: de.rcenvironment.rce.jetty
+Bundle-ClassPath: .
+Bundle-ManifestVersion: 2
+Import-Package: org.apache.commons.logging;version="1.1.1"
+Service-Component: OSGI-INF/*.xml
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: de.rcenvironment.libraries.custom.webservice
+

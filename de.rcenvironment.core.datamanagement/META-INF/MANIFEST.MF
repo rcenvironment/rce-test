@@ -1,0 +1,28 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Data Management
+Bundle-SymbolicName: de.rcenvironment.core.datamanagement;singleton:=true
+Bundle-Vendor: DLR & Fraunhofer SCAI
+Bundle-Version: 2.4.0.qualifier
+Export-Package: 
+ de.rcenvironment.rce.datamanagement,
+ de.rcenvironment.rce.datamanagement.backend,
+ de.rcenvironment.rce.datamanagement.commons
+Bundle-ClassPath: .
+Bundle-ManifestVersion: 2
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+DynamicImport-Package: *
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.core.communication.model,
+ de.rcenvironment.core.utils.common.concurrent,
+ de.rcenvironment.core.utils.common.security,
+ de.rcenvironment.rce.authentication,
+ de.rcenvironment.rce.authorization,
+ de.rcenvironment.rce.communication,
+ de.rcenvironment.rce.communication.file,
+ de.rcenvironment.rce.configuration,
+ org.apache.commons.io,
+ org.apache.commons.logging;provider=paxlogging,
+ org.osgi.framework
+Require-Bundle: org.eclipse.core.runtime
+Service-Component: OSGI-INF/*.xml

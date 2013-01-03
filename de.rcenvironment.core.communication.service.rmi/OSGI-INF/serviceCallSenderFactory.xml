@@ -1,0 +1,7 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0"	name="Service Call Sender Factory">
+	<implementation class="de.rcenvironment.rce.communication.rmi.internal.RMIServiceCallSenderFactory" />
+	<service>
+		<provide interface="de.rcenvironment.rce.communication.service.spi.ServiceCallSenderFactory" /> 
+	</service>
+	<property name="protocol" value="de.rcenvironment.rce.communication.service.rmi" />
+</scr:component>

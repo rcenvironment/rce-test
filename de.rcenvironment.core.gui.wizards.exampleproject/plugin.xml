@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.newWizards" project="true">
+      <wizard
+            category="de.rcenvironment.rce"
+            class="de.rcenvironment.core.gui.wizards.exampleproject.internal.RCEExampleProjectWizard"
+            icon="/icons/workflowProj16.gif"
+            id="de.rcenvironment.core.gui.wizards.exampleproject.internal.RCEExampleProjectWizard"
+            name="Workflow Examples Project">
+      </wizard>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension targetID="de.rcenvironment.rce">
+         <newWizardShortcut
+            id="de.rcenvironment.core.gui.wizards.exampleproject.internal.RCEExampleProjectWizard">
+         </newWizardShortcut>
+      </perspectiveExtension>
+   </extension>
+
+</plugin>

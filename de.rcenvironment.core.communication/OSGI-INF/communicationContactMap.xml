@@ -1,0 +1,10 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="deactivate" name="Communication Contact Map">
+	<implementation class="de.rcenvironment.rce.communication.internal.CommunicationContactMap" /> 
+	<reference bind="bindConfigurationService"
+		unbind="unbindConfigurationService"
+		cardinality="1..1"
+		interface="de.rcenvironment.rce.configuration.ConfigurationService"
+		name="Configuration Service"
+		policy="dynamic"
+	/>
+</scr:component>

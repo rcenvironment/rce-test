@@ -1,0 +1,8 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" factory="de.rcenvironment.rce.component.controller" name="Component Controller">
+
+	<implementation class="de.rcenvironment.rce.component.internal.ComponentControllerImpl"/>
+	<service>
+		<provide interface="de.rcenvironment.rce.component.ComponentController"/>
+	</service>
+
+</scr:component>

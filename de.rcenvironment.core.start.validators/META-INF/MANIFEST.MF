@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core Start Validators
+Bundle-SymbolicName: de.rcenvironment.core.start.validators;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: org.eclipse.core.runtime,
+ de.rcenvironment.core.configuration,
+ de.rcenvironment.core.start.common
+Bundle-ClassPath: .
+Service-Component: OSGI-INF/*.xml
+Import-Package: org.osgi.service.component,
+ de.rcenvironment.core.start.common.validation
+Bundle-Activator: de.rcenvironment.rce.validators.internal.ValidatorsBundleActivator
+Bundle-ActivationPolicy: lazy
+Bundle-Vendor: DLR

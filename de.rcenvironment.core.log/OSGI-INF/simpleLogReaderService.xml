@@ -1,0 +1,10 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Simple Log Reader Service">
+	<implementation class="de.rcenvironment.rce.log.SimpleLogReaderService" />
+	<reference name="Distributed Log Reader Service"
+ 		interface="de.rcenvironment.rce.log.DistributedLogReaderService"
+ 		cardinality="1..1"
+ 		bind="bindDistributedLogReaderService"
+ 		unbind="unbindDistributedLogReaderService"
+ 		policy="dynamic"
+ 	/>
+</scr:component>

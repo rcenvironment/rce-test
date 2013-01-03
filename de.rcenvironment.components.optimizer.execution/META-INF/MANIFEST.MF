@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Optimizer Component Execution
+Bundle-SymbolicName: de.rcenvironment.components.optimizer.execution;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.rce.component,
+ de.rcenvironment.rce.component.endpoint,
+ de.rcenvironment.rce.components.optimizer.commons,
+ de.rcenvironment.rce.notification,
+ de.rcenvironment.commons.executor,
+ org.apache.commons.exec;version="1.1.0",
+ org.apache.commons.lang3;version="3.1.0",
+ org.apache.commons.logging;provider=paxlogging
+Service-Component: OSGI-INF/*.xml
+RCE-Component: true
+Bundle-ClassPath: .
+Bundle-Vendor: DLR
+Bundle-ActivationPolicy: lazy
+Export-Package: de.rcenvironment.rce.components.optimizer

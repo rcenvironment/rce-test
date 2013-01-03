@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Scripting
+Bundle-SymbolicName: de.rcenvironment.core.scripting;singleton:=true
+Bundle-Vendor: DLR
+Bundle-Version: 2.4.0.qualifier
+Bundle-ManifestVersion: 2
+Export-Package: de.rcenvironment.rce.scripting
+Bundle-ClassPath: .
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.commons.scripting,
+ de.rcenvironment.rce.configuration,
+ org.apache.commons.logging;provider=paxlogging,
+ org.eclipse.core.runtime,
+ org.osgi.framework,
+ org.python.jsr223;version="2.5.2"
+Bundle-ActivationPolicy: lazy
+Service-Component: OSGI-INF/*.xml
+Require-Bundle: org.eclipse.core.runtime

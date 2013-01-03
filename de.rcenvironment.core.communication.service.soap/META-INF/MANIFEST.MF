@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Communication Service SOAP
+Bundle-SymbolicName: de.rcenvironment.core.communication.service.soap;singleton:=true
+Bundle-Vendor: DLR
+Bundle-Version: 2.4.0.qualifier
+DynamicImport-Package: *
+Bundle-ManifestVersion: 2
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.rce.communication,
+ de.rcenvironment.rce.communication.service,
+ de.rcenvironment.rce.communication.service.spi,
+ de.rcenvironment.rce.configuration,
+ de.rcenvironment.rce.jetty,
+ javax.activation,
+ javax.jws,
+ javax.jws.soap,
+ javax.mail.util,
+ org.apache.commons.logging;provider=paxlogging,
+ org.mortbay.jetty,
+ org.osgi.framework
+Service-Component: OSGI-INF/*.xml
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: de.rcenvironment.libraries.custom.webservice

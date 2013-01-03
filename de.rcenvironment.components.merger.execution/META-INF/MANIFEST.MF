@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ManifestVersion: 2
+Bundle-Name: RCEnvironment Components Merger Execution Bundle
+Bundle-SymbolicName: de.rcenvironment.components.merger.execution;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Import-Package: de.rcenvironment.components.merger.common,
+ de.rcenvironment.rce.component,
+ de.rcenvironment.rce.component.endpoint
+Export-Package: de.rcenvironment.components.merger.execution
+Service-Component: OSGI-INF/*.xml
+RCE-Component: true
+Bundle-ClassPath: .
+Bundle-Vendor: DLR
+Bundle-ActivationPolicy: lazy

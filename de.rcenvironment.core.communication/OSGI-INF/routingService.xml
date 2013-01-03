@@ -1,0 +1,30 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" name="Routing Service">
+	<implementation class="de.rcenvironment.rce.communication.internal.RoutingServiceImpl" />
+	<service>
+    	<provide interface="de.rcenvironment.rce.communication.RoutingService"/>
+	</service>
+	<reference
+ 		name="Communication Service"
+ 		interface="de.rcenvironment.rce.communication.CommunicationService"
+ 		cardinality="1..1"
+ 		bind="bindCommunicationService"
+ 		unbind="unbindCommunicationService"
+ 		policy="dynamic"
+ 	/>
+ 	<reference
+ 		name="Platform Service"
+ 		interface="de.rcenvironment.rce.communication.PlatformService"
+ 		cardinality="1..1"
+ 		bind="bindPlatformService"
+ 		unbind="unbindPlatformService"
+ 		policy="dynamic"
+ 	/> 	
+	<reference
+ 		name="Configuration Service"
+ 		interface="de.rcenvironment.rce.configuration.ConfigurationService"
+ 		cardinality="1..1"
+ 		bind="bindConfigurationService"
+ 		policy="dynamic"
+ 	/> 	
+
+</scr:component>

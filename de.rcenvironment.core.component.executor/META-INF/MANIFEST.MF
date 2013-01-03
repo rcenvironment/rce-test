@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Component Scripting
+Bundle-SymbolicName: de.rcenvironment.core.component.executor;singleton:=true
+Bundle-Vendor: DLR
+Bundle-Version: 2.4.0.qualifier
+Export-Package: de.rcenvironment.core.component.executor
+Bundle-ManifestVersion: 2
+Import-Package: 
+ de.rcenvironment.commons,
+ de.rcenvironment.commons.executor,
+ de.rcenvironment.commons.validation,
+ de.rcenvironment.core.utils.ssh.jsch,
+ de.rcenvironment.core.utils.ssh.jsch.executor.context,
+ de.rcenvironment.rce.component,
+ de.rcenvironment.rce.component.datamanagement,
+ org.apache.commons.io;version="2.0.1",
+ org.apache.commons.logging;provider=paxlogging,
+ org.codehaus.jackson;version="1.6.0",
+ org.codehaus.jackson.map;version="1.6.0",
+ org.codehaus.jackson.type;version="1.6.0"
+Service-Component: OSGI-INF/*.xml
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

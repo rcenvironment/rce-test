@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <!-- Property Sections -->
+   <extension point="org.eclipse.ui.views.properties.tabbed.propertySections">
+      <propertySections contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         
+         <propertySection
+               tab="workflow.editor.tab.optimizer.Algorithm"
+               class="de.rcenvironment.rce.components.gui.optimizer.properties.AlgorithmSection"
+               id="workflow.editor.tab.Properties.Section.Script"
+               filter="de.rcenvironment.rce.components.gui.optimizer.properties.OptimizerComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         
+         <propertySection
+               tab="workflow.editor.tab.optimizer.Algorithm"
+               class="de.rcenvironment.rce.components.gui.optimizer.properties.DOEAlgorithmSection"
+               id="workflow.editor.tab.Properties.Section.DOEScript"
+               filter="de.rcenvironment.rce.components.gui.optimizer.properties.DOEComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         <propertySection
+               tab="workflow.editor.tab.optimizer.InputsOutputs"
+               class="de.rcenvironment.rce.components.gui.optimizer.properties.OptimizerInputsOutputs"
+               id="workflow.editor.tab.Properties.Section.InputsOutputs"
+               filter="de.rcenvironment.rce.components.gui.optimizer.properties.OptimizerCommonComponentFilter"
+               enablesFor="1">
+         </propertySection>
+         
+         <propertySection
+               tab="workflow.editor.tab.optimizer.Profiles"
+               class="de.rcenvironment.rce.gui.workflow.editor.properties.PropertyProfilesSection"
+               id="workflow.editor.tab.optimizer.Section.Profiles"
+               filter="de.rcenvironment.rce.components.gui.optimizer.properties.OptimizerCommonComponentFilter"
+               enablesFor="1">
+		 </propertySection>
+         
+      </propertySections>
+   </extension>
+   
+   <!-- Register Property Sections -->
+   <extension point="org.eclipse.ui.views.properties.tabbed.propertyTabs">
+      <propertyTabs contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
+         
+         <propertyTab label="%algorithm"
+               category="default"
+               id="workflow.editor.tab.optimizer.Algorithm">
+         </propertyTab>
+         
+         <propertyTab
+               label="%inoutput"
+               category="default"
+               afterTab="workflow.editor.tab.optimizer.Algorithm"
+               id="workflow.editor.tab.optimizer.InputsOutputs">
+         </propertyTab>
+         
+         <propertyTab
+               label="%profiles"
+               category="default"
+               afterTab="workflow.editor.tab.optimizer.InputsOutputs"
+               id="workflow.editor.tab.optimizer.Profiles">
+         </propertyTab>
+         
+     </propertyTabs>
+   </extension>
+
+    <!-- Dynamic Help -->
+   <extension point="org.eclipse.help.contexts">
+      <contexts file="resources/help/contexts.xml" plugin="de.rcenvironment.rce.components.optimizer" />
+   </extension>
+    <!-- Runtime View -->
+   	<extension
+         point="org.eclipse.ui.views">
+      <view category="de.rcenvironment.rce.components"
+      		icon="resources/opti_16.png"
+            allowMultiple="true"
+            class="de.rcenvironment.rce.components.gui.optimizer.view.OptimizerView"
+            id="de.rcenvironment.rce.components.gui.optimizer.view.OptimizerView"
+            name="Optimizer"
+            restorable="false">
+      </view>
+   </extension>
+      	<extension
+         point="org.eclipse.ui.views">
+      <view category="de.rcenvironment.rce.components"
+      		icon="resources/doe_64.png"
+            allowMultiple="true"
+            class="de.rcenvironment.rce.components.gui.optimizer.view.DOEView"
+            id="de.rcenvironment.rce.components.gui.optimizer.view.DOEView"
+            name="DOE"
+            restorable="false">
+      </view>
+   </extension>
+   <!-- View Location -->
+    <extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension targetID="de.rcenvironment.rce">
+			<view id="de.rcenvironment.rce.components.gui.optimizer.view.OptimizerView" relationship="stack"
+				relative="de.rcenvironment.rce.Perspective.bottom" visible="false">
+			</view>
+		</perspectiveExtension>
+	</extension>
+   
+   <!-- Validator -->
+   
+   <extension
+         point="de.rcenvironment.rce.gui.workflow.nodeValidators">
+      <validator
+            class="de.rcenvironment.rce.components.gui.optimizer.properties.OptimizerWorkflowNodeValidator"
+            filter="de.rcenvironment.rce.components.gui.optimizer.properties.OptimizerComponentFilter">
+      </validator>
+   </extension>
+   <!-- Register Runtime View -->
+   <extension
+         point="de.rcenvironment.rce.gui.workflow.monitoring">
+      <monitor component="de.rcenvironment.rce.components.optimizer.*"
+            view="de.rcenvironment.rce.components.gui.optimizer.view.OptimizerView"
+            default="true">
+      </monitor>
+   </extension>
+  
+</plugin>

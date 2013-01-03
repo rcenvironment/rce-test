@@ -1,0 +1,25 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" name="Service Call Handler">
+	<implementation class="de.rcenvironment.rce.communication.service.internal.ServiceCallHandlerImpl" /> 
+ 	<service>
+ 		<provide interface="de.rcenvironment.rce.communication.service.ServiceCallHandler"/>
+ 	</service>
+	<reference bind="bindPlatformService"
+ 		cardinality="1..1"
+ 		interface="de.rcenvironment.rce.communication.PlatformService"
+ 		name="Information Service"
+ 		policy="dynamic"
+ 	/>
+ 	<reference name="Callback Proxy Service"
+		bind="bindCallbackProxyService"
+ 		cardinality="1..1"
+ 		interface="de.rcenvironment.rce.communication.callback.CallbackProxyService"
+ 		
+ 		policy="dynamic"
+ 	/>
+ 	<reference name="Callback Service"
+ 		bind="bindCallbackService"
+ 		cardinality="1..1"
+ 		interface="de.rcenvironment.rce.communication.callback.CallbackService"
+ 		policy="dynamic"
+ 	/>  
+</scr:component>

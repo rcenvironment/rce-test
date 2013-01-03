@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE SQL Component GUI Bundle
+Bundle-SymbolicName: de.rcenvironment.components.sql.gui;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Import-Package: de.rcenvironment.commons.channel,
+ de.rcenvironment.rce.component,
+ de.rcenvironment.rce.component.workflow,
+ de.rcenvironment.rce.components.sql.commons,
+ de.rcenvironment.rce.gui.workflow.editor.properties
+Bundle-ClassPath: .
+Bundle-Vendor: DLR
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.ui.views.properties.tabbed,
+ org.eclipse.core.runtime

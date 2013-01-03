@@ -1,0 +1,26 @@
+Manifest-Version: 1.0
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Excel Component Execution
+Bundle-SymbolicName: de.rcenvironment.components.excel.execution;singleton:=true
+Bundle-Version: 2.4.0.qualifier
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.commons.channel,
+ de.rcenvironment.commons.excel,
+ de.rcenvironment.commons.variables,
+ de.rcenvironment.rce.component,
+ de.rcenvironment.rce.component.datamanagement.stateful,
+ de.rcenvironment.rce.component.datatype,
+ de.rcenvironment.rce.component.endpoint,
+ de.rcenvironment.rce.components.excel.commons,
+ de.rcenvironment.rce.notification,
+ org.apache.commons.io,
+ org.apache.commons.logging;provider=paxlogging,
+ org.apache.poi.openxml4j.exceptions;version="3.8.0"
+Service-Component: OSGI-INF/*.xml
+RCE-Component: true
+Bundle-ClassPath: .
+Bundle-Vendor: DLR
+Bundle-ActivationPolicy: lazy
+Eclipse-PlatformFilter: (& (osgi.ws=win32) (osgi.os=win32) )
+Export-Package: de.rcenvironment.rce.components.excel

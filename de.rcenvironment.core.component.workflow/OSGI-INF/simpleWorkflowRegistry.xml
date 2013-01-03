@@ -1,0 +1,10 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Simple Workflow Registry">
+	<implementation class="de.rcenvironment.rce.component.workflow.SimpleWorkflowRegistry"/>
+	<reference name="Distributed Workflow Registry"
+		interface="de.rcenvironment.rce.component.workflow.DistributedWorkflowRegistry"
+		bind="bindDistributedWorkflowRegistry"
+		unbind="unbindDistributedWorkflowRegistry"
+		cardinality="1..1"
+		policy="dynamic"
+	/>
+</scr:component>

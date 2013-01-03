@@ -1,0 +1,20 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" name="Platform Service">
+	<implementation class="de.rcenvironment.rce.communication.internal.PlatformServiceImpl" />
+	<service>
+    	<provide interface="de.rcenvironment.rce.communication.PlatformService"/>
+	</service>
+	<reference
+ 		name="Configuration Service"
+ 		interface="de.rcenvironment.rce.configuration.ConfigurationService"
+ 		cardinality="1..1"
+ 		bind="bindConfigurationService"
+ 		policy="dynamic"
+ 	/>
+	<reference
+		bind="bindPersistentSettingsService"
+		cardinality="1..1"
+		interface="de.rcenvironment.rce.configuration.PersistentSettingsService"
+		name="Persistent Settings Service"
+		policy="dynamic"
+	/>
+</scr:component>

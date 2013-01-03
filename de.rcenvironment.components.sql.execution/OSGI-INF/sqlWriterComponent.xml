@@ -1,0 +1,47 @@
+<scr:component
+		xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0"
+		factory="de.rcenvironment.rce.component"
+		name="SQL Writer">
+
+	<implementation class="de.rcenvironment.rce.components.sql.SQLWriterComponent"/>
+	<service>
+		<provide interface="de.rcenvironment.rce.component.Registerable"/>
+	</service>
+	
+    <reference
+	        name="JDBC Service"
+	        interface="de.rcenvironment.rce.components.sql.commons.JDBCService"
+	        cardinality="1..1"
+	        bind="bindJdbcService"
+	        unbind="unbindJdbcService"
+	        policy="dynamic"
+    />
+	
+	<property name="rce.component.configuration" type="String">
+		tableName:java.lang.String:output_${componentSqlId}
+		sqlquery:java.lang.String:insert into ${tableName} (...) values (...)
+	    jdbcProfile:java.lang.String:
+		sqlSetup:java.lang.String:
+		sqlCleanup:java.lang.String:
+		sqlDispose:java.lang.String:
+		inputMode:java.lang.String:BLOCK
+		inputMapping:java.lang.String:
+		createTable:java.lang.Boolean:false
+		dropTable:java.lang.Boolean:false
+		dropTableOn:java.lang.String:DISPOSE
+	</property>
+	
+    <property name="rce.component.outputs" type="String">
+       meta.tableName:java.lang.String
+       meta.sqlSuccess:java.lang.Integer
+    </property>
+    
+	<property name="rce.component.name" type="String" value="SQL Writer"/>
+	
+	<property name="rce.component.group" type="String" value="Data"/>
+	
+	<property name="rce.component.class" type="String" value="de.rcenvironment.rce.components.sql.SQLWriterComponent"/>
+	
+	<property name="rce.component.icon-16" type="String" value="/resources/databasewriter_16.png"/>
+    <property name="rce.component.icon-32" type="String" value="/resources/databasewriter_32.png"/>
+</scr:component> 

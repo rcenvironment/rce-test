@@ -1,0 +1,23 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>de.rcenvironment.repositories.rce.main.master</artifactId>
+	<name>RCE Main Repository and Products Master</name>
+	<version>2.4.0.qualifier</version>
+	<packaging>pom</packaging>
+
+	<parent>
+		<groupId>de.rcenvironment</groupId>
+		<artifactId>de.rcenvironment.common.osgi.parent</artifactId>
+		<version>2.3.0.qualifier</version>
+		<relativePath>../de.rcenvironment.common.parent/osgiParent.pom</relativePath>
+	</parent>
+
+	<modules>
+		<module>../de.rcenvironment.configuration.common.feature</module>
+		<module>../de.rcenvironment.configuration.rce.default.feature</module>
+		<module>../de.rcenvironment.repositories.rce.main</module>
+	</modules>
+
+</project>

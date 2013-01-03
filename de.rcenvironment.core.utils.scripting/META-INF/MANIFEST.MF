@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCE Core Utils Scripting
+Bundle-SymbolicName: de.rcenvironment.core.utils.scripting
+Bundle-Version: 2.4.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: 
+ de.rcenvironment.commons.scripting
+Bundle-Vendor: DLR

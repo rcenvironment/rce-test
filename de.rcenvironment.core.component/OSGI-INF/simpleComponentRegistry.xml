@@ -1,0 +1,12 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Simple Component Registry">
+   
+    <implementation class="de.rcenvironment.rce.component.SimpleComponentRegistry"/>
+   
+	<reference name="Distributed Component Registry"
+		interface="de.rcenvironment.rce.component.DistributedComponentRegistry"
+		bind="bindDistributedComponentRegistry"
+		unbind="unbindDistributedComponentRegistry"
+		cardinality="1..1"
+		policy="dynamic"
+	/>
+</scr:component>

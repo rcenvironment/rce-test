@@ -1,0 +1,26 @@
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Remote Service Handler">
+	<implementation class="de.rcenvironment.rce.communication.service.internal.RemoteServiceHandlerImpl" />
+ 	<service>
+    	<provide interface="de.rcenvironment.rce.communication.service.RemoteServiceHandler"/>
+	</service>
+	<reference bind="bindPlatformService"
+ 		cardinality="1..1"
+ 		interface="de.rcenvironment.rce.communication.PlatformService"
+ 		name="Information Service"
+ 		policy="dynamic"
+ 	/>
+ 	<reference name="Callback Proxy Service"
+		bind="bindCallbackProxyService"
+ 		cardinality="1..1"
+ 		interface="de.rcenvironment.rce.communication.callback.CallbackProxyService"
+ 		
+ 		policy="dynamic"
+ 	/>
+	<reference
+ 		name="Callback Service"
+ 		interface="de.rcenvironment.rce.communication.callback.CallbackService"
+ 		cardinality="1..1"
+ 		bind="bindCallbackService"
+ 		policy="dynamic"
+ 	/>
+</scr:component>

@@ -1,0 +1,16 @@
+{
+  "profiles": [
+    {
+	  "label": "performancelog@lit2",
+	  "host": "lit2.sistec.kp.dlr.de",
+	  "database": "performancelog",
+	  "user": "foo",
+	  "password": "foo",
+	  "jdbc": {
+	    "url": "jdbc:mysql://${host}/${database}",
+	    "file": "configuration/de.rcenvironment.rce.components.sql.commons/mysql-connector-java-5.1.17-bin.jar",
+	    "driver": "com.mysql.jdbc.Driver"
+	  }
+	}
+  ]
+}

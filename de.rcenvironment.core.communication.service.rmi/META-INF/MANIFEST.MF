@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-Name: RCE Core Communication Service RMI
+Bundle-SymbolicName: de.rcenvironment.core.communication.service.rmi;singleton:=true
+Bundle-Vendor: DLR & Fraunhofer SCAI
+Bundle-Version: 2.4.0.qualifier
+DynamicImport-Package: *
+Bundle-ManifestVersion: 2
+Import-Package: de.rcenvironment.commons,
+ de.rcenvironment.rce.communication,
+ de.rcenvironment.rce.communication.service,
+ de.rcenvironment.rce.communication.service.spi,
+ de.rcenvironment.rce.configuration,
+ org.apache.commons.logging;provider=paxlogging
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: org.eclipse.core.runtime
+Service-Component: OSGI-INF/*.xml
