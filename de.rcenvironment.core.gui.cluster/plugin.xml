@@ -5,7 +5,7 @@
 	<extension 
 		point="org.eclipse.ui.views">
   		<view
-        category="de.rcenvironment.rce"
+        category="de.rcenvironment.core"
         class="de.rcenvironment.core.gui.cluster.view.internal.ClusterJobMonitorView"
         id="de.rcenvironment.core.gui.cluster.view.ClusterJobMonitorView"
         icon="resources/icons/monitor16.gif"

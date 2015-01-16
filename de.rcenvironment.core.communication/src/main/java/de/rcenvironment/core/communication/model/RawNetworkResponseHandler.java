@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -17,7 +17,7 @@ package de.rcenvironment.core.communication.model;
  * For these senders, connection breakdowns are converted into {@link NetworkResponse}s and returned
  * via the {@link NetworkResponseHandler#onResponseAvailable(NetworkResponse)} callback. If the
  * breakdown occurred on an outgoing connection, this will usually be followed by a
- * {@link NetworkConnectionListener#onOutgoingConnectionTerminated(NetworkConnection)} callback.
+ * {@link MessageChannelLifecycleListener#onOutgoingChannelTerminated(MessageChannel)} callback.
  * 
  * @author Robert Mischke
  */
@@ -31,10 +31,10 @@ public interface RawNetworkResponseHandler {
     void onResponseAvailable(NetworkResponse response);
 
     /**
-     * Signals a broken {@link NetworkConnection}.
+     * Signals a broken {@link MessageChannel}.
      * 
      * @param request the request associated with the detected breakdown, if available
      * @param connection the affected connection
      */
-    void onConnectionBroken(NetworkRequest request, NetworkConnection connection);
+    void onChannelBroken(NetworkRequest request, MessageChannel connection);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -10,15 +10,13 @@ package de.rcenvironment.core.communication.configuration;
 
 import java.util.List;
 
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
-import de.rcenvironment.rce.communication.internal.CommunicationConfiguration;
 
 /**
- * Configuration management service for the local node. It serves to decouple the communication
- * classes from the low-level {@link CommunicationConfiguration} class, which simplifies the
- * configuration of integration tests.
+ * Configuration management service for the local node. It serves to decouple the communication classes from the low-level
+ * {@link CommunicationConfiguration} class, which simplifies the configuration of integration tests.
  * 
  * @author Robert Mischke
  */
@@ -30,25 +28,36 @@ public interface NodeConfigurationService {
     NodeIdentifier getLocalNodeId();
 
     /**
-     * @return a {@link NetworkNodeInformation} object for the local node
+     * @return true if this node is a "workflow host"; temporary pass-through method
      */
-    NetworkNodeInformation getLocalNodeInformation();
+    @Deprecated
+    boolean isWorkflowHost();
 
     /**
-     * @return the list of "provided" {@link NetworkContactPoint}s for the local node; these are the
-     *         {@link NetworkContactPoint}s that the local node listens on as a "server"
+     * @return an {@link InitialNodeInformation} object for the local node
+     */
+    InitialNodeInformation getInitialNodeInformation();
+
+    /**
+     * @return the list of "provided" {@link NetworkContactPoint}s for the local node; these are the {@link NetworkContactPoint}s that the
+     *         local node listens on as a "server"
      */
     List<NetworkContactPoint> getServerContactPoints();
 
     /**
-     * @return the list of "remote" {@link NetworkContactPoint}s for the local node; these are the
-     *         {@link NetworkContactPoint}s that the local node connects to as a "client"
+     * @return the list of "remote" {@link NetworkContactPoint}s for the local node; these are the {@link NetworkContactPoint}s that the
+     *         local node connects to as a "client"
      */
     List<NetworkContactPoint> getInitialNetworkContactPoints();
 
     /**
-     * @return the delay (in milliseconds) before connections to the configured
-     *         "remote contact points" are attempted
+     * @return true if this node reports its outgoing message channels to other nodes, and accepts message forwarding requests from other
+     *         nodes; in effect, setting this to "true" makes this node merge all networks it is connected to into one
+     */
+    boolean isRelay();
+
+    /**
+     * @return the delay (in milliseconds) before connections to the configured "remote contact points" are attempted
      */
     long getDelayBeforeStartupConnectAttempts();
 
@@ -62,4 +71,9 @@ public interface NodeConfigurationService {
      */
     long getForwardingTimeoutMsec();
 
+    /**
+     * @return the current IP filter configuration; the implementing service is responsible for returning the most up-to-date configuration,
+     *         for example by reloading a configuration file
+     */
+    CommunicationIPFilterConfiguration getIPFilterConfiguration();
 }

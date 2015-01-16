@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,12 +8,12 @@
 
 package de.rcenvironment.core.communication.connection.internal;
 
-import de.rcenvironment.core.communication.model.NetworkConnection;
-import de.rcenvironment.rce.communication.CommunicationException;
+import de.rcenvironment.core.communication.common.CommunicationException;
+import de.rcenvironment.core.communication.model.MessageChannel;
 
 /**
  * An exception type for situations when a message should be sent, but the target
- * {@link NetworkConnection} is already closed.
+ * {@link MessageChannel} is already closed.
  * 
  * @author Robert Mischke
  */

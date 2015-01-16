@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,6 +7,9 @@
  */
  
 package de.rcenvironment.core.gui.cluster.configuration.internal;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import de.rcenvironment.core.utils.cluster.ClusterQueuingSystem;
 
@@ -19,6 +22,8 @@ import de.rcenvironment.core.utils.cluster.ClusterQueuingSystem;
 public class PlainClusterConnectionConfigurationImpl implements PlainClusterConnectionConfiguration {
 
     private ClusterQueuingSystem clusterQueuingSystem;
+    
+    private Map<String, String> pathToClusterQueuingSystemCommands = new HashMap<>();
 
     private String host;
 
@@ -49,6 +54,11 @@ public class PlainClusterConnectionConfigurationImpl implements PlainClusterConn
     }
     
     @Override
+    public Map<String, String> getPathToClusterQueuingSystemCommands() {
+        return pathToClusterQueuingSystemCommands;
+    }
+    
+    @Override
     public String getHost() {
         return host;
     }
@@ -70,6 +80,10 @@ public class PlainClusterConnectionConfigurationImpl implements PlainClusterConn
     
     public void setClusterQueuingSystem(ClusterQueuingSystem clusterQueuingSystem) {
         this.clusterQueuingSystem = clusterQueuingSystem;
+    }
+    
+    public void setPathToClusterQueuingSystemCommands(Map<String, String> pathToClusterQueuingSystemCommands) {
+        this.pathToClusterQueuingSystemCommands = pathToClusterQueuingSystemCommands;
     }
     
     public void setHost(String host) {
@@ -96,4 +110,5 @@ public class PlainClusterConnectionConfigurationImpl implements PlainClusterConn
             return username +  "@" + host;
         }
     }
+
 }

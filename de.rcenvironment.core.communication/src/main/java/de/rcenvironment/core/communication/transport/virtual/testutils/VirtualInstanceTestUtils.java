@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -9,21 +9,25 @@
 package de.rcenvironment.core.communication.transport.virtual.testutils;
 
 import java.util.Random;
+import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import de.rcenvironment.core.communication.common.NetworkGraph;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
+import de.rcenvironment.core.communication.routing.internal.NetworkFormatter;
 import de.rcenvironment.core.communication.testutils.NetworkContactPointGenerator;
 import de.rcenvironment.core.communication.testutils.VirtualInstance;
 import de.rcenvironment.core.communication.testutils.VirtualInstanceGroup;
 import de.rcenvironment.core.communication.testutils.VirtualInstanceState;
 import de.rcenvironment.core.communication.transport.spi.NetworkTransportProvider;
-import de.rcenvironment.rce.communication.CommunicationException;
+import de.rcenvironment.core.utils.common.concurrent.CallablesGroup;
+import de.rcenvironment.core.utils.common.concurrent.SharedThreadPool;
+import de.rcenvironment.core.utils.incubator.DebugSettings;
 
 /**
- * Utilities for {@link VirtualInstance} tests. Mostly superseded by the new {@link VirtualTopology}
- * class.
+ * Utilities for {@link VirtualInstance} tests. Mostly superseded by the new {@link VirtualTopology} class.
  * 
  * TODO move to de.rcenvironment.core.communication.testutils
  * 
@@ -34,13 +38,15 @@ public class VirtualInstanceTestUtils {
 
     private static final int UPPER_UNIQUE_TOKEN_LIMIT = (int) 10e+6;
 
-    private final Log log = LogFactory.getLog(getClass());
-
     private final Random randomGenerator = new Random();
 
     private NetworkTransportProvider transportProvider;
 
     private NetworkContactPointGenerator contactPointGenerator;
+
+    private final boolean verboseLogging = DebugSettings.getVerboseLoggingEnabled(getClass());
+
+    private final Log log = LogFactory.getLog(getClass());
 
     public VirtualInstanceTestUtils(NetworkTransportProvider transportProvider, NetworkContactPointGenerator contactPointGenerator) {
         super();
@@ -78,9 +84,26 @@ public class VirtualInstanceTestUtils {
         }
 
         VirtualInstance[] instances = new VirtualInstance[size];
+
+        CallablesGroup<VirtualInstance> callablesGroup = SharedThreadPool.getInstance().createCallablesGroup(VirtualInstance.class);
         for (int i = 1; i <= size; i++) {
-            instances[i - 1] = new VirtualInstance(String.format("RCE-%03d", i), "RCE Instance " + i);
+            final int i2 = i;
+            callablesGroup.add(new Callable<VirtualInstance>() {
+
+                @Override
+                public VirtualInstance call() throws Exception {
+                    if (verboseLogging) {
+                        log.debug("Creating instance " + i2);
+                    }
+                    VirtualInstance instance = new VirtualInstance(String.format("RCE-%03d", i2), "RCE Instance " + i2);
+                    if (verboseLogging) {
+                        log.debug("Finished creating instance " + i2);
+                    }
+                    return instance;
+                }
+            });
         }
+        instances = callablesGroup.executeParallel(null).toArray(instances);
 
         VirtualInstanceGroup group = new VirtualInstanceGroup(instances);
 
@@ -100,8 +123,7 @@ public class VirtualInstanceTestUtils {
     }
 
     /**
-     * Sets the target state of all instances to "started" and waits until the state changes have
-     * finished.
+     * Sets the target state of all instances to "started" and waits until the state changes have finished.
      * 
      * @param instances the instances to start
      * @throws InterruptedException on interruption
@@ -133,7 +155,7 @@ public class VirtualInstanceTestUtils {
     public String getFormattedName(VirtualInstance instance) {
         return String.format("%s (%s)",
             instance.getConfigurationService().getLocalNodeId(),
-            instance.getConfigurationService().getLocalNodeInformation().getLogDescription());
+            instance.getConfigurationService().getInitialNodeInformation().getLogDescription());
     }
 
     /**
@@ -187,64 +209,53 @@ public class VirtualInstanceTestUtils {
      * @param instances the instances to check
      * @return true if all instances are "converged"
      */
-    public boolean allInstancesConverged(VirtualInstance[] instances) {
+    public boolean allInstancesHaveSameRawNetworkGraph(VirtualInstance[] instances) {
+        int differences = 0;
+        VirtualInstance instance0 = instances[0];
+        NetworkGraph networkGraph0 = instance0.getRawNetworkGraph();
+        String compact0 = networkGraph0.getCompactRepresentation();
         for (int i = 1; i < instances.length; i++) {
-            if (instances[i].getTopologyMap().hashCode() != instances[0].getTopologyMap().hashCode()) {
-                return false;
+            VirtualInstance instanceN = instances[i];
+            NetworkGraph networkGraphN = instanceN.getRawNetworkGraph();
+            String compactN = networkGraphN.getCompactRepresentation();
+            if (!compactN.equals(compact0)) {
+                differences++;
+                if (differences == 1) { // only log first
+                    log.warn(String.format("At least two instances do not share a common view of the network topology; first difference:\n"
+                        + "Instance 0 (%s):\n%s\n%s\n%s\nInstance %d (%s):\n %s\n%s\n%s",
+                        instance0.getNodeId(), compact0, NetworkFormatter.networkGraphToGraphviz(networkGraph0, true),
+                        instance0.getFormattedLSAKnowledge(),
+                        i, instanceN.getNodeId(), compactN, NetworkFormatter.networkGraphToGraphviz(networkGraphN, true),
+                        instanceN.getFormattedLSAKnowledge()));
+                }
             }
         }
-        return true;
-    }
-
-    /**
-     * @param instances the instances to use
-     */
-    @Deprecated
-    public void batchAfterStartup(VirtualInstance[] instances) {
-        // TODO remove method.
-    }
-
-    /**
-     * @param instances the instances to use
-     * @throws CommunicationException on messaging errors
-     */
-    public void batchSendLinkStateAdvertisement(VirtualInstance[] instances)
-        throws CommunicationException {
-        // send link state advertisements
-        for (VirtualInstance vi : instances) {
-            vi.getRoutingService().getProtocolManager().broadcastLsa();
-        }
-
-    }
-
-    /**
-     * @param instance the instance that should send an LSA
-     * @throws CommunicationException on messaging errors
-     */
-    public void sendLSA(VirtualInstance instance) throws CommunicationException {
-        instance.getRoutingService().getProtocolManager().broadcastLsa();
-    }
-
-    /**
-     * Sets the TTL for multiple instances.
-     * 
-     * TODO review @krol_ph
-     * 
-     * @param instances the instances to use
-     * @param value the new TTL to set
-     */
-    public void batchSetTimeToLive(VirtualInstance[] instances, int value) {
-        for (VirtualInstance vi : instances) {
-            vi.getRoutingService().getProtocolManager().setTimeToLive(value);
+        if (differences == 0) {
+            return true;
+        } else {
+            log.warn("Total number of differences (from instance 0): " + differences + " out of " + instances.length);
+            return false;
         }
     }
+
+    // /**
+    // * Sets the TTL for multiple instances.
+    // *
+    // * @param instances the instances to use
+    // * @param value the new TTL to set
+    // */
+    // public void batchSetTimeToLive(VirtualInstance[] instances, int value) {
+    // for (VirtualInstance vi : instances) {
+    // vi.getRoutingService().getProtocolManager().setTimeToLive(value);
+    // }
+    // }
 
     /**
      * @param instances the instances to connect
      */
     public void connectToChainTopology(VirtualInstance[] instances) {
         for (int i = 0; i < instances.length - 1; i++) {
-            instances[i].addRuntimeNetworkPeer(instances[i + 1].getConfigurationService().getServerContactPoints().get(0));
+            instances[i].connectAsync(instances[i + 1].getConfigurationService().getServerContactPoints().get(0));
         }
     }
 
@@ -253,7 +264,7 @@ public class VirtualInstanceTestUtils {
      */
     public void connectToRingTopology(VirtualInstance[] instances) {
         connectToChainTopology(instances);
-        instances[instances.length - 1].addRuntimeNetworkPeer(instances[0].getConfigurationService().getServerContactPoints().get(0));
+        instances[instances.length - 1].connectAsync(instances[0].getConfigurationService().getServerContactPoints().get(0));
     }
 
     /**
@@ -263,8 +274,8 @@ public class VirtualInstanceTestUtils {
      */
     public void connectToDoubleChainTopology(VirtualInstance[] instances, int min, int max) {
         for (int i = min; i <= max - 1; i++) {
-            instances[i].addRuntimeNetworkPeer(instances[i + 1].getConfigurationService().getServerContactPoints().get(0));
-            instances[i + 1].addRuntimeNetworkPeer(instances[i].getConfigurationService().getServerContactPoints().get(0));
+            instances[i].connectAsync(instances[i + 1].getConfigurationService().getServerContactPoints().get(0));
+            instances[i + 1].connectAsync(instances[i].getConfigurationService().getServerContactPoints().get(0));
         }
     }
 
@@ -289,8 +300,8 @@ public class VirtualInstanceTestUtils {
      */
     public void connectToDoubleRingTopology(VirtualInstance[] instances, int min, int max) {
         connectToDoubleChainTopology(instances, min, max);
-        instances[max].addRuntimeNetworkPeer(instances[min].getConfigurationService().getServerContactPoints().get(0));
-        instances[min].addRuntimeNetworkPeer(instances[max].getConfigurationService().getServerContactPoints().get(0));
+        instances[max].connectAsync(instances[min].getConfigurationService().getServerContactPoints().get(0));
+        instances[min].connectAsync(instances[max].getConfigurationService().getServerContactPoints().get(0));
     }
 
     /**
@@ -298,8 +309,8 @@ public class VirtualInstanceTestUtils {
      */
     public void connectToDoubleStarTopology(VirtualInstance[] instances) {
         for (int i = 0; i < instances.length - 1; i++) {
-            instances[i].addRuntimeNetworkPeer(instances[instances.length - 1].getConfigurationService().getServerContactPoints().get(0));
-            instances[instances.length - 1].addRuntimeNetworkPeer(instances[i].getConfigurationService().getServerContactPoints().get(0));
+            instances[i].connectAsync(instances[instances.length - 1].getConfigurationService().getServerContactPoints().get(0));
+            instances[instances.length - 1].connectAsync(instances[i].getConfigurationService().getServerContactPoints().get(0));
         }
     }
 
@@ -309,7 +320,7 @@ public class VirtualInstanceTestUtils {
     public void connectToInwardStarTopology(VirtualInstance[] instances) {
         NetworkContactPoint hubServerNCP = instances[0].getConfigurationService().getServerContactPoints().get(0);
         for (int i = 1; i < instances.length; i++) {
-            instances[i].addRuntimeNetworkPeer(hubServerNCP);
+            instances[i].connectAsync(hubServerNCP);
         }
     }
 
@@ -323,8 +334,8 @@ public class VirtualInstanceTestUtils {
         int index1 = randomGenerator.nextInt(instances1.length);
         int index2 = randomGenerator.nextInt(instances2.length);
 
-        instances1[index1].addRuntimeNetworkPeer(instances2[index2].getConfigurationService().getServerContactPoints().get(0));
-        instances2[index2].addRuntimeNetworkPeer(instances1[index1].getConfigurationService().getServerContactPoints().get(0));
+        instances1[index1].connectAsync(instances2[index2].getConfigurationService().getServerContactPoints().get(0));
+        instances2[index2].connectAsync(instances1[index1].getConfigurationService().getServerContactPoints().get(0));
     }
 
     /**
@@ -335,7 +346,7 @@ public class VirtualInstanceTestUtils {
      * @param second the target node
      */
     public void concatenateInstances(VirtualInstance[] instances, int first, int second) {
-        instances[first].addRuntimeNetworkPeer(instances[second].getConfigurationService().getServerContactPoints().get(0));
+        instances[first].connectAsync(instances[second].getConfigurationService().getServerContactPoints().get(0));
     }
 
     /**
@@ -346,8 +357,8 @@ public class VirtualInstanceTestUtils {
      * @param second the target node
      */
     public void doubleConcatenateInstances(VirtualInstance[] instances, int first, int second) {
-        instances[first].addRuntimeNetworkPeer(instances[second].getConfigurationService().getServerContactPoints().get(0));
-        instances[second].addRuntimeNetworkPeer(instances[first].getConfigurationService().getServerContactPoints().get(0));
+        instances[first].connectAsync(instances[second].getConfigurationService().getServerContactPoints().get(0));
+        instances[second].connectAsync(instances[first].getConfigurationService().getServerContactPoints().get(0));
     }
 
 }

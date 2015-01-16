@@ -1,6 +1,0 @@
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Python Executor Factory">
-	<implementation class="de.rcenvironment.executor.python.internal.PythonExecutorFactoryImpl"/>
-	<service>
-		<provide interface="de.rcenvironment.executor.python.PythonExecutorFactory"/>
-	</service>
-</scr:component>

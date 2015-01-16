@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,10 +11,10 @@ package de.rcenvironment.core.communication.model.impl;
 import java.io.Serializable;
 import java.util.Map;
 
-import de.rcenvironment.commons.IdGenerator;
+import de.rcenvironment.core.communication.common.SerializationException;
 import de.rcenvironment.core.communication.model.NetworkRequest;
 import de.rcenvironment.core.communication.model.internal.AbstractNetworkMessage;
-import de.rcenvironment.core.communication.utils.SerializationException;
+import de.rcenvironment.core.utils.incubator.IdGenerator;
 
 /**
  * Implementation of a transport-independent network request.

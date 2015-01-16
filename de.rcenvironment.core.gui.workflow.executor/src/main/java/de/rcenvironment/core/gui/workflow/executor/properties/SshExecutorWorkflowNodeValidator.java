@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -12,10 +12,9 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.rcenvironment.core.component.executor.ScriptUsage;
 import de.rcenvironment.core.component.executor.SshExecutorConstants;
-import de.rcenvironment.rce.gui.workflow.editor.validator.AbstractWorkflowNodeValidator;
-import de.rcenvironment.rce.gui.workflow.editor.validator.WorkflowNodeValidationMessage;
+import de.rcenvironment.core.gui.workflow.editor.validator.AbstractWorkflowNodeValidator;
+import de.rcenvironment.core.gui.workflow.editor.validator.WorkflowNodeValidationMessage;
 
 /**
  * A {@link AbstractWorkflowNodeValidator} implementation to validate cluster component configuration.
@@ -32,37 +31,7 @@ public class SshExecutorWorkflowNodeValidator extends AbstractWorkflowNodeValida
         messages = checkIfStringIsConfigured(messages, SshExecutorConstants.CONFIG_KEY_HOST);
         messages = checkIfStringIsConfigured(messages, SshExecutorConstants.CONFIG_KEY_PORT);
         messages = checkIfStringIsConfigured(messages, SshExecutorConstants.CONFIG_KEY_SANDBOXROOT);
-        messages = checkIfFilesAreConfiguredIfEnabled(messages, SshExecutorConstants.CONFIG_KEY_UPLOAD,
-            SshExecutorConstants.CONFIG_KEY_FILESTOUPLOAD);
-        
-        if (getProperty(SshExecutorConstants.CONFIG_KEY_USAGEOFSCRIPT, String.class)
-            .equals(ScriptUsage.LOCAL.toString())) {
-            messages = checkIfStringIsConfigured(messages, SshExecutorConstants.CONFIG_KEY_LOCALSCRIPT);
-        } else if (getProperty(SshExecutorConstants.CONFIG_KEY_USAGEOFSCRIPT, String.class)
-                .equals(ScriptUsage.REMOTE.toString())) {
-            messages = checkIfStringIsConfigured(messages, SshExecutorConstants.CONFIG_KEY_REMOTEPATHOFSCRIPT);
-        } else {
-            /*
-             * If the name of the script is optional, the validation for this has to be done in the components validation
-             * messages = checkIfStringIsConfigured(messages, SshExecutorConstants.CONFIG_KEY_NAMEOFNEWJOBSCRIPT);
-             */
-            messages = checkIfStringIsConfigured(messages, SshExecutorConstants.CONFIG_KEY_SCRIPT);            
-        }
-        
-        boolean download = getProperty(SshExecutorConstants.CONFIG_KEY_DOWNLOAD, Boolean.class);
-        boolean targetRce = getProperty(SshExecutorConstants.CONFIG_KEY_DOWNLOADTARGETISRCE, Boolean.class);
-        boolean targetFileSystem = getProperty(SshExecutorConstants.CONFIG_KEY_DOWNLOADTARGETISFILESYSTEM, Boolean.class);
-        
-        if (download && !targetRce && !targetFileSystem) {
-            messages = addMessage(messages, SshExecutorConstants.CONFIG_KEY_DOWNLOADTARGETISRCE);
-            messages = addMessage(messages, SshExecutorConstants.CONFIG_KEY_DOWNLOADTARGETISFILESYSTEM);
-        }
-        
-        String targetFileSystemPath = getProperty(SshExecutorConstants.CONFIG_KEY_FILESYSTEMPATH, String.class);
-        
-        if (targetFileSystem && (targetFileSystemPath == null || targetFileSystemPath.isEmpty())) {
-            messages = addMessage(messages, SshExecutorConstants.CONFIG_KEY_FILESYSTEMPATH);
-        }
+        messages = checkIfStringIsConfigured(messages, SshExecutorConstants.CONFIG_KEY_SCRIPT);            
         
         return messages;
     }
@@ -72,7 +41,7 @@ public class SshExecutorWorkflowNodeValidator extends AbstractWorkflowNodeValida
             new WorkflowNodeValidationMessage(
                 WorkflowNodeValidationMessage.Type.ERROR,
                 configurationKey,
-                String.format(Messages.errorMissing, configurationKey),
+                String.format("", configurationKey), 
                 Messages.bind(String.format(Messages.errorMissing, configurationKey),
                     configurationKey));
         messages.add(validationMessage);
@@ -81,7 +50,7 @@ public class SshExecutorWorkflowNodeValidator extends AbstractWorkflowNodeValida
     
     protected List<WorkflowNodeValidationMessage> checkIfStringIsConfigured(List<WorkflowNodeValidationMessage> messages,
         String configurationKey) {
-        final String value = getProperty(configurationKey, String.class);
+        final String value = getProperty(configurationKey);
         if (value == null || value.isEmpty()) {
             WorkflowNodeValidationMessage validationMessage =
                 new WorkflowNodeValidationMessage(
@@ -93,25 +62,6 @@ public class SshExecutorWorkflowNodeValidator extends AbstractWorkflowNodeValida
             messages.add(validationMessage);
         }
         
-        return messages;
-    }
-    
-    protected List<WorkflowNodeValidationMessage> checkIfFilesAreConfiguredIfEnabled(List<WorkflowNodeValidationMessage> messages,
-        String enabledConfigurationKey, String fileConfigurationKey) {
-        if (getProperty(enabledConfigurationKey, Boolean.class)) {
-            
-            final String value = getProperty(fileConfigurationKey, String.class);
-            if (value == null || value.isEmpty() || value.equals(SshExecutorConstants.EYMPTY_FILE_LIST_IN_JSON)) {
-                final WorkflowNodeValidationMessage validationMessage =
-                    new WorkflowNodeValidationMessage(
-                        WorkflowNodeValidationMessage.Type.WARNING,
-                        fileConfigurationKey,
-                        String.format(Messages.warningFileListEmpty, fileConfigurationKey),
-                        Messages.bind(String.format(Messages.warningFileListEmpty, fileConfigurationKey),
-                            fileConfigurationKey));
-                messages.add(validationMessage);
-            }
-        }        
         return messages;
     }
     

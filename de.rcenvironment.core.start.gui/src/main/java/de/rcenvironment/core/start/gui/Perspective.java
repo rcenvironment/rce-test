@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Fraunhofer SCAI, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -26,11 +26,10 @@ public class Perspective implements IPerspectiveFactory {
         // relative positions of the views.
         final float leftRatio = 0.3f;
         final float bottomRatio = 0.6f;
-        final float rightRatio = 0.5f;
         
         String editorArea = layout.getEditorArea();
-        IFolderLayout left = layout.createFolder("de.rcenvironment.rce.Perspective.left", IPageLayout.LEFT, leftRatio, editorArea);
-        layout.createPlaceholderFolder("de.rcenvironment.rce.Perspective.bottom", IPageLayout.BOTTOM, bottomRatio, editorArea);
+        IFolderLayout left = layout.createFolder("de.rcenvironment.core.Perspective.left", IPageLayout.LEFT, leftRatio, editorArea);
+        layout.createPlaceholderFolder("de.rcenvironment.core.Perspective.bottom", IPageLayout.BOTTOM, bottomRatio, editorArea);
         left.addView(IPageLayout.ID_PROJECT_EXPLORER);
     }
 

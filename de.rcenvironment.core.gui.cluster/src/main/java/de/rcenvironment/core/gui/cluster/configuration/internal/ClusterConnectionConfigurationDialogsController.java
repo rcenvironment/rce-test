@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -27,12 +27,13 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 
+import de.rcenvironment.core.configuration.SecurePreferencesFactory;
 import de.rcenvironment.core.gui.cluster.internal.ErrorMessageDialogFactory;
 import de.rcenvironment.core.gui.cluster.view.internal.ClusterConnectionInformation;
-import de.rcenvironment.core.utils.cluster.ClusterQueuingSystem;
 import de.rcenvironment.core.utils.cluster.ClusterService;
-import de.rcenvironment.core.utils.cluster.SimpleClusterServiceManager;
-import de.rcenvironment.gui.commons.SecurePreferencesFactory;
+import de.rcenvironment.core.utils.cluster.ClusterServiceManager;
+import de.rcenvironment.core.utils.incubator.ServiceRegistry;
+import de.rcenvironment.core.utils.incubator.ServiceRegistryAccess;
 
 
 /**
@@ -59,10 +60,13 @@ public class ClusterConnectionConfigurationDialogsController {
     private ClusterService jobInformationService;
     
     private String clusterConfigurationName;
+
+    private ServiceRegistryAccess serviceRegistryAccess;
     
     public ClusterConnectionConfigurationDialogsController(Composite parent) {
         this.parent = parent;
         dialogSettings = Activator.getInstance().getDialogSettings();
+        serviceRegistryAccess = ServiceRegistry.createAccessFor(this);
     }
     
     /**
@@ -160,10 +164,10 @@ public class ClusterConnectionConfigurationDialogsController {
         if (configuration.getPassword() == null || configuration.getPassword().isEmpty()) {
             configuration.setPassword(openPasswordInputDialog());
         }
-        SimpleClusterServiceManager jobInformationServiceFactory = new SimpleClusterServiceManager();
-        jobInformationService = jobInformationServiceFactory.retrieveSshBasedClusterJobInformationService(
-            ClusterQueuingSystem.TORQUE, configuration.getHost(), configuration.getPort(),
-            configuration.getUsername(), configuration.getPassword());
+        ClusterServiceManager clusterServiceManager = serviceRegistryAccess.getService(ClusterServiceManager.class);
+        jobInformationService = clusterServiceManager.retrieveSshBasedClusterService(
+            configuration.getClusterQueuingSystem(), configuration.getPathToClusterQueuingSystemCommands(),
+            configuration.getHost(), configuration.getPort(), configuration.getUsername(), configuration.getPassword());
         clusterConfigurationName = configuration.getConfigurationName();
         connectionInformation = new ClusterConnectionInformation(configuration, new Date());
         return connectionInformation;
@@ -171,8 +175,8 @@ public class ClusterConnectionConfigurationDialogsController {
     
     private void createNewClusterConnectionConfiguration(CreateClusterConnectionConfigurationDialog dialog) {
         ClusterConnectionConfiguration newConfiguration = new ClusterConnectionConfiguration(dialog.getClusterQueuingSystem(),
-            dialog.getHost(), dialog.getPort(), dialog.getUsername(), dialog.getConfigurationName(), dialog.getPassword());
-        
+            dialog.getPathsToClusterQueuingSystemCommands(), dialog.getHost(), dialog.getPort(), dialog.getUsername(),
+            dialog.getConfigurationName(), dialog.getPassword());
         ClusterConnectionConfiguration[] configurations = getStoredClusterConnectionConfigurations();
         ClusterConnectionConfiguration[] newConfigurations = new ClusterConnectionConfiguration[configurations.length + 1];
         System.arraycopy(configurations, 0, newConfigurations, 0, configurations.length);
@@ -186,7 +190,8 @@ public class ClusterConnectionConfigurationDialogsController {
         ClusterConnectionConfiguration oldConfiguration) {
         
         ClusterConnectionConfiguration newConfiguration = new ClusterConnectionConfiguration(dialog.getClusterQueuingSystem(),
-            dialog.getHost(), dialog.getPort(), dialog.getUsername(), dialog.getConfigurationName(), dialog.getPassword());
+            dialog.getPathsToClusterQueuingSystemCommands(), dialog.getHost(), dialog.getPort(), dialog.getUsername(),
+            dialog.getConfigurationName(), dialog.getPassword());
         
         ClusterConnectionConfiguration[] configurations = getStoredClusterConnectionConfigurations();
         for (int i = 0; i < configurations.length; i++) {
@@ -278,6 +283,7 @@ public class ClusterConnectionConfigurationDialogsController {
             
             for (int i = 0; i < configurations.length; i++) {
                 configurations[i] = new ClusterConnectionConfiguration(plainConfigurations[i].getClusterQueuingSystem(),
+                    plainConfigurations[i].getPathToClusterQueuingSystemCommands(),
                     plainConfigurations[i].getHost(), plainConfigurations[i].getPort(), plainConfigurations[i].getUsername(),
                     plainConfigurations[i].getConfigurationName());
                 for (SensitiveClusterConnectionConfiguration sensitiveConfig : sensitiveConfigurations) {

@@ -1,12 +1,25 @@
+******************************
+* IMPORTANT NOTICE FOR 2.5.1 *
+******************************
+
+Please note that this release guideline is undergoing major rework as of the 
+RCE 2.5.1 release. It may not be consistent or easy to follow in all places.
+Refer to /de.rcenvironment.core/doc/release.txt for information not covered 
+in this file. For RCE 3.x.x, these guides will probably be replaced by a single 
+"developer guide" document. 
+
+******************************
+
 = RCE Release Guideline =
 
 == General conventions & overview ==
 
- * All core bundle base versions (for example, the "2.3.0" in "2.3.0.qualifier") are raised to 
-   the same value on every release.
+ * All base versions (for example, the "2.3.0" in "2.3.0.qualifier") are raised to the 
+   same value on every release of a core, component or product repository. The platform 
+   repository still follows this rule for 2.5.x; however, this may change in 3.0.0. 
    
- * Release bundles retain their normal qualifier; there is no change in naming conventions between
-   snapshot and release builds.
+ * Bundle, fragment, feature and repository projects keep the same ".qualifier" suffix
+   for snapshot, RC and release builds. The actual qualifier is set by the build process.
    
  * The versioning rules for package exports and imports are still "work in progress".
 
@@ -63,51 +76,34 @@ builds reproducible.
  * For each new RCE release, create an SVN tag of /common/trunk; see existing tags
    for naming conventions. 
  
-== RCE Core ==
+== RCE Core Repository (with Standard Components)  (2.5.x) ==
 
 Note: This section describes the adaptations for a new "RCE Core" release. As "RCE Core" is 
 always released as part of a new "RCE Standard Edition" release, the release process is 
 described at the end of that section.
 
-=== Version number adaptations ===
+In 2.5.x, the component bundles are still built as part of the core repository, and are 
+therefore upgraded and released along with it. This will change in 3.0.0.
 
- * Set the version of "/de.rcenvironment.core.common/coreParent.pom" (the "parent POM") 
-   to the release version (pattern: "2.3.x.qualifier").
+=== Version Number Adaptations ===
 
- * Adapt the parent references of all core bundle POMs to the new parent POM version.
-   (Search/replace is useful here; double-check before committing.)
-   
- * Adapt the parent references of all core repository project POMs to the new parent POM version.
-   (Search/replace is useful here; double-check before committing.)
+ * Open a shell or command window in "/de.rcenvironment.core/maven/utils/" and run the 
+   appropriate "upgrade-core" script for your platform (.bat on Windows, .sh on Linux).
+   Usage: "upgrade-core <old core version> <new core version>"
+   Example: "upgrade-core 2.5.0 2.5.1"  
 
- * Set the Manifest "Bundle-Version" entry of all core bundles to the release version.
-   (Search/replace is useful here; double-check before committing.)
+ * If the platform repository version has changed, run the "upgrade-platform-reference"  
+   script in the same directory. 
+   Usage: "upgrade-platform-reference <old platform version> <new platform version>"
+   Example: "upgrade-platform-reference 2.5.0 2.5.3"
 
- * Using a text editor, adapt the versions in all core feature.xml files.
-   Currently, these are: 
-  * de.rcenvironment.core.feature
-  * de.rcenvironment.core.gui.feature
-  * de.rcenvironment.core.gui.branding.default.feature
-  * de.rcenvironment.componentgroups.examples.feature
-  * de.rcenvironment.componentgroups.standard.feature
-  
- * Check if the platform repository has changed; if yes, set the new repository version suffix 
-   in "/de.rcenvironment.core.common/coreParent.pom" as <internal.platformRepository.urlVersionSuffix>.
-
- * Adapt the feature version references in /de.rcenvironment.repositories.rce.core/category.xml.
-   Change the URL properties to the same version.
-   Also adapt the platform version reference (and URL), if it has changed.
-   (Editing the file in a text editor usually works better than the built-in editor.)
-   
- * Build the core repository to detect any inconsistencies. (To build from inside Eclipse,
-   for example to check workspace consistency before commiting, use the 
-   "RCE - build core repository (using local platform repository)" launch configuration.
-   For post-commit testing, use the Jenkins job "RCE_Tycho_Trunk_Snapshot_RCE_CoreRepo_USDD".)
-
-=== Other source code and configuration adaptations ===
-
- * Update "about" version numbers in "/de.rcenvironment.core.gui.branding.default/plugin.properties" 
-   and "/de.rcenvironment.rce.gui.branding.default/plugin_de.properties".
+ * Build the core repository to detect any inconsistencies.
+   * To build from inside Eclipse, for example to check workspace consistency before 
+     committing, use the launch files in "/de.rcenvironment.repositories.rce.core/eclipse".
+     If you have built a local platform repository before, use "RCE - build core repository 
+     (using local platform repository)". To use a platform repository built on Jenkins, 
+     use "RCE - build core repository (using trunk snapshot platform repository)"
+   * For post-commit testing, use the Jenkins job "RCE_Tycho_Trunk_Snapshot_RCE_CoreRepo_USDD".
 
 == RCE Standard Edition (Product/Distribution Release) ==
 
@@ -156,10 +152,11 @@ described at the end of that section.
  * If necessary, apply fixes to the branch until the build succeeds.
  
  * Download the generated zip release(s) from the SourceForge download site and test them
- 	* At least run all of the test workflows in de.rcenvironment.core.component.workflow.tests/src/test/resources on at least one platform
+ 	* At least run all of the test workflows in de.rcenvironment.core.component.workflow.tests/src/test/resources/workflow_test
+ 	on at least one platform (consider test.readme file in de.rcenvironment.core.component.workflow.tests/src/test/resources/)
  
  * To test the automatic update, take an older RCE release and edit the registered update site to end 
-   with the new version ("2.3/2.3.x") instead of "2.3/latest". (Note: In the future, there might be a 
+   with the new version ("releases/2.3/2.3.x") instead of "releases/latest". (Note: In the future, there might be a 
    separate update site for this.) For proper testing, use the "check for updates" feature; 
    trying to install individual features via "install new software" won't work (and isn't meant to).
    
@@ -178,12 +175,13 @@ described at the end of that section.
    This releases the new build to end users when they use the "check for updates" feature.
    
  * In the SourceForce file release area, rename the auto-generated zip files. Example:
-   "rce-standard-2.3.#-win32.win32.x86_64.zip" for version "2.3.#" in the folder
-   "/home/pfs/project/rcenvironment/RCE_Standard_Edition/Releases/2.3.x/2.3.#".
+   "rce-standard-2.3.#-win32.win32.x86_64.zip" for version "2.3.#".
    (In this case, the "2.3.x" part is literal; hence the ".#" notation.)
+   You can do it in the Web interface as well as directly on the server in the folder
+   "/home/pfs/project/rcenvironment/RCE_Standard_Edition/Releases/2.3.x/2.3.#".
 
- * In the SourceForce file release area, tag win32.win32.x86 and linux.gtk.x86 as default for Windows
-   and Linux OS   
+ * In the SourceForce file release area (Web interface), tag win32.win32.x86 and linux.gtk.x86
+   as default for Windows and Linux OS   
 
 === Administrative steps ===
 

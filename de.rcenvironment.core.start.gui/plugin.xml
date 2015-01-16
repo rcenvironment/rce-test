@@ -4,7 +4,7 @@
 
    <!-- Preference page -->
 	<extension point="org.eclipse.ui.preferencePages">
- 		<page id="de.rcenvironment.rce" name="RCE"
+ 		<page id="de.rcenvironment.core" name="RCE"
     		class="de.rcenvironment.core.start.gui.internal.PreferencePage">
    		</page>
 	</extension>
@@ -12,23 +12,20 @@
 	<!-- RCE perspective -->
 	<extension point="org.eclipse.ui.perspectives">
 		<perspective class="de.rcenvironment.core.start.gui.Perspective"
-			icon="resources/images/perspectiveIcon16.gif" 
-			id="de.rcenvironment.rce" 
+			icon="platform:/plugin/de.rcenvironment.core.gui.resources/resources/images/logo16.png" 
+			id="de.rcenvironment.core" 
 			name="RCE">
 		</perspective>
 	</extension> 
 	
 	<!--  View categories -->
 	<extension point="org.eclipse.ui.views">
-    	<category id="de.rcenvironment.rce" name="RCE"/>
-	</extension>
-	<extension point="org.eclipse.ui.views">
-    	<category id="de.rcenvironment.rce.components" name="RCE Components"/>
+    	<category id="de.rcenvironment.core" name="RCE"/>
 	</extension>
 	
 	<!--  Category in New Wizard -->   
     <extension point="org.eclipse.ui.newWizards"> 
-        <category id="de.rcenvironment.rce" name="RCE"/> 
+        <category id="de.rcenvironment.core" name="RCE"/> 
     </extension>
     <!-- Key bindings -->
     <extension
@@ -50,6 +47,18 @@
 		commandId="org.eclipse.ui.edit.paste"
 		sequence="M1+V"
 		schemeId="de.rcenvironment.core.start.gui.binding" />
-		
 	</extension>
+	   
+	  <!-- Splash handler -->
+    <extension point="org.eclipse.ui.splashHandlers">
+       <splashHandler
+            class="de.rcenvironment.core.start.gui.internal.SplashHandler"
+            id="de.rcenvironment.core.start.SplashHandler">
+       </splashHandler>
+       <splashHandlerProductBinding
+            productId="de.rcenvironment.core.start.product"
+            splashId="de.rcenvironment.core.start.SplashHandler">
+       </splashHandlerProductBinding>
+    </extension>
+	
 </plugin>

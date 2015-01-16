@@ -54,7 +54,6 @@
     <!--  TODO: Add CovariantEquals, EqualsAvoidNull, FinalLocalVariable, NoClone, NoFinalizer, IllegalThrows, -->
     <!--        UnnecessaryParentheses, PackageDeclaration, ParameterAssignment, ExplicitInitialization -->
     <module name="AvoidInlineConditionals" />
-    <module name="DoubleCheckedLocking" />
     <module name="EmptyStatement" />
     <module name="EqualsHashCode" />
     <module name="HiddenField">
@@ -192,12 +191,16 @@
   
   <module name="NewlineAtEndOfFile">
     <property name="lineSeparator" value="lf"/>
+    <property name="fileExtensions" value="java,properties,pom,MF"/>
   </module>
   <module name="Translation" />
   <module name="FileLength">
     <property name="max" value="2000" />
+    <property name="fileExtensions" value="java,properties,pom,MF"/>
   </module>
-  <module name="FileTabCharacter" />
+  <module name="FileTabCharacter">
+    <property name="fileExtensions" value="java,properties,pom,MF"/>
+  </module>
   
   <module name="Header">
     <property name="header" value="/*\n * Copyright (C) 2006-2011 DLR, Germany\n * \n * All rights reserved\n * \n * http://www.rcenvironment.de/\n */"/>

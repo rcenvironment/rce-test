@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -18,8 +18,13 @@ import java.io.File;
 import org.junit.Before;
 import org.junit.Test;
 
+import de.rcenvironment.components.excel.common.ExcelException;
+
 /**
+ * Test class for accessing specific addresses in Excel files.
+ * 
  * @author Markus Kunde
+ * @author Oliver Seebach
  * 
  */
 public class ExcelAddressTest {
@@ -47,14 +52,15 @@ public class ExcelAddressTest {
     private static final String TABELLE1_A1_D5 = "Tabelle1!A1:D5";
 
     private static final String TABELLE1_A1 = "Tabelle1!A1";
+    
+    private static final String WRONGADDRESS = "Taelle2!A10:E15";
+    private static final String WRONGADDRESS2 = "Tabelle1!A1:";
 
     private static final String EXCEPTION_ADDRESS_MSG = "Wrong address not recognized.";
 
-    private static final String EXCEPTION_STD_MESSAGE = "Should not happen";
-
     private static final String EXTERNAL_TEST_NOTEXCELFILE = "externalFiles/Feedback_Tixi.txt";
 
-    private static final String EXTERNAL_TEST_EXCELFILE = "externalFiles/ExcelTester.xls";
+    private static final String EXTERNAL_TEST_EXCELFILE = "externalFiles/ExcelTester_Address.xls";
 
     private ExcelAddress valid1;
 
@@ -84,7 +90,7 @@ public class ExcelAddressTest {
             valid6 = new ExcelAddress(new File(EXTERNAL_TEST_EXCELFILE), TABELLE1_5_10);
             valid7 = new ExcelAddress(new File(EXTERNAL_TEST_EXCELFILE), I_TABELLE);
         } catch (ExcelException e) {
-            fail(EXCEPTION_STD_MESSAGE);
+            fail("Failed to set up Excel addresses");
         }
     }
 
@@ -104,8 +110,28 @@ public class ExcelAddressTest {
             addr = new ExcelAddress(new File(EXTERNAL_TEST_EXCELFILE), I_TABELLE);
             assertTrue(addr != null);
         } catch (ExcelException e) {
-            fail(EXCEPTION_STD_MESSAGE);
+            fail("Failed to get Excel addresses");
         }
+    }
+    
+    /**
+     * testWrongAddressFileString.
+     * 
+     */
+    @Test(expected = ExcelException.class)
+    public void testWrongAddressFileString() {
+        ExcelAddress addr = new ExcelAddress(new File(EXTERNAL_TEST_EXCELFILE), WRONGADDRESS);
+        assertTrue(addr != null);
+    }
+    
+    /**
+     * testWrongAddress2FileString.
+     * 
+     */
+    @Test(expected = ExcelException.class)
+    public void testWrongAddress2FileString() {
+        ExcelAddress addr = new ExcelAddress(new File(EXTERNAL_TEST_EXCELFILE), WRONGADDRESS2);
+        assertTrue(addr != null);
     }
     
     /**
@@ -244,7 +270,7 @@ public class ExcelAddressTest {
             if (e.getCause() instanceof IllegalArgumentException) {
                 assertTrue(true);
             } else {
-                fail(EXCEPTION_STD_MESSAGE);
+                fail("Unexpected cause for ExcelException. Found " + e.getCause().getClass() + " but expected IllegalArgumentException.");
             }
         }
 

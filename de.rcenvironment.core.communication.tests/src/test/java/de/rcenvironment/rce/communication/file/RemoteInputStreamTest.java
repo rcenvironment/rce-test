@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Fraunhofer SCAI, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,10 +8,9 @@
 
 package de.rcenvironment.rce.communication.file;
 
-import static de.rcenvironment.rce.communication.CommunicationTestHelper.FILE_CONTACT;
-import static de.rcenvironment.rce.communication.CommunicationTestHelper.LOCAL_PLATFORM;
-import static de.rcenvironment.rce.communication.CommunicationTestHelper.URI;
+import static de.rcenvironment.core.communication.testutils.CommunicationTestHelper.URI;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -24,13 +23,11 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
-import de.rcenvironment.rce.authentication.User;
-import de.rcenvironment.rce.communication.CommunicationTestHelper;
-import de.rcenvironment.rce.communication.file.internal.RemoteFileConnectionSupport;
-import de.rcenvironment.rce.communication.file.spi.RemoteFileConnection;
-import de.rcenvironment.rce.communication.file.spi.RemoteFileConnectionFactory;
-import de.rcenvironment.rce.communication.internal.CommunicationContactMap;
-import de.rcenvironment.rce.communication.internal.CommunicationType;
+import de.rcenvironment.core.authentication.User;
+import de.rcenvironment.core.communication.fileaccess.api.RemoteFileConnection;
+import de.rcenvironment.core.communication.fileaccess.api.RemoteInputStream;
+import de.rcenvironment.core.communication.fileaccess.internal.RemoteFileConnectionSupport;
+import de.rcenvironment.core.communication.fileaccess.spi.RemoteFileConnectionFactory;
 
 /**
  * 
@@ -49,12 +46,6 @@ public class RemoteInputStreamTest {
      */
     @Before
     public void setUp() throws Exception {
-
-        CommunicationTestHelper.activateCommunicationContactMap();
-
-        CommunicationContactMap.removeAllMappings();
-        CommunicationContactMap.setMapping(CommunicationType.FILE_TRANSFER, LOCAL_PLATFORM, FILE_CONTACT);
-
         ServiceReference ref = EasyMock.createNiceMock(ServiceReference.class);
 
         RemoteFileConnectionFactory factoryMock = EasyMock.createNiceMock(RemoteFileConnectionFactory.class);
@@ -84,7 +75,8 @@ public class RemoteInputStreamTest {
             remoteStream.read();
             fail();
         } catch (RuntimeException e) {
-            assertEquals("read2", e.getMessage());
+            // single byte read() should never be called
+            assertTrue(e.getMessage().contains("should not"));
         }
 
         try {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,8 +7,18 @@
  */
 package de.rcenvironment.core.communication.testutils.templates;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.Set;
+
 import org.junit.Test;
 
+import de.rcenvironment.core.communication.channel.MessageChannelState;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.model.MessageChannel;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
 import de.rcenvironment.core.communication.testutils.AbstractVirtualInstanceTest;
 import de.rcenvironment.core.communication.testutils.VirtualInstance;
@@ -23,13 +33,15 @@ import de.rcenvironment.core.communication.testutils.VirtualInstanceGroup;
  */
 public abstract class AbstractCommonVirtualInstanceTest extends AbstractVirtualInstanceTest {
 
+    private static final int DEFAULT_TEST_TIMEOUT = 10000;
+
     /**
      * Test with two clients connecting to a single server. The server instance is started before
      * and shut down after the clients.
      * 
      * @throws Exception on unexpected test exceptions
      */
-    @Test
+    @Test(timeout = DEFAULT_TEST_TIMEOUT)
     public void testBasicClientServer() throws Exception {
 
         // TODO old test; could be improved by using new test utilities
@@ -76,6 +88,96 @@ public abstract class AbstractCommonVirtualInstanceTest extends AbstractVirtualI
         // TODO validate server network knowledge, internal state etc.
 
         allInstances.shutDown();
+    }
+
+    /**
+     * Tests details of channel lifecycle and operation.
+     * 
+     * @throws Exception on uncaught exceptions
+     */
+    @Test(timeout = DEFAULT_TEST_TIMEOUT)
+    public void testChannelHandling() throws Exception {
+        // 3 instances using duplex connections
+        setupInstances(3, true, true);
+
+        VirtualInstance client1 = testTopology.getInstance(0);
+        VirtualInstance server = testTopology.getInstance(1);
+        VirtualInstance client2 = testTopology.getInstance(2);
+
+        prepareWaitForNextMessage();
+        testTopology.connect(0, 1, false);
+        testTopology.connect(2, 1, false);
+        waitForNextMessage();
+        waitForNetworkSilence();
+
+        Set<MessageChannel> client1Outgoing = client1.getMessageChannelService().getAllOutgoingChannels();
+        Set<MessageChannel> client2Outgoing = client2.getMessageChannelService().getAllOutgoingChannels();
+        Set<MessageChannel> serverOutgoing = server.getMessageChannelService().getAllOutgoingChannels();
+
+        assertEquals(1, client1Outgoing.size());
+        assertEquals(1, client2Outgoing.size());
+        assertEquals(2, serverOutgoing.size());
+
+        MessageChannel channel1toS = client1Outgoing.iterator().next();
+        MessageChannel channel2toS = client2Outgoing.iterator().next();
+
+        // identify/assign outgoing channels of server
+        MessageChannel channelSto1 = null;
+        MessageChannel channelSto2 = null;
+        for (MessageChannel channel : serverOutgoing) {
+            NodeIdentifier remoteNodeId = channel.getRemoteNodeInformation().getNodeId();
+            if (remoteNodeId.equals(client1.getNodeId())) {
+                channelSto1 = channel;
+            } else if (remoteNodeId.equals(client2.getNodeId())) {
+                channelSto2 = channel;
+            } else {
+                fail();
+            }
+        }
+        assertNotNull(channelSto1);
+        assertNotNull(channelSto2);
+
+        // ids assigned?
+        assertNotNull(channel1toS.getChannelId());
+        assertNotNull(channel2toS.getChannelId());
+        assertNotNull(channelSto1.getChannelId());
+        assertNotNull(channelSto2.getChannelId());
+
+        // correct "mirror" ids associated?
+        assertEquals(channelSto1.getChannelId(), channel1toS.getAssociatedMirrorChannelId());
+        assertEquals(channelSto2.getChannelId(), channel2toS.getAssociatedMirrorChannelId());
+        assertEquals(channel1toS.getChannelId(), channelSto1.getAssociatedMirrorChannelId());
+        assertEquals(channel2toS.getChannelId(), channelSto2.getAssociatedMirrorChannelId());
+
+        // check initial channel states
+        for (VirtualInstance vi : testTopology.getInstances()) {
+            for (MessageChannel channel : vi.getMessageChannelService().getAllOutgoingChannels()) {
+                assertEquals(MessageChannelState.ESTABLISHED, channel.getState());
+                assertTrue(channel.isReadyToUse());
+            }
+        }
+
+        // close a client-to-server connection
+        channel1toS.close();
+        // may or may not produce network traffic, so wait
+        Thread.sleep(testConfiguration.getDefaultNetworkSilenceWait());
+        waitForNetworkSilence();
+
+        assertEquals(MessageChannelState.CLOSED, channel1toS.getState());
+        assertEquals(MessageChannelState.CLOSED, channelSto1.getState());
+        assertEquals(MessageChannelState.ESTABLISHED, channel2toS.getState());
+        assertEquals(MessageChannelState.ESTABLISHED, channelSto2.getState());
+
+        // close a server-to-client connection
+        channelSto2.close();
+        // may or may not produce network traffic, so wait
+        Thread.sleep(testConfiguration.getDefaultNetworkSilenceWait());
+        waitForNetworkSilence();
+
+        assertEquals(MessageChannelState.CLOSED, channel2toS.getState());
+        assertEquals(MessageChannelState.CLOSED, channelSto2.getState());
+
+        testTopology.getAsGroup().shutDown();
     }
 
 }

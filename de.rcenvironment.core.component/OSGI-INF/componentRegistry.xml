@@ -1,7 +1,7 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" immediate="true" name="Component Registry">
-	<implementation class="de.rcenvironment.rce.component.internal.ComponentRegistryImpl"/>
+	<implementation class="de.rcenvironment.core.component.registration.internal.ComponentRegistryImpl"/>
 	<service>
-		<provide interface="de.rcenvironment.rce.component.ComponentRegistry"/>
+		<provide interface="de.rcenvironment.core.component.registration.api.ComponentRegistry"/>
 	</service>
 	
 	<reference name="Component Factory"
@@ -10,33 +10,35 @@
 		bind="addComponent"
 		unbind="removeComponent"
 		policy="dynamic"
-		target="(component.factory=de.rcenvironment.rce.component)"/>
+		target="(component.factory=de.rcenvironment.rce.component)"
+		/>
 		
-	<reference name="Component Controller Factory"
-		interface="org.osgi.service.component.ComponentFactory"
-		cardinality="1..1"
-		bind="bindComponentControllerFactory"
-		policy="dynamic"
-		target="(component.factory=de.rcenvironment.rce.component.controller)"/>
-	
 	<reference name="Configuration Service"
-		interface="de.rcenvironment.rce.configuration.ConfigurationService"
+		interface="de.rcenvironment.core.configuration.ConfigurationService"
 		cardinality="1..1"
 		bind="bindConfigurationService"
 		policy="dynamic"
 		/>
 	
 	<reference name="Platform Service"
-		interface="de.rcenvironment.rce.communication.PlatformService"
+		interface="de.rcenvironment.core.communication.api.PlatformService"
 		cardinality="1..1"
 		bind="bindPlatformService"
 		policy="dynamic"
 		/>
-	
-	<reference name="Distributed Notification Service"
-		interface="de.rcenvironment.rce.notification.DistributedNotificationService"
+		
+	<reference
+		name="Distributed Component Knowledge Service" 
+		interface="de.rcenvironment.core.component.api.DistributedComponentKnowledgeService" 
+		cardinality="1..1" 
+		bind="bindDistributedComponentKnowledgeService" 
+		policy="dynamic"/>
+		
+	<reference name="Package Admin Service"
+		interface="org.osgi.service.packageadmin.PackageAdmin"
 		cardinality="1..1"
-		bind="bindDistributedNotificationService"
+		bind="bindPackageAdminService"
 		policy="dynamic"
 		/>
+		
 </scr:component>

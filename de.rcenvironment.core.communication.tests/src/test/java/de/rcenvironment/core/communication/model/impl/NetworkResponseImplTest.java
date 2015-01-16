@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,9 +11,9 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import de.rcenvironment.core.communication.common.SerializationException;
+import de.rcenvironment.core.communication.protocol.MessageMetaData;
 import de.rcenvironment.core.communication.utils.MessageUtils;
-import de.rcenvironment.core.communication.utils.MetaDataWrapper;
-import de.rcenvironment.core.communication.utils.SerializationException;
 
 /**
  * Test case for {@link NetworkResponseImpl}.
@@ -31,7 +31,7 @@ public class NetworkResponseImplTest {
     public void contentSerialization() throws SerializationException {
         String testString = "test";
         NetworkResponseImpl instance1 =
-            new NetworkResponseImpl(MessageUtils.serializeObject(testString), MetaDataWrapper.createEmpty().getInnerMap());
+            new NetworkResponseImpl(MessageUtils.serializeObject(testString), MessageMetaData.create().getInnerMap());
         assertEquals(testString, instance1.getDeserializedContent());
         NetworkResponseImpl instance2 = new NetworkResponseImpl(instance1.getContentBytes(), instance1.accessRawMetaData());
         assertEquals(testString, instance2.getDeserializedContent());

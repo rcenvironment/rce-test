@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import de.rcenvironment.core.communication.model.NodeIdentifier;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
 
 /**
  * Encapsulates information about a network node and its direct neighborhood. This is called a link

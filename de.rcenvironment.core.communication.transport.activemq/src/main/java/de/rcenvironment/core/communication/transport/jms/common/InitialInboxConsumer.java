@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -13,32 +13,33 @@ import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 
-import de.rcenvironment.core.communication.connection.NetworkConnectionEndpointHandler;
-import de.rcenvironment.core.communication.connection.ServerContactPoint;
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
+import de.rcenvironment.core.communication.channel.ServerContactPoint;
+import de.rcenvironment.core.communication.common.CommunicationException;
+import de.rcenvironment.core.communication.messaging.RawMessageChannelEndpointHandler;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
+import de.rcenvironment.core.communication.protocol.ProtocolConstants;
 import de.rcenvironment.core.utils.common.concurrent.SharedThreadPool;
 import de.rcenvironment.core.utils.common.concurrent.TaskDescription;
-import de.rcenvironment.rce.communication.CommunicationException;
+import de.rcenvironment.core.utils.common.concurrent.ThreadPool;
 
 /**
- * A single-threaded consumer that listens for initial protocol handshake requests. These requests
- * are the first messages that should be sent by a remote node after it has established a (network
- * level) connection to the local broker.
+ * A single-threaded consumer that listens for initial protocol handshake requests. These requests are the first messages that should be
+ * sent by a remote node after it has established a (network level) connection to the local broker.
  * 
  * @author Robert Mischke
  */
 public final class InitialInboxConsumer extends AbstractJmsQueueConsumer implements Runnable {
 
-    private final NetworkConnectionEndpointHandler endpointHandler;
+    private final RawMessageChannelEndpointHandler endpointHandler;
 
     private ServerContactPoint associatedSCP;
 
-    private RemoteInitiatedConnectionFactory passiveConnectionFactory;
+    private RemoteInitiatedMessageChannelFactory passiveConnectionFactory;
 
-    private final SharedThreadPool threadPool = SharedThreadPool.getInstance();
+    private final ThreadPool threadPool = SharedThreadPool.getInstance();
 
-    public InitialInboxConsumer(Connection localJmsConnection, NetworkConnectionEndpointHandler endpointHandler,
-        ServerContactPoint associatedSCP, RemoteInitiatedConnectionFactory passiveConnectionFactory) throws JMSException {
+    public InitialInboxConsumer(Connection localJmsConnection, RawMessageChannelEndpointHandler endpointHandler,
+        ServerContactPoint associatedSCP, RemoteInitiatedMessageChannelFactory passiveConnectionFactory) throws JMSException {
         super(localJmsConnection, JmsProtocolConstants.QUEUE_NAME_INITIAL_BROKER_INBOX);
         this.endpointHandler = endpointHandler;
         this.associatedSCP = associatedSCP;
@@ -84,40 +85,56 @@ public final class InitialInboxConsumer extends AbstractJmsQueueConsumer impleme
         }
         try {
             if (JmsProtocolConstants.MESSAGE_TYPE_INITIAL.equals(messageType)) {
-                NetworkNodeInformation initiatingNodeInformation = JmsProtocolUtils.parseCommonHandshakeBody(message);
-                NetworkNodeInformation receivingNodeInformation = endpointHandler.exchangeNodeInformation(initiatingNodeInformation);
-
-                log.debug("Received initial handshake request from " + initiatingNodeInformation);
-                // initiate the passive connection
-                // TODO (review: document as general approach?) do so before sending the response
-                // TODO clean up / extract to different place
-                JmsNetworkConnection passiveConnection =
-                    passiveConnectionFactory.createRemoteInitiatedConnection(receivingNodeInformation, initiatingNodeInformation,
-                        associatedSCP, connection);
-                endpointHandler.onRemoteInitiatedConnectionEstablished(passiveConnection, associatedSCP);
-
-                log.debug("Passive connection established, sending handshake response to " + initiatingNodeInformation);
-                Message jmsResponse = JmsProtocolUtils.createCommonHandshakeMessage(receivingNodeInformation, session);
-                // register name of passive (B2C) connection JMS queue
-                jmsResponse.setStringProperty(JmsProtocolConstants.MESSAGE_FIELD_PASSIVE_B2C_REQUEST_INBOX,
-                    passiveConnection.getOutgoingRequestQueueName());
-                // register name of active (C2B) connection JMS queue
-                jmsResponse.setStringProperty(JmsProtocolConstants.MESSAGE_FIELD_ACTIVE_C2B_REQUEST_INBOX,
-                    JmsProtocolConstants.QUEUE_NAME_C2B_REQUEST_INBOX);
-                // send response
-                MessageProducer responseProducer = session.createProducer(message.getJMSReplyTo());
-                JmsProtocolUtils.configureMessageProducer(responseProducer);
-                responseProducer.send(jmsResponse);
-                log.debug("Sent response to initial handshake; creating connection to sender");
-
+                handleHandshakeRequest(message, session, connection);
             } else {
                 log.warn("Received message of unhandled type " + messageType + " from queue " + queueName);
             }
-        } catch (JMSException e) {
-            log.warn("Error while dispatching message of type " + messageType, e);
-        } catch (CommunicationException e) {
-            log.warn("Error while dispatching message of type " + messageType, e);
+        } catch (JMSException | CommunicationException e) {
+            log.warn(String.format("Error while dispatching message of type %s: %s", messageType, e.toString())); // log without stacktrace
         }
     }
 
+    private void handleHandshakeRequest(Message message, Session session, Connection connection) throws JMSException,
+        CommunicationException {
+
+        JMSHandshakeInformation remoteHandshakeInformation =
+            JmsProtocolUtils.parseHandshakeMessage(message, ProtocolConstants.PROTOCOL_COMPATIBILITY_VERSION);
+
+        Message jmsResponse;
+        if (remoteHandshakeInformation.matchesVersion(ProtocolConstants.PROTOCOL_COMPATIBILITY_VERSION)) {
+            InitialNodeInformation remoteNodeInformation = remoteHandshakeInformation.getInitialNodeInformation();
+            InitialNodeInformation ownNodeInformation = endpointHandler.exchangeNodeInformation(remoteNodeInformation);
+
+            log.debug("Received initial handshake request from " + remoteNodeInformation);
+            // create the remote-initiated connection
+            // TODO (review: document as general approach?) do so before sending the response
+            JmsMessageChannel remoteInitiatedChannel =
+                passiveConnectionFactory.createRemoteInitiatedMessageChannel(ownNodeInformation, remoteHandshakeInformation,
+                    associatedSCP, connection, session);
+            remoteInitiatedChannel.markAsEstablished();
+            endpointHandler.onRemoteInitiatedChannelEstablished(remoteInitiatedChannel, associatedSCP);
+
+            // create full response
+            JMSHandshakeInformation ownHandshakeInformation = new JMSHandshakeInformation();
+            ownHandshakeInformation.setProtocolVersionString(ProtocolConstants.PROTOCOL_COMPATIBILITY_VERSION);
+            ownHandshakeInformation.setChannelId(remoteInitiatedChannel.getChannelId());
+            ownHandshakeInformation.setInitialNodeInformation(ownNodeInformation);
+            ownHandshakeInformation.setRemoteInitiatedRequestInboxQueueName(JmsProtocolConstants.QUEUE_NAME_C2B_REQUEST_INBOX);
+            log.debug("Remote-initiated connection established, sending handshake response to " + remoteNodeInformation);
+
+            jmsResponse = JmsProtocolUtils.createHandshakeMessage(ownHandshakeInformation, session);
+        } else {
+            // respond with a reduced handshake response containing only the version information
+            JMSHandshakeInformation ownHandshakeInformation = new JMSHandshakeInformation();
+            ownHandshakeInformation.setProtocolVersionString(ProtocolConstants.PROTOCOL_COMPATIBILITY_VERSION);
+            log.debug("Received handshake request with an incompatible version ('" + remoteHandshakeInformation.getProtocolVersionString()
+                + "'); sending minimal response");
+            jmsResponse = JmsProtocolUtils.createHandshakeMessage(ownHandshakeInformation, session);
+        }
+
+        // send response
+        MessageProducer responseProducer = session.createProducer(message.getJMSReplyTo());
+        JmsProtocolUtils.configureMessageProducer(responseProducer);
+        responseProducer.send(jmsResponse);
+    }
 }

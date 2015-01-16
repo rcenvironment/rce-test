@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -22,6 +22,7 @@ import com.jcraft.jsch.Session;
  * Provides SCP and remote-to-remote copy operations for established JSch sessions.
  * 
  * @author Robert Mischke
+ * @author Doreen Seider
  */
 public final class JschFileTransfer {
 
@@ -47,6 +48,44 @@ public final class JschFileTransfer {
     public static void uploadFile(Session session, File localFile, String remotePath) throws IOException, JSchException {
         ScpToMessage message = new ScpToMessage(session, localFile, remotePath);
         message.execute();
+    }
+    
+    /**
+     * Uploads directories with SCP.
+     * 
+     * @param session an established JSch session
+     * @param directory the local directory to upload
+     * @param remotePath the remote target path of the directory to copy, using a relative path to the
+     *        initial SSH "home" directory if necessary
+     * @throws JSchException on general SSH errors
+     * @throws IOException on SCP operation failure
+     * @throws InterruptedException if creating directory failed
+     */
+    public static void uploadDirectory(Session session, File directory, String remotePath)
+        throws IOException, JSchException, InterruptedException {
+
+        remotePath = remotePath + "/" + directory.getName();
+
+        ChannelExec channel = (ChannelExec) session.openChannel("exec");
+        // NOTE: the provided paths are expected to require no escaping
+        channel.setCommand("mkdir -p " + remotePath);
+        channel.connect();
+        while (!channel.isClosed()) {
+            // dir creation is usually fast, so only wait for a short time
+            Thread.sleep(SHORT_WAIT_MSEC);
+        }
+        channel.disconnect();
+        if (channel.getExitStatus() != 0) {
+            throw new IOException("Creating directory failed: "  + remotePath);
+        }
+        
+        for (File file : directory.listFiles()) {
+            if (file.isDirectory()) {
+                uploadDirectory(session, file, remotePath);
+            } else {
+                uploadFile(session, file, remotePath);
+            }
+        }
     }
 
     /**

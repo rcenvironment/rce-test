@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR SC, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -22,6 +22,27 @@ import de.rcenvironment.core.utils.cluster.ClusterQueuingSystem;
  * @author Doreen Seider
  */
 public class ClusterJobSourceServiceImplTest {
+
+    /** Test constants. */
+    public int port = 3;
+
+    /** Test constants. */
+    public String localHost = RandomStringUtils.random(5);
+
+    /** Test constants. */
+    public String localJobId = RandomStringUtils.random(5);
+
+    /** Test constants. */
+    public String localSource = RandomStringUtils.random(5);
+
+    /** Test constants. */
+    public String remoteHost = RandomStringUtils.random(5);
+
+    /** Test constants. */
+    public String remoteJobId = RandomStringUtils.random(5);
+
+    /** Test constants. */
+    public String remoteSource = RandomStringUtils.random(5);
 
     private ClusterJobSourceServiceImpl service = new ClusterJobSourceServiceImpl();
     

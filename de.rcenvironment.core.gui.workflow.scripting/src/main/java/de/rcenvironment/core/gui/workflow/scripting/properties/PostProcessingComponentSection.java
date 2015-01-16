@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,7 +8,7 @@
  
 package de.rcenvironment.core.gui.workflow.scripting.properties;
 
-import de.rcenvironment.commons.scripting.ScriptableComponentConstants.ScriptTime;
+import de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.ScriptTime;
 
 
 /**

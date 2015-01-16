@@ -1,5 +1,5 @@
 /*
-qu * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -56,6 +56,9 @@ public class ClusterJobInformationLabelProvider extends LabelProvider implements
                     image = runningImage;
                     break;
                 case Queued:
+                case Waiting:
+                case DepWait:
+                case Unsched:
                     image = queuedImage;
                     break;
                 case Completed:
@@ -102,9 +105,6 @@ public class ClusterJobInformationLabelProvider extends LabelProvider implements
                 break;
             case 7:
                 returnValue = logEntry.getJobState().toString();
-                break;
-            case 8:
-                returnValue = logEntry.getSubmittedFrom();
                 break;
             default:
                 break;

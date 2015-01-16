@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -90,8 +90,8 @@ public class VirtualTopology {
      *        false, it is only initiated in the from->to direction
      */
     public void connect(int from, int to, boolean bothDirections) {
-        NetworkContactPoint targetSCP = instances[to].getConfigurationService().getServerContactPoints().get(0);
-        instances[from].addRuntimeNetworkPeer(targetSCP);
+        NetworkContactPoint targetSCP = instances[to].getDefaultContactPoint();
+        instances[from].connectAsync(targetSCP);
         if (bothDirections) {
             connect(to, from, false);
         }
@@ -153,6 +153,6 @@ public class VirtualTopology {
      * @return true if all instances consider themselves "converged"
      */
     public boolean allInstancesConverged() {
-        return testUtils.allInstancesConverged(instances);
+        return testUtils.allInstancesHaveSameRawNetworkGraph(instances);
     }
 }

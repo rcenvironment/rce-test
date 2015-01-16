@@ -4,13 +4,14 @@
 
 	<artifactId>de.rcenvironment.components.converger.common</artifactId>
 	<name>RCE Converger Component Common Bundle</name>
+	<version>6.0.0.qualifier</version>
 	<packaging>eclipse-plugin</packaging>
 
 	<parent>
 		<groupId>de.rcenvironment</groupId>
-		<artifactId>de.rcenvironment.core.parent</artifactId>
-		<version>2.4.0.qualifier</version>
-		<relativePath>../de.rcenvironment.core.common/coreParent.pom</relativePath>
+		<artifactId>de.rcenvironment.componentgroups.standard.parent</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../de.rcenvironment.componentgroups.standard/parent.pom</relativePath>
 	</parent>
 
 </project>

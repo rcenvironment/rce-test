@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -13,9 +13,15 @@ package de.rcenvironment.core.utils.cluster;
  * @author Doreen Seider
  */
 public enum ClusterQueuingSystem {
-
+    
+    /**
+     * SGE.
+     */
+    SGE,
+    
     /**
      * TORQUE.
      */
     TORQUE;
+
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                         "http://docbook.org/xml/4.4/docbookx.dtd">
+<sect1 id="further_information">
+    <title>Further Information</title>
+    <para>
+        RCE is published under the Eclipse Public Licence (EPL) 1.0.
+    </para>
+    <para> RCE is built upon the OSGi implementation Equinox. It is based on Eclipse 3.6 (Helios)
+        and requires a Java Runtime Engine, version 7.</para>
+    <para> RCE packages are provided for Windows (32 and 64 bit) and Linux (32 and 64 bit). RCE is tested on Windows 7 (64 bit) and Ubuntu 12 and 14 LTS (64 bit). It is also
+        reported to run on SLED 11 (64 bit). Other builds (especially Windows 32 bit) are provided as-is, with no formal testing.</para>
+    <para>For download and contact information, please visit <ulink
+            url="http://www.rcenvironment.de">www.rcenvironment.de</ulink></para>
+</sect1>

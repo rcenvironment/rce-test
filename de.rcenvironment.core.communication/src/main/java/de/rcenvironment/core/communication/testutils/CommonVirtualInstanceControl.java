@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,8 +8,8 @@
 
 package de.rcenvironment.core.communication.testutils;
 
-import de.rcenvironment.core.communication.connection.NetworkConnectionListener;
-import de.rcenvironment.core.communication.connection.NetworkTrafficListener;
+import de.rcenvironment.core.communication.channel.MessageChannelLifecycleListener;
+import de.rcenvironment.core.communication.messaging.RawMessageChannelTrafficListener;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
 import de.rcenvironment.core.communication.transport.spi.NetworkTransportProvider;
 
@@ -78,18 +78,18 @@ public interface CommonVirtualInstanceControl {
     void registerNetworkTransportProvider(NetworkTransportProvider provider);
 
     /**
-     * Registers a {@link NetworkConnectionListener}.
+     * Registers a {@link MessageChannelLifecycleListener}.
      * 
      * @param listener the new listener
      */
-    void addNetworkConnectionListener(NetworkConnectionListener listener);
+    void addNetworkConnectionListener(MessageChannelLifecycleListener listener);
 
     /**
-     * Registers a {@link NetworkTrafficListener}.
+     * Registers a {@link RawMessageChannelTrafficListener}.
      * 
      * @param listener the new listener
      */
-    void addNetworkTrafficListener(NetworkTrafficListener listener);
+    void addNetworkTrafficListener(RawMessageChannelTrafficListener listener);
 
     /**
      * Registers the given network contact point as an initial peer for all nodes. Initial peers are

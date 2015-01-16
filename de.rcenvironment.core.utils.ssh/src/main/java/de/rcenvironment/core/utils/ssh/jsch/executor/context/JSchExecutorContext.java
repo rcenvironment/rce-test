@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -16,8 +16,8 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Logger;
 import com.jcraft.jsch.Session;
 
-import de.rcenvironment.commons.executor.CommandLineExecutor;
-import de.rcenvironment.commons.validation.ValidationFailureException;
+import de.rcenvironment.core.utils.common.validation.ValidationFailureException;
+import de.rcenvironment.core.utils.executor.CommandLineExecutor;
 import de.rcenvironment.core.utils.executor.context.spi.ExecutorContext;
 import de.rcenvironment.core.utils.ssh.jsch.JschSessionFactory;
 import de.rcenvironment.core.utils.ssh.jsch.SshParameterException;

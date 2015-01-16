@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,13 +8,12 @@
 
 package de.rcenvironment.core.communication.model.internal;
 
-import de.rcenvironment.core.communication.model.NodeIdentifier;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
 import de.rcenvironment.core.communication.model.NodeInformation;
-import de.rcenvironment.rce.communication.PlatformIdentifier;
 
 /**
  * A shared holder for information associated with a (globally unique) node id. Each
- * {@link PlatformIdentifier} or {@link NodeIdentifier} with the same node id is supposed to
+ * {@link NodeIdentifier} or {@link NodeIdentifier} with the same node id is supposed to
  * reference the same holder object. This way, changes made to it are immediately accessible to all
  * users of these references. All public methods of this class are thread-safe.
  * 

@@ -2,26 +2,19 @@
 <feature
       id="de.rcenvironment.core.feature"
       label="RCE Core  Feature"
-      version="2.4.0.qualifier"
+      version="6.0.0.qualifier"
       provider-name="DLR">
 
    <description url="http://www.rcenvironment.de">
-      This feature provides the basic functionality of RCE (Remote Component Environment).
+      Basic functionality of RCE (Remote Component Environment).
    </description>
 
    <copyright url="http://www.rcenvironment.de">
-      Copyright (c) 2006-2010 German Aerospace Center (DLR), Fraunhofer
-SCAI, and others. All rights reserved.
-Copyright (c) 2010-2012 German Aerospace Center (DLR) and others.
+      Copyright (c) 2006-2014 DLR and others.
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License
 v1.0 which accompanies this distribution, and is available at
 http://www.eclipse.org/legal/epl-v10.html
-Contribution:
-RCE is open source and every contribution is
-welcome. The future features listed in the release schedule are
-just a few of them we can imagine. Please feel free to contact
-us.
    </copyright>
 
    <license url="http://www.eclipse.org/legal/epl-v10.html">
@@ -119,30 +112,41 @@ This Agreement is governed by the laws of the State of New York and the intellec
    </url>
 
    <requires>
-      <import plugin="de.rcenvironment.core.utils.testing" version="2.3.0" match="greaterOrEqual"/>
       <import plugin="org.ops4j.pax.logging.pax-logging-api" version="1.6.4" match="greaterOrEqual"/>
       <import plugin="org.apache.commons.io"/>
-      <import plugin="org.codehaus.jackson.core"/>
-      <import plugin="org.codehaus.jackson.mapper"/>
-      <import plugin="de.rcenvironment.libraries.custom.xml"/>
+      <import plugin="de.rcenvironment.platform.maven.other"/>
       <import plugin="org.eclipse.osgi"/>
-      <import plugin="de.rcenvironment.libraries.custom.transitional"/>
-      <import plugin="org.eclipse.core.runtime"/>
-      <import plugin="de.rcenvironment.libraries.custom.webservice"/>
+      <import plugin="de.rcenvironment.platform.maven.xml"/>
+      <import plugin="org.eclipse.equinox.security"/>
+      <import plugin="de.rcenvironment.platform.maven.graph"/>
       <import plugin="org.eclipse.osgi.services"/>
-      <import plugin="de.rcenvironment.libraries.custom.database"/>
-      <import plugin="de.rcenvironment.libraries.custom.webservice" version="2.3.0" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.ui"/>
-      <import plugin="org.eclipse.core.runtime" version="3.6.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="de.rcenvironment.platform.maven.database"/>
+      <import plugin="de.rcenvironment.platform.maven.webservice"/>
       <import plugin="org.eclipse.core.filesystem"/>
       <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.junit" version="4.8.2" match="greaterOrEqual"/>
+      <import plugin="de.rcenvironment.platform.maven.testing"/>
+      <import plugin="org.eclipse.draw2d"/>
+      <import plugin="org.eclipse.ui"/>
       <import plugin="org.eclipse.ui.navigator.resources"/>
       <import plugin="org.eclipse.ui.ide"/>
+      <import plugin="de.rcenvironment.core.gui.resources"/>
+      <import plugin="org.eclipse.jface"/>
+      <import plugin="org.eclipse.swt"/>
+      <import plugin="org.eclipse.ui.workbench"/>
       <import plugin="org.eclipse.ui.navigator"/>
-      <import plugin="org.eclipse.ui.intro"/>
-      <import plugin="org.junit" version="4.8.2" match="greaterOrEqual"/>
-      <import plugin="de.rcenvironment.libraries.custom.testing" version="2.3.0" match="greaterOrEqual"/>
-      <import plugin="javax.mail.glassfish" version="1.4.1" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.equinox.app"/>
+      <import plugin="de.rcenvironment.platform.maven.ssh.server"/>
+      <import plugin="org.eclipse.ui.views.properties.tabbed"/>
+      <import plugin="de.rcenvironment.core.gui.utils.common"/>
+      <import plugin="de.rcenvironment.core.gui.workflow"/>
+      <import plugin="de.rcenvironment.platform.maven.jms"/>
+      <import plugin="org.eclipse.core.runtime" version="3.6.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ui.forms"/>
+      <import plugin="com.jcraft.jsch"/>
+      <import plugin="org.eclipse.equinox.preferences"/>
+      <import plugin="javax.mail"/>
    </requires>
 
    <plugin
@@ -181,6 +185,13 @@ This Agreement is governed by the laws of the State of New York and the intellec
          unpack="false"/>
 
    <plugin
+         id="de.rcenvironment.core.configuration.bootstrap"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
          id="de.rcenvironment.core.configuration.discovery"
          download-size="0"
          install-size="0"
@@ -202,13 +213,6 @@ This Agreement is governed by the laws of the State of New York and the intellec
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.core.utils.executor.python"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="de.rcenvironment.core.communication"
          download-size="0"
          install-size="0"
@@ -217,20 +221,6 @@ This Agreement is governed by the laws of the State of New York and the intellec
 
    <plugin
          id="de.rcenvironment.core.communication.file.service"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="de.rcenvironment.core.communication.service.rmi"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="de.rcenvironment.core.communication.service.soap"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -258,7 +248,7 @@ This Agreement is governed by the laws of the State of New York and the intellec
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.core.datamanagement.backend.catalog.derby"
+         id="de.rcenvironment.core.datamanagement.backend.metadata.derby"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -419,6 +409,20 @@ This Agreement is governed by the laws of the State of New York and the intellec
          unpack="false"/>
 
    <plugin
+         id="de.rcenvironment.core.component.integration"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.component.toolaccess"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
          id="de.rcenvironment.core.gui.workflow.executor"
          download-size="0"
          install-size="0"
@@ -427,6 +431,41 @@ This Agreement is governed by the laws of the State of New York and the intellec
 
    <plugin
          id="de.rcenvironment.core.communication.transport.activemq"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.command"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.gui.utils.incubator"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.utils.incubator"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.shutdown"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.embedded.ssh"
          download-size="0"
          install-size="0"
          version="0.0.0"

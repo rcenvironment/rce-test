@@ -11,16 +11,33 @@
 		bind="bindNetworkRoutingService" 
 		policy="dynamic"/>
 	<reference
-		name="NetworkConnectionService" 
-		interface="de.rcenvironment.core.communication.connection.NetworkConnectionService" 
+		name="MessageChannelService" 
+		interface="de.rcenvironment.core.communication.channel.MessageChannelService" 
 		cardinality="1..1" 
-		bind="bindNetworkConnectionService" 
+		bind="bindMessageChannelService" 
 		policy="dynamic"/>
 	<reference
 		name="NodeConfigurationService" 
 		interface="de.rcenvironment.core.communication.configuration.NodeConfigurationService" 
 		cardinality="1..1" 
 		bind="bindNodeConfigurationService" 
-		policy="dynamic"
-	/>
+		policy="dynamic"/>
+	<reference
+		name="NodePropertiesService" 
+		interface="de.rcenvironment.core.communication.nodeproperties.NodePropertiesService" 
+		cardinality="1..1" 
+		bind="bindNodePropertiesService" 
+		policy="dynamic"/>
+	<reference
+		name="ConnectionSetupService" 
+		interface="de.rcenvironment.core.communication.connection.api.ConnectionSetupService" 
+		cardinality="1..1" 
+		bind="bindConnectionSetupService" 
+		policy="dynamic"/>
+	<reference
+		name="ServiceCallHandler" 
+		interface="de.rcenvironment.core.communication.rpc.ServiceCallHandler" 
+		cardinality="1..1" 
+		bind="bindServiceCallHandler" 
+		policy="dynamic"/>
 </scr:component>

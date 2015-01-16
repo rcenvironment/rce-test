@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,14 +8,17 @@
 
 package de.rcenvironment.core.communication.testutils;
 
-import de.rcenvironment.core.communication.connection.NetworkConnectionListener;
-import de.rcenvironment.core.communication.connection.NetworkTrafficListener;
+import java.util.concurrent.Callable;
+
+import de.rcenvironment.core.communication.channel.MessageChannelLifecycleListener;
+import de.rcenvironment.core.communication.messaging.RawMessageChannelTrafficListener;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
 import de.rcenvironment.core.communication.transport.spi.NetworkTransportProvider;
+import de.rcenvironment.core.utils.common.concurrent.CallablesGroup;
+import de.rcenvironment.core.utils.common.concurrent.SharedThreadPool;
 
 /**
- * Utility class to simplify the management of virtual node instances. Any methods called are
- * delegated to each node in the group.
+ * Utility class to simplify the management of virtual node instances. Any methods called are delegated to each node in the group.
  * 
  * @author Robert Mischke
  */
@@ -26,8 +29,7 @@ public class VirtualInstanceGroup implements CommonVirtualInstanceControl {
     /**
      * Creates a new group with the given nodes.
      * 
-     * Note: There is no specific reason against dynamically adding/removing instances; add this
-     * feature when necessary.
+     * Note: There is no specific reason against dynamically adding/removing instances; add this feature when necessary.
      * 
      * @param instances the dynamic-length list of instances to add
      */
@@ -36,10 +38,19 @@ public class VirtualInstanceGroup implements CommonVirtualInstanceControl {
     }
 
     @Override
-    public void setTargetState(VirtualInstanceState state) throws InterruptedException {
-        for (CommonVirtualInstanceControl instance : instances) {
-            instance.setTargetState(state);
+    public void setTargetState(final VirtualInstanceState state) throws InterruptedException {
+        CallablesGroup<Void> callablesGroup = SharedThreadPool.getInstance().createCallablesGroup(Void.class);
+        for (final CommonVirtualInstanceControl instance : instances) {
+            callablesGroup.add(new Callable<Void>() {
+
+                @Override
+                public Void call() throws Exception {
+                    instance.setTargetState(state);
+                    return null;
+                }
+            });
         }
+        callablesGroup.executeParallel(null);
     }
 
     @Override
@@ -88,17 +99,29 @@ public class VirtualInstanceGroup implements CommonVirtualInstanceControl {
     }
 
     @Override
-    public void addNetworkConnectionListener(NetworkConnectionListener listener) {
+    public void addNetworkConnectionListener(MessageChannelLifecycleListener listener) {
         for (CommonVirtualInstanceControl instance : instances) {
             instance.addNetworkConnectionListener(listener);
         }
     }
 
     @Override
-    public void addNetworkTrafficListener(NetworkTrafficListener listener) {
+    public void addNetworkTrafficListener(RawMessageChannelTrafficListener listener) {
         for (CommonVirtualInstanceControl instance : instances) {
             instance.addNetworkTrafficListener(listener);
         }
+    }
+
+    /**
+     * @return all contained instances as an array
+     */
+    public VirtualInstance[] toArray() {
+        VirtualInstance[] result = new VirtualInstance[instances.length];
+        int i = 0;
+        for (CommonVirtualInstanceControl instance : instances) {
+            result[i++] = (VirtualInstance) instance;
+        }
+        return result;
     }
 
 }

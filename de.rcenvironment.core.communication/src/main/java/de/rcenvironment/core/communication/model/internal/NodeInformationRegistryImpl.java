@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,10 +11,10 @@ package de.rcenvironment.core.communication.model.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
 import de.rcenvironment.core.communication.model.NodeInformation;
 import de.rcenvironment.core.communication.model.NodeInformationRegistry;
-import de.rcenvironment.rce.communication.PlatformIdentityInformation;
+import de.rcenvironment.core.communication.model.NodeIdentityInformation;
 
 /**
  * Central registry for information gathered about nodes.
@@ -62,12 +62,12 @@ public class NodeInformationRegistryImpl implements NodeInformationRegistry {
 
     /**
      * Updates the associated information for a node from a received or locally-generated
-     * {@link NetworkNodeInformation} object.
+     * {@link InitialNodeInformation} object.
      * 
      * @param remoteNodeInformation the object to update from
      */
-    public void updateFrom(NetworkNodeInformation remoteNodeInformation) {
-        String nodeId = remoteNodeInformation.getWrappedNodeId().getNodeId();
+    public void updateFrom(InitialNodeInformation remoteNodeInformation) {
+        String nodeId = remoteNodeInformation.getNodeId().getIdString();
         NodeInformationHolder writableNodeInformation = getWritableNodeInformation(nodeId);
         writableNodeInformation.setDisplayName(remoteNodeInformation.getDisplayName());
         writableNodeInformation.setIsWorkflowHost(remoteNodeInformation.getIsWorkflowHost());
@@ -75,11 +75,11 @@ public class NodeInformationRegistryImpl implements NodeInformationRegistry {
 
     /**
      * Updates the associated information for a node from a received or locally-generated
-     * {@link PlatformIdentityInformation} object.
+     * {@link NodeIdentityInformation} object.
      * 
      * @param identityInformation the object to update from
      */
-    public void updateFrom(PlatformIdentityInformation identityInformation) {
+    public void updateFrom(NodeIdentityInformation identityInformation) {
         String nodeId = identityInformation.getPersistentNodeId();
         NodeInformationHolder writableNodeInformation = getWritableNodeInformation(nodeId);
         writableNodeInformation.setDisplayName(identityInformation.getDisplayName());

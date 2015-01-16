@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -14,8 +14,8 @@ import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import de.rcenvironment.core.communication.model.NodeIdentifier;
-import de.rcenvironment.rce.communication.PlatformIdentifierFactory;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.common.NodeIdentifierFactory;
 
 /**
  * Unit tests for {@link TopologyMap}.
@@ -43,15 +43,15 @@ public class TopologyMapTest extends TestCase {
 
     private static final String LSA_CAUSED_UPDATE = "Merging this LSA into a graph was considered an update when it shouldn't";
 
-    private static final NodeIdentifier NODE_1 = PlatformIdentifierFactory.fromNodeId("randomstring:1");
+    private static final NodeIdentifier NODE_1 = NodeIdentifierFactory.fromNodeId("node1");
 
-    private static final NodeIdentifier NODE_2 = PlatformIdentifierFactory.fromNodeId("randomstring:2");
+    private static final NodeIdentifier NODE_2 = NodeIdentifierFactory.fromNodeId("node2");
 
-    private static final NodeIdentifier NODE_3 = PlatformIdentifierFactory.fromNodeId("randomstring:3");
+    private static final NodeIdentifier NODE_3 = NodeIdentifierFactory.fromNodeId("node3");
 
-    private static final NodeIdentifier NODE_4 = PlatformIdentifierFactory.fromNodeId("randomstring:4");
+    private static final NodeIdentifier NODE_4 = NodeIdentifierFactory.fromNodeId("node4");
 
-    private static final NodeIdentifier NODE_5 = PlatformIdentifierFactory.fromNodeId("randomstring:5");
+    private static final NodeIdentifier NODE_5 = NodeIdentifierFactory.fromNodeId("node5");
 
     private static final String NODE_1_NAME = "Name1";
 
@@ -355,10 +355,10 @@ public class TopologyMapTest extends TestCase {
 
         assertFalse(graph1.equals(graph2));
 
-        graph1.update(graph2.generateLsa());
-        graph2.update(graph1.generateLsa());
+        graph1.update(graph2.generateNewLocalLSA());
+        graph2.update(graph1.generateNewLocalLSA());
 
-        assertEquals(graph2.generateLsa().getGraphHashCode(), graph2.hashCode());
+        assertEquals(graph2.generateNewLocalLSA().getGraphHashCode(), graph2.hashCode());
 
         assertEquals(graph1, graph2);
     }
@@ -549,8 +549,8 @@ public class TopologyMapTest extends TestCase {
 
         assertTrue(networkGraph.containsNode(NODE_5));
         assertFalse(networkGraph.containsNode(NODE_4));
-        assertTrue(networkGraph.containsNode(PlatformIdentifierFactory.fromNodeId(NODE_5.getNodeId())));
-        assertFalse(networkGraph.containsNode(PlatformIdentifierFactory.fromNodeId("FAKE" + NODE_5.getNodeId())));
+        assertTrue(networkGraph.containsNode(NodeIdentifierFactory.fromNodeId(NODE_5.getIdString())));
+        assertFalse(networkGraph.containsNode(NodeIdentifierFactory.fromNodeId("FAKE" + NODE_5.getIdString())));
     }
 
     /**
@@ -672,7 +672,7 @@ public class TopologyMapTest extends TestCase {
 
         networkGraph.addLink(NODE_1, NODE_4, CONNECTION_ID_1);
 
-        LinkStateAdvertisement lsa = networkGraph.generateLsa();
+        LinkStateAdvertisement lsa = networkGraph.generateNewLocalLSA();
 
         assertTrue(lsa.getOwner().equals(networkGraph.getLocalNodeId()));
         assertEquals("Collection sizes are expected to be the same.",
@@ -721,14 +721,21 @@ public class TopologyMapTest extends TestCase {
         // cause timestamp-based sequence numbers to be different
         Thread.sleep(SHORT_TIMESTAMP_CHANGING_DELAY);
         TopologyMap graph2 = new TopologyMap(NODE_2);
+        // crude approach to ensure different timestamps; it would be better to inject an artificial
+        // time source for testing -- misc_ro, June 2013
+        while (graph2.getSequenceNumberOfNode(NODE_2) == graph1.getSequenceNumberOfNode(NODE_1)) {
+            Thread.sleep(SHORT_TIMESTAMP_CHANGING_DELAY);
+            graph2 = new TopologyMap(NODE_2);
+        }
 
         // get the highest current sequence number (assuming node 3 was assigned the highest one)
         long node1OriginalSeqNo = graph1.getSequenceNumberOfNode(NODE_1);
         long node2OriginalSeqNo = graph2.getSequenceNumberOfNode(NODE_2);
 
+        assertFalse(node1OriginalSeqNo == node2OriginalSeqNo);
         assertFalse(graph1.equals(graph2));
 
-        LinkStateAdvertisement lsa = graph1.generateLsa();
+        LinkStateAdvertisement lsa = graph1.generateNewLocalLSA();
 
         // LSA generation should have increased the node 1 sequence number in graph 1
         long node1NewSeqNo = graph1.getSequenceNumberOfNode(NODE_1);
@@ -739,7 +746,7 @@ public class TopologyMapTest extends TestCase {
         assertTrue(graph2.update(lsa));
         assertEquals(node1NewSeqNo, graph2.getSequenceNumberOfNode(NODE_1));
 
-        lsa = graph2.generateLsa();
+        lsa = graph2.generateNewLocalLSA();
 
         // LSA generation should have increased the node 2 sequence number in graph 2
         long node2NewSeqNo = graph2.getSequenceNumberOfNode(NODE_2);
@@ -757,7 +764,7 @@ public class TopologyMapTest extends TestCase {
 
         assertFalse(graph1.equals(graph2));
 
-        lsa = graph1.generateLsa();
+        lsa = graph1.generateNewLocalLSA();
         assertTrue(lsa.getSequenceNumber() > node1NewSeqNo);
         node1NewSeqNo = graph1.getSequenceNumberOfNode(NODE_2);
         assertEquals(node1NewSeqNo, lsa.getSequenceNumber());
@@ -770,7 +777,7 @@ public class TopologyMapTest extends TestCase {
 
         assertFalse(graph2.equals(graph1));
 
-        lsa = graph2.generateLsa();
+        lsa = graph2.generateNewLocalLSA();
         graph1.update(lsa);
 
         node2NewSeqNo = graph2.getSequenceNumberOfNode(NODE_2);

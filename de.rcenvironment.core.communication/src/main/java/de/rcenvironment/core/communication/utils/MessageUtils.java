@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -16,6 +16,9 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import org.apache.commons.io.IOUtils;
+
+import de.rcenvironment.core.communication.common.SerializationException;
+import de.rcenvironment.core.utils.common.StatsCounter;
 
 /**
  * Message-related utilities like serialization/deserialization.
@@ -89,6 +92,8 @@ public final class MessageUtils {
     }
 
     private static byte[] serialize(Serializable object) throws SerializationException {
+        StatsCounter.countClass("MessageUtils.serialize()", object);
+        
         ObjectOutputStream oos = null;
         ByteArrayOutputStream baos = null;
         try {
@@ -113,7 +118,9 @@ public final class MessageUtils {
         ObjectInputStream ois = null;
         try {
             ois = new ObjectInputStream(new ByteArrayInputStream(data));
-            return ois.readObject();
+            Object object = ois.readObject();
+            StatsCounter.countClass("MessageUtils.deserialize()", object);
+            return object;
         } catch (ClassNotFoundException ex) {
             throw new SerializationException(ex);
         } catch (IOException ex) {

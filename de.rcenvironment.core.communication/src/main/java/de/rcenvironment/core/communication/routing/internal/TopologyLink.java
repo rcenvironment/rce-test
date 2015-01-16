@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,12 +11,12 @@ package de.rcenvironment.core.communication.routing.internal;
 import java.io.Serializable;
 import java.util.Date;
 
-import de.rcenvironment.core.communication.model.NetworkConnection;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.model.MessageChannel;
 
 /**
  * Represents a logical link between two communicating RCE instances in a network. It is similar to
- * a {@link NetworkConnection}, but can connect arbitrary nodes (while a {@link NetworkConnection}
+ * a {@link MessageChannel}, but can connect arbitrary nodes (while a {@link MessageChannel}
  * always starts at the local node). It is used as a directed edge in the graph representing the
  * known network topology (see {@link TopologyMap}).
  * 
@@ -45,7 +45,7 @@ public final class TopologyLink implements Comparable<TopologyLink>, Cloneable, 
         this.source = source;
         this.destination = destination;
         // generate a link id that should be globally unique
-        this.linkIdentity = source.getNodeId() + destination.getNodeId() + connectionId;
+        this.linkIdentity = source.getIdString() + destination.getIdString() + connectionId;
         this.connectionId = connectionId;
         this.reliability = 0;
         this.weight = 1;

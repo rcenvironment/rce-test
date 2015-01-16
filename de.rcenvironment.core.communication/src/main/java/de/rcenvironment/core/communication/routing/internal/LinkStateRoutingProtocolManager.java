@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -10,30 +10,36 @@ package de.rcenvironment.core.communication.routing.internal;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import de.rcenvironment.core.communication.connection.NetworkConnectionListener;
-import de.rcenvironment.core.communication.connection.NetworkConnectionService;
-import de.rcenvironment.core.communication.model.NetworkConnection;
+import de.rcenvironment.core.communication.channel.MessageChannelLifecycleListener;
+import de.rcenvironment.core.communication.channel.MessageChannelLifecycleListenerAdapter;
+import de.rcenvironment.core.communication.channel.MessageChannelService;
+import de.rcenvironment.core.communication.common.CommunicationException;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.common.SerializationException;
+import de.rcenvironment.core.communication.messaging.NetworkRequestHandler;
+import de.rcenvironment.core.communication.messaging.NetworkRequestHandlerMap;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
+import de.rcenvironment.core.communication.model.MessageChannel;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
+import de.rcenvironment.core.communication.model.NetworkRequest;
 import de.rcenvironment.core.communication.model.NetworkResponse;
 import de.rcenvironment.core.communication.model.NetworkResponseHandler;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
-import de.rcenvironment.core.communication.routing.NetworkTopologyChangeListener;
+import de.rcenvironment.core.communication.model.impl.NetworkResponseImpl;
+import de.rcenvironment.core.communication.protocol.MessageMetaData;
+import de.rcenvironment.core.communication.protocol.NetworkRequestFactory;
+import de.rcenvironment.core.communication.protocol.ProtocolConstants;
+import de.rcenvironment.core.communication.spi.NetworkTopologyChangeListener;
 import de.rcenvironment.core.communication.utils.MessageUtils;
-import de.rcenvironment.core.communication.utils.MetaDataWrapper;
-import de.rcenvironment.core.communication.utils.SerializationException;
-import de.rcenvironment.rce.communication.CommunicationException;
 
 /**
  * Implementation of a link state based routing table.
@@ -43,76 +49,51 @@ import de.rcenvironment.rce.communication.CommunicationException;
  */
 public class LinkStateRoutingProtocolManager {
 
-    /**
-     * 
-     */
     private static final int DEFAULT_TIME_TO_LIVE = 200;
 
     /**
-     * TODO Write comment. 
-     *
+     * Delegating adapter for {@link MessageChannelLifecycleListener} events.
+     * 
      * @author Robert Mischke
      */
-    private class ConnectionEventListenerImpl implements NetworkConnectionListener {
+    private class MessageChannelLifecycleHandler extends MessageChannelLifecycleListenerAdapter {
 
         @Override
-        public void onOutgoingConnectionEstablished(final NetworkConnection connection) {
-            synchronized (topologyMap) {
+        public void onOutgoingChannelEstablished(final MessageChannel connection) {
+            handleOutgoingChannelEstablished(connection);
+        }
 
-                log.debug("Registering connection " + connection.getConnectionId() + " at node " + ownNodeId);
+        @Override
+        public void onOutgoingChannelTerminated(MessageChannel connection) {
+            handleOutgoingChannelTerminated(connection);
+        }
+    }
 
-                registerNewConnection(connection);
+    /**
+     * Handler for incoming LSA (link state advertisement) requests.
+     * 
+     * @author Robert Mischke
+     */
+    private static class LSARequestHandler implements NetworkRequestHandler {
 
-                if (!connection.getInitiatedByRemote()) {
-                    // only reply with an LSA batch if the connection was self-initiated
-                    // TODO check: is this metadata still necessary?
-                    Map<String, String> metaData = MetaDataWrapper.createEmpty().
-                        addTraceItem(ownNodeId.toString()).
-                        setTopicLsa().setCategoryRouting().getInnerMap();
+        private LinkStateRoutingProtocolManager protocolManager;
 
-                    LinkStateAdvertisementBatch payloadLsaCache = topologyMap.generateLsaBatchOfAllNodes();
+        public LSARequestHandler(LinkStateRoutingProtocolManager protocolManager) {
+            this.protocolManager = protocolManager;
+        }
 
-                    log.debug("Sending initial LSA batch into connection " + connection.getConnectionId());
-
-                    byte[] lsaBytes = MessageUtils.serializeSafeObject(payloadLsaCache);
-                    connectionService.sendRequest(lsaBytes, metaData, connection, new NetworkResponseHandler() {
-
-                        @Override
-                        public void onResponseAvailable(NetworkResponse response) {
-                            if (!response.isSuccess()) {
-                                log.warn("Failed to send initial LSA batch via connection " + connection.getConnectionId() + ": Code "
-                                    + response.getResultCode());
-                                return;
-                            }
-                            Serializable deserializedContent;
-                            try {
-                                deserializedContent = response.getDeserializedContent();
-                                if (deserializedContent instanceof LinkStateAdvertisementBatch) {
-                                    handleLinkStateAdvertisementCacheResponse(deserializedContent);
-                                    broadcastLsa();
-                                } else {
-                                    log.error("Unexpected response to initial LSA batch: " + deserializedContent);
-                                }
-                            } catch (SerializationException e) {
-                                log.error("Failed to deserialize response to initial LSA batch", e);
-                            }
-                        }
-
-                    });
-                } else {
-                    // for a remote-initiated connection, an update LSA is sufficient
-                    broadcastLsa();
-                }
+        @Override
+        public NetworkResponse handleRequest(NetworkRequest request, NodeIdentifier sourceId) throws SerializationException {
+            Serializable messageContent = request.getDeserializedContent();
+            Serializable responseBody;
+            if (messageContent instanceof LinkStateAdvertisementBatch) {
+                responseBody = protocolManager.handleReceivedInitialLSABatch(messageContent);
+            } else {
+                responseBody = protocolManager.handleSingleLinkStateAdvertisement(messageContent, request.accessRawMetaData());
             }
-            onTopologyChanged();
+            byte[] responseBodyBytes = MessageUtils.serializeSafeObject(responseBody);
+            return new NetworkResponseImpl(responseBodyBytes, request.getRequestId(), ProtocolConstants.ResultCode.SUCCESS);
         }
-
-        @Override
-        public void onOutgoingConnectionTerminated(NetworkConnection connection) {
-            unregisterClosedConnection(connection);
-            onTopologyChanged();
-        }
-
     }
 
     private static int timeToLive = DEFAULT_TIME_TO_LIVE;
@@ -120,7 +101,6 @@ public class LinkStateRoutingProtocolManager {
     private static final int MESSAGE_BUFFER_SIZE = 50;
 
     private static final boolean DEBUG_DUMP_INITIAL_LSA_BATCHES = false;
-
 
     /**
      * TODO Enter comment.
@@ -131,11 +111,13 @@ public class LinkStateRoutingProtocolManager {
 
     private final TopologyMap topologyMap;
 
-    private final NetworkNodeInformation ownNodeInformation;
+    private final NetworkRequestHandler networkRequestHandler;
+
+    private final InitialNodeInformation ownNodeInformation;
 
     private final NodeIdentifier ownNodeId;
 
-    private final NetworkConnectionService connectionService;
+    private final MessageChannelService connectionService;
 
     private NetworkTopologyChangeListener topologyChangeListener;
 
@@ -143,40 +125,44 @@ public class LinkStateRoutingProtocolManager {
 
     private final NetworkStats networkStats;
 
-    private final Map<String, NetworkConnection> connectionsById = new HashMap<String, NetworkConnection>();
-
-
+    private final Map<String, MessageChannel> connectionsById = new HashMap<String, MessageChannel>();
 
     // private final LinkStateAdvertisementBatch lsaCache = new LinkStateAdvertisementBatch();
 
     // @Deprecated
-    
 
     /**
      * Constructor needs to get services injected.
+     * 
      * @param communicationService
      * @param platformService
+     * @param changeListener listener for topology change events
      */
-    public LinkStateRoutingProtocolManager(NetworkNodeInformation ownNodeInformation, NetworkConnectionService connectionService) {
-        this.ownNodeInformation = ownNodeInformation;
-        this.ownNodeId = ownNodeInformation.getWrappedNodeId();
+    public LinkStateRoutingProtocolManager(TopologyMap topologyMap, MessageChannelService connectionService,
+        NetworkTopologyChangeListener changeListener) {
+        this.topologyMap = topologyMap;
+        this.networkRequestHandler = new LSARequestHandler(this);
+        this.ownNodeInformation = topologyMap.getLocalNodeInformation();
+        this.ownNodeId = ownNodeInformation.getNodeId();
         this.connectionService = connectionService;
-        this.topologyMap = new TopologyMap(ownNodeInformation);
         this.networkStats = new NetworkStats();
-        connectionService.addConnectionListener(new ConnectionEventListenerImpl());
+        connectionService.addChannelLifecycleListener(new MessageChannelLifecycleHandler());
         // initialize topology with self
         TopologyNode ownNode = topologyMap.addNode(ownNodeId);
         ownNode.setDisplayName(ownNodeInformation.getDisplayName());
         ownNode.setIsWorkflowHost(ownNodeInformation.getIsWorkflowHost());
         // initialize own sequence number
         ownNode.invalidateSequenceNumber();
-        // TODO when called from constructor, listeners have no chance of registering before
-        onTopologyChanged();
+        this.topologyChangeListener = changeListener;
+        fireTopologyChangedListener();
+    }
+
+    public NetworkRequestHandlerMap getNetworkRequestHandlers() {
+        return new NetworkRequestHandlerMap(ProtocolConstants.VALUE_MESSAGE_TYPE_LSA, networkRequestHandler);
     }
 
     /**
-     * Broadcast the information that this node is shutting down, and will disappear from the
-     * network.
+     * Broadcast the information that this node is shutting down, and will disappear from the network.
      * 
      * @throws CommunicationException The communication exception.
      */
@@ -188,7 +174,7 @@ public class LinkStateRoutingProtocolManager {
      * Test if a message with a given message id has been received recently.
      * 
      * @param messageId The id of the message.
-     * @return A boolean. 
+     * @return A boolean.
      */
     public boolean messageReivedById(String messageId) {
         return messageBuffer.containsKey(messageId);
@@ -205,36 +191,18 @@ public class LinkStateRoutingProtocolManager {
     }
 
     /**
-     * Find a route to destination.
-     *  
-     * @param destination The destination node.
-     * @return A boolean.
-     */
-    public NetworkRoute getRouteTo(NodeIdentifier destination) {
-        networkStats.incShortestPathComputations();
-        return topologyMap.getShortestPath(getOwner(), destination);
-    }
-
-    /**
-     * This method is called, when the routing service receives an {@link LinkStateAdvertisement}
-     * from a remote instance.
-     *
+     * This method is called, when the routing service receives an {@link LinkStateAdvertisement} from a remote instance.
+     * 
      * @param messageContent The message content.
      * @param metaData The meta data.
      * @return an optional {@link Serializable} response or null
      */
-    public Serializable handleLinkStateAdvertisement(Serializable messageContent, Map<String, String> metaData) {
+    private Serializable handleSingleLinkStateAdvertisement(Serializable messageContent, Map<String, String> metaData) {
 
         boolean topologyChanged = false;
 
         synchronized (topologyMap) {
 
-            if (messageContent instanceof LinkStateAdvertisementBatch) {
-                // TODO re-introduce the startup flag when LSA batches are used elsewhere, too?
-                return handleLinkStateAdvertisementCacheRequest(messageContent);
-            }
-
-            // sanity check
             if (!(messageContent instanceof LinkStateAdvertisement)) {
                 throw new IllegalStateException("Received a non-LSA in handleLinkStateAdvertisement()");
             }
@@ -242,7 +210,7 @@ public class LinkStateRoutingProtocolManager {
             LinkStateAdvertisement lsa = (LinkStateAdvertisement) messageContent;
 
             networkStats.incReceivedLSAs();
-            networkStats.incHopCountOfReceivedLSAs(MetaDataWrapper.wrap(metaData).getHopCount());
+            // networkStats.incHopCountOfReceivedLSAs(MessageMetaData.wrap(metaData).getHopCount());
 
             // TODO review: currently not sent; see LSA batch handling above
             // if (LinkStateAdvertisement.REASON_STARTUP.equals(lsa.getReason())) {
@@ -261,10 +229,7 @@ public class LinkStateRoutingProtocolManager {
                 // lsaCache.put(lsa.getOwner(), lsa);
                 // }
 
-                /**
-                 * @Protocol Forward lsa
-                 */
-                broadcastLsa(lsa, metaData);
+                broadcastLsa(lsa);
 
                 // NetworkFormatter.nodeList(topologyMap));
 
@@ -275,12 +240,12 @@ public class LinkStateRoutingProtocolManager {
                 // }
             } else {
                 networkStats.incRejectedLSAs();
-                networkStats.incHopCountOfRejectedLSAs(MetaDataWrapper.wrap(metaData).getHopCount());
+                networkStats.incHopCountOfRejectedLSAs(MessageMetaData.wrap(metaData).getHopCount());
                 // send null response
             }
         }
         if (topologyChanged) {
-            onTopologyChanged();
+            fireTopologyChangedListener();
         }
         return null;
     }
@@ -291,7 +256,7 @@ public class LinkStateRoutingProtocolManager {
      * @param messageContent The message content.
      * @return The link state advertisement batch.
      */
-    public Serializable handleLinkStateAdvertisementCacheRequest(Serializable messageContent) {
+    private Serializable handleReceivedInitialLSABatch(Serializable messageContent) {
 
         boolean topologyChanged = false;
         LinkStateAdvertisementBatch response;
@@ -331,23 +296,24 @@ public class LinkStateRoutingProtocolManager {
             response = topologyMap.generateLsaBatchOfAllNodes();
         }
         if (topologyChanged) {
-            onTopologyChanged();
+            fireTopologyChangedListener();
         }
         return response;
     }
 
     /**
-     * TODO Robert Mischke: Enter comment!
+     * Handles the response received from a remote node in response to the inital {@link LinkStateAdvertisementBatch}.
      * 
      * @param messageContent The message content.
+     * @return whether the received response caused a topology change
      */
-    public void handleLinkStateAdvertisementCacheResponse(Serializable messageContent) {
+    private boolean handleInitialLSABatchResponse(Serializable messageContent) {
         boolean topologyChanged = false;
         synchronized (topologyMap) {
             // sanity check
             if (!(messageContent instanceof LinkStateAdvertisementBatch)) {
                 log.warn("Message content was of wrong type.");
-                return;
+                return false;
             }
 
             LinkStateAdvertisementBatch lsaCache = (LinkStateAdvertisementBatch) messageContent;
@@ -372,8 +338,13 @@ public class LinkStateRoutingProtocolManager {
 
             }
         }
+        return topologyChanged;
+    }
+
+    private void onOutgoingChannelHandshakeCompleted(MessageChannel connection, boolean topologyChanged) {
+        broadcastNewLocalLSA();
         if (topologyChanged) {
-            onTopologyChanged();
+            fireTopologyChangedListener();
         }
     }
 
@@ -382,10 +353,10 @@ public class LinkStateRoutingProtocolManager {
      * 
      * @return The message id.
      */
-    public String broadcastLsa() {
+    public String broadcastNewLocalLSA() {
         // extract fresh LSA from topology map
         // synchronized (lsaCache) {
-        LinkStateAdvertisement ownLsa = topologyMap.generateLsa();
+        LinkStateAdvertisement ownLsa = topologyMap.generateNewLocalLSA();
         // lsaCache.put(ownNodeId, ownLsa);
         return broadcastLsa(ownLsa);
         // }
@@ -399,174 +370,66 @@ public class LinkStateRoutingProtocolManager {
      * @return The message id.
      */
     private String broadcastLsa(LinkStateAdvertisement lsa) {
-        return broadcastLsa(lsa, MetaDataWrapper.createRouting().setTopicLsa().getInnerMap());
-    }
-
-    /**
-     * Send any link state advertisement.
-     * 
-     * @param lsa The link state advertisement.
-     * @param metaData The meta data.
-     * @throws CommunicationException The communication exception.
-     * @return The message id.
-     */
-    private String broadcastLsa(LinkStateAdvertisement lsa, Map<String, String> metaData) {
 
         byte[] lsaBytes = MessageUtils.serializeSafeObject(lsa);
         String messageId = "";
 
-        // TODO Message Id might not be necessary anymore
-        if (MetaDataWrapper.wrap(metaData).getMessageId().equals("")) {
-            messageId = MetaDataWrapper.wrap(metaData).
-                setMessageId(generateUniqueMessageId(ownNodeId, ownNodeId, lsa)).
-                getMessageId();
-        }
-
         // update metadata
-        MetaDataWrapper.wrap(metaData).
-            incHopCount().
-            addTraceItem(ownNodeId.toString()).
-            setTopicLsa().
-            setCategoryRouting();
-
         List<TopologyNode> neighbors = new ArrayList<TopologyNode>(topologyMap.getSuccessors());
         // Use a randomized list
         Collections.shuffle(neighbors);
 
+        /*
+         * Changed in 3.0.0: LSAs are now broadcast into all outgoing channels, instead of sending a routed message to each neighbor. The
+         * rationale is that if there are parallel message channels, they exist either for intentional redundancy, or one or more of them
+         * are stale/broken. In both cases, it is appropriate to send to all channels. - misc_ro, July 2013
+         */
+        Collection<TopologyLink> links = topologyMap.getAllOutgoingLinks(ownNodeId);
+
         // iterate over all neighbor nodes of the current node
-        for (TopologyNode neighbor : neighbors) {
-            // split horizon
-            // if (neighbor.equals(lsa.getOwner())) { continue; }
+        // NOTE: "links" is not threadsafe (can cause a ConcurrentModificationException); not fixing as this code is deprecated
+        for (TopologyLink link : links) {
 
             networkStats.incSentLSAs();
-            networkStats.incHopCountOfSentLSAs(MetaDataWrapper.wrap(metaData).getHopCount());
+            // networkStats.incHopCountOfSentLSAs(MessageMetaData.wrap(metaData).getHopCount());
+            // non-routed broadcast -> no recipient
+            NetworkRequest request =
+                NetworkRequestFactory.createNetworkRequest(lsaBytes, ProtocolConstants.VALUE_MESSAGE_TYPE_LSA, ownNodeId, null);
+            final String channelId = link.getConnectionId();
+            connectionService.sendRequest(request, connectionsById.get(channelId), new NetworkResponseHandler() {
 
-            sendToNeighbor(lsaBytes, metaData, neighbor.getNodeIdentifier());
+                @Override
+                public void onResponseAvailable(NetworkResponse response) {
+                    if (!response.isSuccess()) {
+                        // TODO add cause to log entry
+                        log.warn("Failed to send LSA via channel " + channelId);
+                    }
+                }
+            });
+            // sendToNeighbor(request, neighbor.getNodeIdentifier());
         }
 
         return messageId;
     }
 
     /**
-     * TODO Comment and rename!
-     * 
-     * @param messageContent
-     * @param metaData
-     * @param nodeIdentifier
-     * @return
-     * @throws CommunicationException The communication exception.
+     * @param id a {@link MessageChannel}'s id
+     * @return the associated {@link MessageChannel}
      */
-    private void sendToNeighbor(byte[] messageContent, Map<String, String> metaData,
-        final NodeIdentifier nodeIdentifier) {
-
-        // compute route
-        NetworkRoute route = getRouteTo(nodeIdentifier);
-
-        // FIXME response generation; return Future?
-        if (route.validate()) {
-            // check if route is immediate, ie of length 1
-            if (route.getLength() != 1) {
-                // TODO change to CommunicationException?
-                throw new IllegalStateException("Unexpected state: Route to neighbor has length " + route.getLength());
-            }
-
-            // if there is a route, use it
-            sendTowardsNeighbor(messageContent, metaData, route.getFirstLink(), new NetworkResponseHandler() {
-
-                @Override
-                public void onResponseAvailable(NetworkResponse response) {
-                    if (!response.isSuccess()) {
-                        // TODO add cause to log entry
-                        log.warn("Failed to send LSA to neighbor node " + nodeIdentifier);
-                    }
-                }
-            });
-        } else {
-            log.warn("Route to " + nodeIdentifier + " failed to validate");
-            // else fail
-            // FIXME route.getFirstLink() can be null, which sometimes causes NPEs
-            // FIXME when this happens, it blocks the test indefinitely; find the source and add a
-            // timeout; the "if" is only a band-aid fix
-            // TODO review
-            // if (route != null) {
-            // onCommunicationFailure(messageContent, metaData,
-            // route.getFirstLink().getNetworkContactPoint());
-            // }
-        }
-    }
-
-    /**
-     * Central method to send a remote, asynchronous messages to a {@link NetworkContactPoint}. No
-     * routing is involved here.
-     * 
-     * @param messageBytes The message content.
-     * @param metaData The message meta data.
-     * @param link The link.
-     * @param outerResponseHander 
-     */
-    // TODO move this to routing service? -- misc_ro
-    // TODO better method name?
-    public void sendTowardsNeighbor(final byte[] messageBytes,
-        final Map<String, String> metaData, final TopologyLink link, final NetworkResponseHandler outerResponseHander) {
-
-        NetworkConnection connection = getConnectionForLink(link);
-
-        NetworkResponseHandler responseHandler = new NetworkResponseHandler() {
-
-            @Override
-            public void onResponseAvailable(NetworkResponse response) {
-                if (!response.isSuccess()) {
-                    Serializable loggableContent;
-                    try {
-                        loggableContent = response.getDeserializedContent();
-                    } catch (SerializationException e) {
-                        // used for logging only
-                        loggableContent = "Failed to deserialize content: " + e;
-                    }
-                    log.warn(String.format("Received non-success response for request id '%s' at '%s': result code: %d, body: '%s'",
-                        response.getRequestId(), ownNodeId, response.getResultCode(), loggableContent));
-                }
-                if (outerResponseHander != null) {
-                    outerResponseHander.onResponseAvailable(response);
-                } else {
-                    log.warn("No outer response handler");
-                }
-            }
-
-        };
-
-        connectionService.sendRequest(messageBytes, metaData, connection, responseHandler);
-    }
-
-    private NetworkConnection getConnectionForLink(final TopologyLink link) {
-        NetworkConnection connection = null;
+    // FIXME move/replace
+    public MessageChannel getMessageChannelById(String id) {
+        MessageChannel connection = null;
         synchronized (connectionsById) {
-            connection = connectionsById.get(link.getConnectionId());
+            connection = connectionsById.get(id);
         }
         if (connection == null) {
-            throw new IllegalStateException("No registered connection for connection id " + link.getConnectionId());
+            throw new IllegalStateException("No registered connection for connection id " + id);
         }
         return connection;
     }
 
-    /**
-     * Central method to build up a connection.
-     * 
-     * @param ncp
-     * @param duplex
-     * @return NetworkConnection
-     * @throws CommunicationException The communication exception.
-     * @throws InterruptedException The Interrupted exception.
-     * @throws ExecutionException The execution exception.
-     */
-    private NetworkConnection establishConnection(NetworkContactPoint ncp, boolean duplex)
-        throws CommunicationException, InterruptedException, ExecutionException {
-        Future<NetworkConnection> future = connectionService.connect(ncp, false);
-        return future.get();
-    }
-
-    private TopologyLink registerNewConnection(NetworkConnection connection) {
-        String connectionId = connection.getConnectionId();
+    private TopologyLink registerNewConnection(MessageChannel connection) {
+        String connectionId = connection.getChannelId();
         synchronized (connectionsById) {
             // consistency check: there should be no connection with the same id already
             if (connectionsById.get(connectionId) != null) {
@@ -579,7 +442,7 @@ public class LinkStateRoutingProtocolManager {
             // ownNodeInformation.getLogName()));
 
             // NOTE: this replaces the obsolete "pingNetworkContactPoint" method -- misc_ro
-            NodeIdentifier remoteNodeId = connection.getRemoteNodeInformation().getWrappedNodeId();
+            NodeIdentifier remoteNodeId = connection.getRemoteNodeInformation().getNodeId();
 
             // TODO restore onCommunicationSuccess callback (via traffic listener?)
             // onCommunicationSuccess("", MetaDataWrapper.createEmpty().getInnerMap(), connection,
@@ -588,43 +451,99 @@ public class LinkStateRoutingProtocolManager {
             // update graph model
             topologyMap.addNode(remoteNodeId);
 
-            if (topologyMap.hasLinkForConnection(connection.getConnectionId())) {
+            if (topologyMap.hasLinkForConnection(connection.getChannelId())) {
                 // unexpected state / consistency error
                 throw new IllegalStateException("Found existing link for new connection " + connectionId);
             }
 
             // add newly discovered link to network model
-            TopologyLink newLink = topologyMap.addLink(getOwner(), remoteNodeId, connection.getConnectionId());
+            TopologyLink newLink = topologyMap.addLink(getOwner(), remoteNodeId, connection.getChannelId());
 
             return newLink;
         }
     }
 
-    private void unregisterClosedConnection(NetworkConnection connection) {
+    private void handleOutgoingChannelEstablished(final MessageChannel connection) {
+        synchronized (topologyMap) {
+
+            log.debug("Registering connection " + connection.getChannelId() + " at node " + ownNodeId);
+
+            registerNewConnection(connection);
+
+            if (!connection.getInitiatedByRemote()) {
+                // only reply with an LSA batch if the connection was self-initiated
+                LinkStateAdvertisementBatch payloadLsaCache = topologyMap.generateLsaBatchOfAllNodes();
+
+                log.debug("Sending initial LSA batch into connection " + connection.getChannelId());
+
+                byte[] lsaBytes = MessageUtils.serializeSafeObject(payloadLsaCache);
+                NetworkRequest lsaRequest =
+                    NetworkRequestFactory.createNetworkRequest(lsaBytes, ProtocolConstants.VALUE_MESSAGE_TYPE_LSA, ownNodeId,
+                        connection.getRemoteNodeInformation().getNodeId());
+                connectionService.sendRequest(lsaRequest, connection, new NetworkResponseHandler() {
+
+                    @Override
+                    public void onResponseAvailable(NetworkResponse response) {
+                        if (!response.isSuccess()) {
+                            log.warn("Failed to send initial LSA batch via connection " + connection.getChannelId() + ": Code "
+                                + response.getResultCode());
+                            return;
+                        }
+                        Serializable deserializedContent;
+                        try {
+                            deserializedContent = response.getDeserializedContent();
+                            if (deserializedContent instanceof LinkStateAdvertisementBatch) {
+                                boolean topologyChanged = handleInitialLSABatchResponse(deserializedContent);
+                                onOutgoingChannelHandshakeCompleted(connection, topologyChanged);
+                            } else {
+                                log.error("Unexpected response to initial LSA batch: " + deserializedContent);
+                            }
+                        } catch (SerializationException e) {
+                            log.error("Failed to deserialize response to initial LSA batch", e);
+                        }
+                    }
+
+                });
+            } else {
+                // for a remote-initiated connection, an update LSA is sufficient
+                broadcastNewLocalLSA();
+            }
+        }
+        fireTopologyChangedListener();
+    }
+
+    private void handleOutgoingChannelTerminated(MessageChannel connection) {
         synchronized (connectionsById) {
-            String connectionId = connection.getConnectionId();
+            String channelId = connection.getChannelId();
 
             // remove link from topology
-            TopologyLink link = topologyMap.getLinkForConnection(connectionId);
-            if (!topologyMap.removeLink(link)) {
-                log.warn("Unexpected state: Closed connection had no link counterpart; id=" + connectionId);
+            TopologyLink link = topologyMap.getLinkForConnection(channelId);
+            if (link == null) {
+                log.debug("Channel " + channelId + " to unregister does not exist in the topology; "
+                    + "the usual cause is that the remote node " + connection.getRemoteNodeInformation().getNodeId()
+                    + " was removed after a shutdown notice");
+            } else {
+                if (!topologyMap.removeLink(link)) {
+                    log.warn("Unexpected state: Channel was found in topology, but could not be removed; id=" + channelId);
+                }
             }
 
             // is there already a connection to this NCP?
-            NetworkConnection registeredConnection = connectionsById.get(connectionId);
+            MessageChannel registeredConnection = connectionsById.get(channelId);
             if (registeredConnection == null) {
-                log.warn("No registered connection for id " + connectionId);
+                log.warn("No registered connection for id " + channelId);
                 return;
             }
             if (registeredConnection != connection) {
-                log.warn("Another connection is registered under id " + connectionId + "; ignoring unregistration");
+                log.warn("Another connection is registered under id " + channelId + "; ignoring unregistration");
                 return;
             }
-            connectionsById.remove(connectionId);
+            connectionsById.remove(channelId);
             log.debug(String.format("Unregistered connection %s from %s", connection.toString(),
                 ownNodeInformation.getLogDescription()));
         }
-        broadcastLsa();
+        broadcastNewLocalLSA();
+        fireTopologyChangedListener();
     }
 
     /**
@@ -639,8 +558,8 @@ public class LinkStateRoutingProtocolManager {
         networkStats.incFailedCommunications();
 
         log.debug(String.format(
-            "'%s' reports that a message that was issued by '%s' exeeded the maximum time to life (%s).",
-            ownNodeId, MetaDataWrapper.wrap(metaData).getSender(), timeToLive));
+            "'%s' reports that a message that was issued by '%s' exeeded the maximum time to live (%s).",
+            ownNodeId, MessageMetaData.wrap(metaData).getSender(), timeToLive));
     }
 
     /**
@@ -672,11 +591,10 @@ public class LinkStateRoutingProtocolManager {
     private String generateUniqueMessageId(NodeIdentifier sender, NodeIdentifier receiver,
         Serializable messageContent) {
         return Integer.toString(String.format("msg-id:%s%s%s%s",
-            sender.getNodeId(),
-            receiver.getNodeId(),
+            sender.getIdString(),
+            receiver.getIdString(),
             messageContent.hashCode(),
-            System.currentTimeMillis()
-        ).hashCode());
+            System.currentTimeMillis()).hashCode());
     }
 
     /**
@@ -707,22 +625,11 @@ public class LinkStateRoutingProtocolManager {
         return timeToLive;
     }
 
-    /**
-     * @param timeToLive The timeToLive to set.
-     */
-    public void setTimeToLive(int timeToLive) {
-        this.timeToLive = timeToLive;
-    }
-
     public Map<String, Serializable> getMessageBuffer() {
         return messageBuffer;
     }
 
-    public void setTopologyChangeListener(NetworkTopologyChangeListener topologyChangeListener) {
-        this.topologyChangeListener = topologyChangeListener;
-    }
-
-    private void onTopologyChanged() {
+    private void fireTopologyChangedListener() {
         if (topologyChangeListener != null) {
             topologyChangeListener.onNetworkTopologyChanged();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Fraunhofer SCAI, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -70,8 +70,6 @@ public class ClusterJobInformationTableFilter extends ViewerFilter implements Se
                 } else if (isSelectedBySearchTerm(logEntry.getQueueTime())) {
                     returnValue = true;
                 } else if (isSelectedBySearchTerm(logEntry.getJobState().toString())) {
-                    returnValue = true;
-                } else if (isSelectedBySearchTerm(logEntry.getSubmittedFrom())) {
                     returnValue = true;
                 }
             }

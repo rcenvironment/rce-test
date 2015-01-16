@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,6 +7,7 @@
  */
 package de.rcenvironment.core.communication.testutils;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.TimeoutException;
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 
+import de.rcenvironment.core.communication.common.NetworkGraph;
 import de.rcenvironment.core.communication.routing.internal.NetworkFormatter;
 import de.rcenvironment.core.communication.transport.virtual.testutils.VirtualInstanceTestUtils;
 import de.rcenvironment.core.communication.transport.virtual.testutils.VirtualTopology;
@@ -63,7 +65,7 @@ public abstract class AbstractVirtualInstanceTest extends AbstractTransportBased
 
         // log statistics
         if (allInstances != null) {
-            log.info(NetworkFormatter.globalNetworkTraffic(getGlobalTrafficListener(), testSize));
+            log.info(getGlobalTrafficListener().getFormattedTrafficReport(testSize));
         }
         // reset static flags in case they were changed
         VirtualInstance.setRememberRuntimePeersAfterRestarts(false);
@@ -82,7 +84,12 @@ public abstract class AbstractVirtualInstanceTest extends AbstractTransportBased
     }
 
     protected void assertInstancesKnowSameTopology(VirtualInstance[] instances) {
-        assertTrue(ERROR_MSG_INSTANCES_DID_NOT_CONVERGE, instanceUtils.allInstancesConverged(instances));
+        assertTrue(ERROR_MSG_INSTANCES_DID_NOT_CONVERGE, instanceUtils.allInstancesHaveSameRawNetworkGraph(instances));
+    }
+
+    protected boolean instancesHaveSameUnfilteredNetworkGraph(VirtualInstance vi1, VirtualInstance vi2) {
+        // TODO merge with similar "assert" method?
+        return vi1.getRawNetworkGraph().getCompactRepresentation().equals(vi2.getRawNetworkGraph().getCompactRepresentation());
     }
 
     protected void addGlobalTrafficListener(VirtualInstance[] instances) {
@@ -115,4 +122,15 @@ public abstract class AbstractVirtualInstanceTest extends AbstractTransportBased
         return trafficListener;
     }
 
+    protected void assertNodeAndLinkCount(VirtualInstance vi, int expectedNodeCount, int expectedLinkCount) {
+        NetworkGraph rawNetworkGraph = vi.getRawNetworkGraph();
+        try {
+            assertEquals(ERROR_MSG_NUMBER_OF_NODES, expectedNodeCount, rawNetworkGraph.getNodeCount());
+            assertEquals(ERROR_MSG_NUMBER_OF_LINKS, expectedLinkCount, rawNetworkGraph.getLinkCount());
+        } catch (AssertionError e) {
+            log.debug(NetworkFormatter.networkGraphToGraphviz(rawNetworkGraph, false));
+            log.debug(vi.getFormattedLSAKnowledge());
+            throw e;
+        }
+    }
 }

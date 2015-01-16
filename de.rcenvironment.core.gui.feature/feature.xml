@@ -2,18 +2,15 @@
 <feature
       id="de.rcenvironment.core.gui.feature"
       label="RCE Core GUI Feature"
-      version="2.4.0.qualifier"
+      version="6.0.0.qualifier"
       provider-name="DLR">
 
    <description url="http://www.rcenvironment.de">
-      This feature provides basic GUI functionality of RCE (Remote
-Component Environment).
+      Basic GUI functionality of RCE (Remote Component Environment).
    </description>
 
    <copyright url="http://www.rcenvironment.de">
-      Copyright (c) 2006-2010 German Aerospace Center (DLR), Fraunhofer
-SCAI, and others. All rights reserved.
-Copyright (c) 2010-2012 German Aerospace Center (DLR) and others.
+      Copyright (c) 2006-2014 DLR and others.
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License
 v1.0 which accompanies this distribution, and is available at
@@ -125,29 +122,40 @@ This Agreement is governed by the laws of the State of New York and the intellec
       <import plugin="org.eclipse.core.filesystem"/>
       <import plugin="org.eclipse.core.resources"/>
       <import plugin="org.eclipse.ui.ide"/>
-      <import plugin="de.rcenvironment.core.utils.common"/>
+      <import plugin="de.rcenvironment.core.component"/>
+      <import plugin="de.rcenvironment.core.component.workflow"/>
+      <import plugin="de.rcenvironment.core.configuration"/>
+      <import plugin="de.rcenvironment.core.utils.incubator"/>
+      <import plugin="org.ops4j.pax.logging.pax-logging-api"/>
+      <import plugin="de.rcenvironment.platform.maven.other"/>
       <import plugin="org.eclipse.ui"/>
-      <import plugin="org.eclipse.ui.navigator.resources"/>
-      <import plugin="org.eclipse.ui.navigator"/>
-      <import plugin="org.eclipse.ui.intro"/>
       <import plugin="de.rcenvironment.core.communication"/>
+      <import plugin="de.rcenvironment.core.gui.utils.incubator"/>
       <import plugin="org.eclipse.jface"/>
-      <import plugin="org.eclipse.core.runtime" version="3.5.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ui.workbench" version="3.5.2" match="greaterOrEqual"/>
       <import plugin="de.rcenvironment.core.authentication"/>
       <import plugin="de.rcenvironment.core.authorization"/>
       <import plugin="de.rcenvironment.core.component.datamanagement"/>
       <import plugin="de.rcenvironment.core.datamanagement"/>
+      <import plugin="de.rcenvironment.core.notification"/>
+      <import plugin="de.rcenvironment.core.utils.common"/>
+      <import plugin="org.apache.commons.io"/>
+      <import plugin="org.eclipse.compare"/>
       <import plugin="de.rcenvironment.core.log"/>
       <import plugin="org.eclipse.osgi.services"/>
       <import plugin="de.rcenvironment.core.login"/>
+      <import plugin="de.rcenvironment.platform.maven.auth"/>
+      <import plugin="org.eclipse.swt"/>
       <import plugin="de.rcenvironment.core.utils.scripting"/>
-      <import plugin="de.rcenvironment.core.component"/>
-      <import plugin="de.rcenvironment.core.component.workflow"/>
+      <import plugin="de.rcenvironment.core.component.integration"/>
+      <import plugin="org.eclipse.osgi"/>
+      <import plugin="org.eclipse.ui.forms"/>
+      <import plugin="org.eclipse.core.commands"/>
       <import plugin="org.eclipse.help"/>
       <import plugin="org.eclipse.gef"/>
-      <import plugin="de.rcenvironment.core.notification"/>
-      <import plugin="de.rcenvironment.core.configuration"/>
+      <import plugin="de.rcenvironment.core.component.executor"/>
+      <import plugin="de.rcenvironment.core.start.common"/>
+      <import plugin="org.eclipse.ui.ide" version="3.6.2" match="greaterOrEqual"/>
    </requires>
 
    <plugin
@@ -156,6 +164,7 @@ This Agreement is governed by the laws of the State of New York and the intellec
          install-size="0"
          version="0.0.0"
          unpack="false"/>
+
    <plugin
          id="de.rcenvironment.core.gui.communication"
          download-size="0"
@@ -185,7 +194,24 @@ This Agreement is governed by the laws of the State of New York and the intellec
          unpack="false"/>
 
    <plugin
+         id="de.rcenvironment.core.gui.utils.ole"
+         os="win32"
+         ws="win32"
+         arch="x86"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
          id="de.rcenvironment.core.gui.workflow.scripting"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.gui.workflow.integration"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -197,14 +223,44 @@ This Agreement is governed by the laws of the State of New York and the intellec
          install-size="0"
          version="0.0.0"
          unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.gui.wizards.toolintegration"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
    <plugin
          id="de.rcenvironment.core.gui.workflow"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
+
    <plugin
          id="de.rcenvironment.core.gui.workflow.executor"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.gui.resources"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.gui.command"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.core.gui.help"
          download-size="0"
          install-size="0"
          version="0.0.0"

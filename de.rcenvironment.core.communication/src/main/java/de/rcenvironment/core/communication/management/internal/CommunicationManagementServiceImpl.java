@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,28 +8,45 @@
 
 package de.rcenvironment.core.communication.management.internal;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.osgi.framework.Version;
 
+import de.rcenvironment.core.communication.channel.MessageChannelService;
+import de.rcenvironment.core.communication.channel.ServerContactPoint;
+import de.rcenvironment.core.communication.common.CommunicationException;
+import de.rcenvironment.core.communication.configuration.CommunicationConfiguration;
 import de.rcenvironment.core.communication.configuration.NodeConfigurationService;
-import de.rcenvironment.core.communication.connection.NetworkConnectionService;
-import de.rcenvironment.core.communication.connection.ServerContactPoint;
+import de.rcenvironment.core.communication.connection.api.ConnectionSetup;
+import de.rcenvironment.core.communication.connection.api.ConnectionSetupService;
 import de.rcenvironment.core.communication.management.CommunicationManagementService;
-import de.rcenvironment.core.communication.model.NetworkConnection;
+import de.rcenvironment.core.communication.messaging.MessageEndpointHandler;
+import de.rcenvironment.core.communication.messaging.internal.HealthCheckRequestHandler;
+import de.rcenvironment.core.communication.messaging.internal.MessageEndpointHandlerImpl;
+import de.rcenvironment.core.communication.messaging.internal.RPCRequestHandler;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
+import de.rcenvironment.core.communication.model.MessageChannel;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
 import de.rcenvironment.core.communication.model.internal.NodeInformationRegistryImpl;
+import de.rcenvironment.core.communication.nodeproperties.NodePropertiesService;
+import de.rcenvironment.core.communication.nodeproperties.NodePropertyConstants;
+import de.rcenvironment.core.communication.protocol.ProtocolConstants;
 import de.rcenvironment.core.communication.routing.NetworkRoutingService;
+import de.rcenvironment.core.communication.rpc.ServiceCallHandler;
+import de.rcenvironment.core.communication.transport.spi.AbstractMessageChannel;
+import de.rcenvironment.core.utils.common.VersionUtils;
 import de.rcenvironment.core.utils.common.concurrent.SharedThreadPool;
 import de.rcenvironment.core.utils.common.concurrent.TaskDescription;
-import de.rcenvironment.rce.communication.CommunicationException;
-import de.rcenvironment.rce.communication.internal.CommunicationConfiguration;
 
 /**
  * Default {@link CommunicationManagementService} implementation.
@@ -43,24 +60,41 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
      */
     private static final int DELAY_AFTER_SHUTDOWN_ANNOUNCE_MSEC = 200;
 
-    private NetworkConnectionService connectionService;
+    private MessageChannelService connectionService;
 
     private NetworkRoutingService networkRoutingService;
 
-    private NetworkNodeInformation ownNodeInformation;
+    private InitialNodeInformation ownNodeInformation;
 
     private NodeConfigurationService configurationService;
 
     private List<ServerContactPoint> initializedServerContactPoints = new ArrayList<ServerContactPoint>();
 
-    private final Log log = LogFactory.getLog(getClass());
-
     private ScheduledFuture<?> connectionHealthCheckTaskHandle;
 
+    private ServiceCallHandler serviceCallHandler;
+
+    private NodePropertiesService nodePropertiesService;
+
+    private ConnectionSetupService connectionSetupService;
+
+    private long sessionStartTimeMsec;
+
+    private boolean autoStartNetworkOnActivation = true; // disabled by integration tests
+
+    private final Log log = LogFactory.getLog(getClass());
+
     @Override
-    public void startUpNetwork() {
+    public synchronized void startUpNetwork() {
+
+        sessionStartTimeMsec = System.currentTimeMillis();
+
+        // add to local metadata
+        Map<String, String> localMetadata = createLocalMetadataContribution();
+        nodePropertiesService.addOrUpdateLocalNodeProperties(localMetadata);
 
         // start server contact points
+        log.debug("Starting server contact points");
         for (NetworkContactPoint ncp : configurationService.getServerContactPoints()) {
             // log.debug(String.format("Virtual instance '%s': Starting server at %s",
             // ownNodeInformation.getLogName(), ncp));
@@ -83,9 +117,19 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
             return;
         }
 
+        connectionService.setShutdownFlag(false);
+
         // trigger connections to initial peers
+        log.debug("Starting preconfigured connections");
         for (final NetworkContactPoint ncp : configurationService.getInitialNetworkContactPoints()) {
-            asyncConnectToNetworkPeer(ncp);
+            // TODO add custom display name when available; move string reconstruction into NCP
+            final String displayName = String.format("%s:%s", ncp.getHost(), ncp.getPort());
+            boolean connectOnStartup = !"false".equals(ncp.getAttributes().get("connectOnStartup"));
+            ConnectionSetup setup = connectionSetupService.createConnectionSetup(ncp, displayName, connectOnStartup);
+            log.debug("Loaded pre-configured network connection \"%s\" (Settings: %s)" + setup.getDisplayName());
+            if (setup.getConnnectOnStartup()) {
+                setup.signalStartIntent();
+            }
         }
 
         connectionHealthCheckTaskHandle = SharedThreadPool.getInstance().scheduleAtFixedRate(new Runnable() {
@@ -94,7 +138,7 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
             @TaskDescription("Connection health check (trigger task)")
             public void run() {
                 try {
-                    connectionService.triggerConnectionHealthChecks();
+                    connectionService.triggerHealthCheckForAllChannels();
                 } catch (RuntimeException e) {
                     log.error("Uncaught exception during connection health check", e);
                 }
@@ -103,10 +147,11 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
     }
 
     @Override
-    public void connectToRuntimePeer(NetworkContactPoint ncp) throws CommunicationException {
-        Future<NetworkConnection> future = connectionService.connect(ncp, true);
+    @Deprecated
+    public MessageChannel connectToRuntimePeer(NetworkContactPoint ncp) throws CommunicationException {
+        Future<MessageChannel> future = connectionService.connect(ncp, true);
         try {
-            future.get();
+            return future.get();
         } catch (ExecutionException e) {
             throw new CommunicationException(e);
         } catch (InterruptedException e) {
@@ -115,6 +160,7 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
     }
 
     @Override
+    @Deprecated
     public void asyncConnectToNetworkPeer(final NetworkContactPoint ncp) {
         SharedThreadPool.getInstance().execute(new Runnable() {
 
@@ -132,10 +178,14 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
     }
 
     @Override
-    public void shutDownNetwork() {
+    public synchronized void shutDownNetwork() {
+        connectionService.setShutdownFlag(true);
+
         connectionHealthCheckTaskHandle.cancel(true);
 
-        networkRoutingService.announceShutdown();
+        // workaround for old tests that assume a network message on shutdown
+        // TODO rework to proper solution
+        nodePropertiesService.addOrUpdateLocalNodeProperty("state", "shutting down");
 
         // FIXME dirty hack until the shutdown LSA broadcast waits for a response or timeout itself;
         // without this, the asynchronous sending might not happen before the connections are closed
@@ -147,7 +197,7 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
         }
 
         // close outgoing connections
-        connectionService.closeAllOutgoingConnections();
+        connectionService.closeAllOutgoingChannels();
 
         // shut down server contact points
         synchronized (initializedServerContactPoints) {
@@ -160,16 +210,17 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
         }
     }
 
-    /**
-     * Intended for use by unit/integration tests; simulates a "hard"/unclean shutdown where the
-     * node does not send any network notifications before shutting down.
-     * 
-     */
+    @Override
     public void simulateUncleanShutdown() {
-        // TODO simulate connections "crashing" as well
+        // simulate crash of outgoing channels
+        for (MessageChannel channel : connectionService.getAllOutgoingChannels()) {
+            ((AbstractMessageChannel) channel).setSimulatingBreakdown(true);
+        }
+        connectionService.closeAllOutgoingChannels();
+        // simulate crash of server contact points
         synchronized (initializedServerContactPoints) {
             for (ServerContactPoint scp : initializedServerContactPoints) {
-                scp.shutDown();
+                scp.setSimulatingBreakdown(true);
             }
             initializedServerContactPoints.clear();
         }
@@ -180,7 +231,7 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
      * 
      * @param newService the service to bind
      */
-    public void bindNetworkConnectionService(NetworkConnectionService newService) {
+    public void bindMessageChannelService(MessageChannelService newService) {
         // do not allow rebinding for now
         if (connectionService != null) {
             throw new IllegalStateException();
@@ -215,11 +266,61 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
     }
 
     /**
+     * Define the {@link ServiceCallHandler} implementation to use for incoming RPC calls; made public for integration testing.
+     * 
+     * @param newInstance the {@link ServiceCallHandler} to use
+     */
+    public void bindServiceCallHandler(ServiceCallHandler newInstance) {
+        serviceCallHandler = newInstance;
+    }
+
+    /**
+     * OSGi-DS bind method; public for integration test access.
+     * 
+     * @param newInstance the new service instance to bind
+     */
+    public void bindNodePropertiesService(NodePropertiesService newInstance) {
+        this.nodePropertiesService = newInstance;
+    }
+
+    /**
+     * OSGi-DS bind method; public for integration test access.
+     * 
+     * @param newInstance the new service instance to bind
+     */
+    public void bindConnectionSetupService(ConnectionSetupService newInstance) {
+        this.connectionSetupService = newInstance;
+    }
+
+    /**
      * OSGi-DS lifecycle method.
      */
     public void activate() {
-        ownNodeInformation = configurationService.getLocalNodeInformation();
+        ownNodeInformation = configurationService.getInitialNodeInformation();
         NodeInformationRegistryImpl.getInstance().updateFrom(ownNodeInformation);
+
+        MessageEndpointHandler messageEndpointHandler = new MessageEndpointHandlerImpl();
+        messageEndpointHandler.registerRequestHandler(ProtocolConstants.VALUE_MESSAGE_TYPE_RPC, new RPCRequestHandler(serviceCallHandler));
+        messageEndpointHandler.registerRequestHandler(ProtocolConstants.VALUE_MESSAGE_TYPE_HEALTH_CHECK, new HealthCheckRequestHandler());
+
+        connectionService.setMessageEndpointHandler(messageEndpointHandler);
+
+        // register LSA protocol handler
+        // messageEndpointHandler.registerRequestHandlers(networkRoutingService.getProtocolManager().getNetworkRequestHandlers());
+
+        // register metadata protocol handler
+        messageEndpointHandler.registerRequestHandlers(nodePropertiesService.getNetworkRequestHandlers());
+
+        if (autoStartNetworkOnActivation) { // default is true; only disabled in tests
+            SharedThreadPool.getInstance().execute(new Runnable() {
+
+                @Override
+                @TaskDescription("Communication Layer Startup")
+                public void run() {
+                    startUpNetwork();
+                }
+            });
+        }
     }
 
     /**
@@ -227,4 +328,33 @@ public class CommunicationManagementServiceImpl implements CommunicationManageme
      */
     public void deactivate() {}
 
+    /**
+     * Allows unit or integration tests to prevent {@link #startUpNetwork()} from being called automatically as part of the
+     * {@link #activate()} method.
+     * 
+     * @param autoStartNetworkOnActivation the new value; default is "true"
+     */
+    public void setAutoStartNetworkOnActivation(boolean autoStartNetworkOnActivation) {
+        this.autoStartNetworkOnActivation = autoStartNetworkOnActivation;
+    }
+
+    private Map<String, String> createLocalMetadataContribution() {
+        Map<String, String> localData = new HashMap<String, String>();
+        localData.put(NodePropertyConstants.KEY_NODE_ID, ownNodeInformation.getNodeIdString());
+        localData.put(NodePropertyConstants.KEY_DISPLAY_NAME, ownNodeInformation.getDisplayName());
+        localData.put(NodePropertyConstants.KEY_SESSION_START_TIME, Long.toString(sessionStartTimeMsec));
+        // TODO @5.0: review: provide options to disable? - misc_ro
+        localData.put("debug.sessionStartInfo",
+            DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG).format(new Date(sessionStartTimeMsec))); // temporary
+        Version coreVersion = VersionUtils.getVersionOfCoreBundles();
+        if (coreVersion != null) {
+            localData.put("debug.coreVersion", coreVersion.toString());
+        } else {
+            localData.put("debug.coreVersion", "<unknown>");
+        }
+        localData.put("debug.osInfo", String.format("%s (%s/%s)",
+            System.getProperty("os.name"), System.getProperty("os.version"), System.getProperty("os.arch")));
+        localData.put("debug.isRelay", Boolean.toString(configurationService.isRelay()));
+        return localData;
+    }
 }

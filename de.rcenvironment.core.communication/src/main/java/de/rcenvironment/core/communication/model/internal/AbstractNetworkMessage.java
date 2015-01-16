@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -12,10 +12,10 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.rcenvironment.core.communication.common.SerializationException;
 import de.rcenvironment.core.communication.model.NetworkMessage;
+import de.rcenvironment.core.communication.protocol.MessageMetaData;
 import de.rcenvironment.core.communication.utils.MessageUtils;
-import de.rcenvironment.core.communication.utils.MetaDataWrapper;
-import de.rcenvironment.core.communication.utils.SerializationException;
 
 /**
  * Abstract base class for transport-independent network messages.
@@ -27,7 +27,7 @@ public class AbstractNetworkMessage implements NetworkMessage {
     // TODO review
     private static final String METADATA_KEY_REQUEST_ID = "common.requestId";
 
-    protected MetaDataWrapper metaDataWrapper;
+    protected MessageMetaData metaDataWrapper;
 
     private Map<String, String> metaData;
 
@@ -43,6 +43,11 @@ public class AbstractNetworkMessage implements NetworkMessage {
     public AbstractNetworkMessage(Map<String, String> metaData) {
         // TODO review: the provided map is embedded/used, not cloned (for now)
         setMetaData(metaData);
+    }
+
+    @Override
+    public String getMessageType() {
+        return metaDataWrapper.getMessageType();
     }
 
     @Override
@@ -75,6 +80,11 @@ public class AbstractNetworkMessage implements NetworkMessage {
     }
 
     @Override
+    public MessageMetaData accessMetaData() {
+        return metaDataWrapper;
+    }
+
+    @Override
     public Map<String, String> accessRawMetaData() {
         // note: direct access, not cloned
         return metaData;
@@ -87,7 +97,7 @@ public class AbstractNetworkMessage implements NetworkMessage {
      */
     public void setMetaData(Map<String, String> metaData) {
         this.metaData = metaData;
-        this.metaDataWrapper = MetaDataWrapper.wrap(metaData);
+        this.metaDataWrapper = MessageMetaData.wrap(metaData);
     }
 
     /**

@@ -2,27 +2,19 @@
 <feature
       id="de.rcenvironment.componentgroups.standard.feature"
       label="RCE Standard Components Feature"
-      version="2.4.0.qualifier"
+      version="6.0.0.qualifier"
       provider-name="DLR">
 
    <description url="http://www.rcenvironment.de">
-      This feature provides workflow components for RCE (Remote
-Component Environment).
+      Standard workflow components for RCE (Remote Component Environment).
    </description>
 
    <copyright url="http://www.rcenvironment.de">
-      Copyright (c) 2006-2010 German Aerospace Center (DLR), Fraunhofer
-SCAI, and others. All rights reserved.
-Copyright (c) 2010-2012 German Aerospace Center (DLR) and others.
+      Copyright (c) 2006-2014 DLR.
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License
 v1.0 which accompanies this distribution, and is available at
 http://www.eclipse.org/legal/epl-v10.html
-Contribution:
-RCE is open source and every contribution is
-welcome. The future features listed in the release schedule are
-just a few of them we can imagine. Please feel free to contact
-us.
    </copyright>
 
    <license url="http://www.eclipse.org/legal/epl-v10.html">
@@ -120,46 +112,70 @@ This Agreement is governed by the laws of the State of New York and the intellec
    </url>
 
    <requires>
-      <import plugin="org.eclipse.ui.views.properties.tabbed"/>
-      <import plugin="org.eclipse.core.runtime"/>
-      <import plugin="org.eclipse.draw2d"/>
-      <import plugin="org.eclipse.gef" version="3.6.2" match="greaterOrEqual"/>
-      <import plugin="de.rcenvironment.core.utils.common"/>
-      <import plugin="de.rcenvironment.core.gui.utils.common"/>
-      <import plugin="de.rcenvironment.core.communication"/>
+      <import plugin="de.rcenvironment.core.gui.workflow"/>
       <import plugin="de.rcenvironment.core.component"/>
       <import plugin="de.rcenvironment.core.component.workflow"/>
-      <import plugin="de.rcenvironment.core.gui.workflow"/>
-      <import plugin="de.rcenvironment.core.notification"/>
-      <import plugin="org.eclipse.ui.ide"/>
-      <import plugin="org.eclipse.core.resources"/>
-      <import plugin="org.apache.commons.logging"/>
-      <import plugin="de.rcenvironment.core.utils.executor.python"/>
+      <import plugin="de.rcenvironment.core.gui.utils.incubator"/>
+      <import plugin="de.rcenvironment.core.authentication"/>
+      <import plugin="de.rcenvironment.core.communication"/>
       <import plugin="de.rcenvironment.core.component.datamanagement"/>
+      <import plugin="de.rcenvironment.core.gui.utils.common"/>
+      <import plugin="de.rcenvironment.core.notification"/>
+      <import plugin="de.rcenvironment.core.utils.common"/>
+      <import plugin="de.rcenvironment.core.component.executor"/>
       <import plugin="de.rcenvironment.core.gui.datamanagement"/>
+      <import plugin="de.rcenvironment.core.gui.workflow.executor"/>
+      <import plugin="de.rcenvironment.core.utils.scripting"/>
+      <import plugin="de.rcenvironment.core.component.scripting"/>
+      <import plugin="de.rcenvironment.core.scripting"/>
+      <import plugin="de.rcenvironment.core.utils.executor"/>
+      <import plugin="de.rcenvironment.core.configuration"/>
+      <import plugin="de.rcenvironment.core.gui.workflow.scripting"/>
+      <import plugin="de.rcenvironment.core.component.wrapper"/>
+      <import plugin="de.rcenvironment.core.utils.cluster"/>
+      <import plugin="de.rcenvironment.core.utils.ssh"/>
+      <import plugin="org.eclipse.ui.views.properties.tabbed"/>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.eclipse.gef" version="3.6.2" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.swt"/>
+      <import plugin="org.eclipse.ui.forms"/>
+      <import plugin="de.rcenvironment.platform.maven.other"/>
+      <import plugin="org.ops4j.pax.logging.pax-logging-api"/>
+      <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.eclipse.core.jobs"/>
+      <import plugin="de.rcenvironment.core.gui.resources"/>
+      <import plugin="de.rcenvironment.core.utils.incubator"/>
+      <import plugin="de.rcenvironment.platform.maven.gui"/>
+      <import plugin="org.eclipse.draw2d"/>
+      <import plugin="org.eclipse.ui.ide"/>
+      <import plugin="org.apache.commons.io"/>
+      <import plugin="org.eclipse.jface"/>
+      <import plugin="org.eclipse.osgi"/>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.osgi.services"/>
    </requires>
 
    <plugin
-         id="de.rcenvironment.components.merger.gui"
+         id="de.rcenvironment.components.joiner.gui"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.merger.execution"
+         id="de.rcenvironment.components.joiner.execution"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.merger.common"
+         id="de.rcenvironment.components.joiner.common"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-   
+
    <plugin
          id="de.rcenvironment.components.converger.gui"
          download-size="0"
@@ -182,6 +198,27 @@ This Agreement is governed by the laws of the State of New York and the intellec
          unpack="false"/>
 
    <plugin
+         id="de.rcenvironment.components.inputprovider.common"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.components.inputprovider.execution"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.components.inputprovider.gui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
          id="de.rcenvironment.components.parametricstudy.gui"
          download-size="0"
          install-size="0"
@@ -189,7 +226,7 @@ This Agreement is governed by the laws of the State of New York and the intellec
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.python.gui"
+         id="de.rcenvironment.components.script.gui"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -210,14 +247,29 @@ This Agreement is governed by the laws of the State of New York and the intellec
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.python.execution"
+         id="de.rcenvironment.components.script.common"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.python.common"
+         id="de.rcenvironment.components.script.execution"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.components.script.execution.python"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="de.rcenvironment.components.script.execution.jython"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -245,72 +297,61 @@ This Agreement is governed by the laws of the State of New York and the intellec
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.simplewrapper.gui"
+         id="de.rcenvironment.components.outputwriter.gui"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.simplewrapper.execution"
+         id="de.rcenvironment.components.outputwriter.execution"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.simplewrapper.common"
+         id="de.rcenvironment.components.outputwriter.common"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.excel.common"
-         os="win32"
-         ws="win32"
+         id="de.rcenvironment.components.cluster.common"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.excel.execution"
-         os="win32"
-         ws="win32"
+         id="de.rcenvironment.components.cluster.execution"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.excel.gui"
-         os="win32"
-         ws="win32"
+         id="de.rcenvironment.components.cluster.gui"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.sql.common"
+         id="de.rcenvironment.components.optimizer.dakota.common"
          download-size="0"
          install-size="0"
          version="0.0.0"
+         fragment="true"
          unpack="false"/>
 
    <plugin
-         id="de.rcenvironment.components.sql.execution"
+         id="de.rcenvironment.components.optimizer.dakota.execution"
          download-size="0"
          install-size="0"
          version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="de.rcenvironment.components.sql.gui"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
+         fragment="true"
          unpack="false"/>
 
 </feature>

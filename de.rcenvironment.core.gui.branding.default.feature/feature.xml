@@ -2,27 +2,19 @@
 <feature
       id="de.rcenvironment.core.gui.branding.default.feature"
       label="RCE Default Branding Feature"
-      version="2.4.0.qualifier"
+      version="6.0.0.qualifier"
       provider-name="DLR">
 
    <description url="http://www.rcenvironment.de">
-      This feature provides branding files for RCE (Remote
-Component Environment).
+      TBranding files for RCE (Remote Component Environment).
    </description>
 
    <copyright url="http://www.rcenvironment.de">
-      Copyright (c) 2006-2010 German Aerospace Center (DLR), Fraunhofer
-SCAI, and others. All rights reserved.
-Copyright (c) 2010-2012 German Aerospace Center (DLR) and others.
+      Copyright (c) 2006-2014 DLR and others.
 All rights reserved. This program and the accompanying materials
 are made available under the terms of the Eclipse Public License
 v1.0 which accompanies this distribution, and is available at
 http://www.eclipse.org/legal/epl-v10.html
-Contribution:
-RCE is open source and every contribution is
-welcome. The future features listed in the release schedule are
-just a few of them we can imagine. Please feel free to contact
-us.
    </copyright>
 
    <license url="http://www.eclipse.org/legal/epl-v10.html">

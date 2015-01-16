@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,6 +7,8 @@
  */
  
 package de.rcenvironment.core.gui.cluster.configuration.internal;
+
+import java.util.Map;
 
 import de.rcenvironment.core.utils.cluster.ClusterQueuingSystem;
 
@@ -22,17 +24,19 @@ public class ClusterConnectionConfiguration implements PlainClusterConnectionCon
     
     private SensitiveClusterConnectionConfiguration sensitiveConfiguration;
 
-    public ClusterConnectionConfiguration(ClusterQueuingSystem queueingSystem, String host, int port,
-        String username, String configurationName, String password) {
+    public ClusterConnectionConfiguration(ClusterQueuingSystem queueingSystem, Map<String, String> pathToClusterQueuingSystemCommands,
+        String host, int port, String username, String configurationName, String password) {
         this.plainConfiguration = new PlainClusterConnectionConfigurationImpl(queueingSystem, host, port, username, configurationName);
+        ((PlainClusterConnectionConfigurationImpl) this.plainConfiguration)
+            .setPathToClusterQueuingSystemCommands(pathToClusterQueuingSystemCommands);
         this.sensitiveConfiguration = new SensitiveClusterConnectionConfigurationImpl(password);
         ((SensitiveClusterConnectionConfigurationImpl) sensitiveConfiguration).setKey(plainConfiguration.getUsername()
             +  "@" + plainConfiguration.getHost() + ":" + plainConfiguration.getPort());
     }
     
-    public ClusterConnectionConfiguration(ClusterQueuingSystem queueingSystem, String host, int port,
-        String username, String configurationName) {
-        this(queueingSystem, host, port, username, configurationName, null);
+    public ClusterConnectionConfiguration(ClusterQueuingSystem queueingSystem, Map<String, String> pathToClusterQueuingSystemCommands,
+        String host, int port, String username, String configurationName) {
+        this(queueingSystem, pathToClusterQueuingSystemCommands, host, port, username, configurationName, null);
     }
     
     @Override
@@ -58,7 +62,12 @@ public class ClusterConnectionConfiguration implements PlainClusterConnectionCon
     public ClusterQueuingSystem getClusterQueuingSystem() {
         return plainConfiguration.getClusterQueuingSystem();
     }
-
+    
+    @Override
+    public Map<String, String> getPathToClusterQueuingSystemCommands() {
+        return plainConfiguration.getPathToClusterQueuingSystemCommands();
+    }
+    
     @Override
     public String getHost() {
         return plainConfiguration.getHost();
@@ -91,5 +100,5 @@ public class ClusterConnectionConfiguration implements PlainClusterConnectionCon
     protected SensitiveClusterConnectionConfiguration getSensitiveClusterConnectionConfiguration() {
         return sensitiveConfiguration;
     }
-        
+
 }

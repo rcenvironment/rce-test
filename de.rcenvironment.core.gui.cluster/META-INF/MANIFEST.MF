@@ -2,17 +2,19 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: RCE Core GUI Cluster
 Bundle-SymbolicName: de.rcenvironment.core.gui.cluster;singleton:=true
-Bundle-Version: 2.4.0.qualifier
+Bundle-Version: 6.0.0.qualifier
 Bundle-Vendor: DLR
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-Activator: de.rcenvironment.core.gui.cluster.configuration.internal.Activator
-Import-Package: de.rcenvironment.core.utils.cluster,
- de.rcenvironment.gui.commons,
- org.apache.commons.logging;provider=paxlogging,
- org.codehaus.jackson,
- org.codehaus.jackson.map;version="1.6.0",
- org.codehaus.jackson.map.annotate;version="1.6.0",
+Import-Package: de.rcenvironment.core.configuration,
+ de.rcenvironment.core.utils.cluster,
+ de.rcenvironment.core.utils.incubator,
+ org.apache.commons.lang3.exception;version="3.1.0",
+ org.apache.commons.logging;version="1.1.1",
+ org.codehaus.jackson;version="1.9.13",
+ org.codehaus.jackson.map;version="1.9.13",
+ org.codehaus.jackson.map.annotate;version="1.9.13",
  org.eclipse.equinox.security.storage;version="1.0.0"

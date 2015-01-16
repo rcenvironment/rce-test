@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Fraunhofer SCAI, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -91,9 +91,6 @@ public class ClusterJobInformationTableColumnSorter extends ViewerSorter {
                 break;
             case 7:
                 returnValue = jobInformation1.getJobState().compareTo(jobInformation2.getJobState());
-                break;
-            case 8:
-                returnValue = jobInformation1.getSubmittedFrom().compareTo(jobInformation2.getSubmittedFrom());
                 break;
             default:
                 break;

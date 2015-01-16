@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Fraunhofer SCAI, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -24,6 +24,7 @@ import org.eclipse.jface.action.ToolBarContributionItem;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkbenchCommandConstants;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
@@ -34,8 +35,12 @@ import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.ide.IDEActionFactory;
 import org.eclipse.ui.ide.IIDEActionConstants;
 import org.eclipse.ui.internal.WorkbenchPlugin;
+import org.eclipse.ui.internal.actions.CommandAction;
 import org.eclipse.ui.internal.registry.ActionSetRegistry;
 import org.eclipse.ui.internal.registry.IActionSetDescriptor;
+
+import de.rcenvironment.core.gui.resources.api.ImageManager;
+import de.rcenvironment.core.gui.resources.api.StandardImages;
 
 /**
  * This class advises the creation of the action bar of the {@link Application}.
@@ -65,6 +70,10 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
     private IWorkbenchAction refreshAction;
     /** File -> Print action. */
     private IWorkbenchAction printAction;
+    /** File -> Switch Workspace. */
+//    private IWorkbenchAction switchWorkspaceAction;
+    /** File -> Restart. */
+    private CommandAction restartAction;
     /** File -> Import action. */
     private IWorkbenchAction importAction;
     /** File -> Export action. */
@@ -169,6 +178,12 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         register(refreshAction);
         printAction = ActionFactory.PRINT.create(window);
         register(printAction);
+//        switchWorkspaceAction = IDEActionFactory.OPEN_WORKSPACE.create(window);
+//        register(switchWorkspaceAction);
+        restartAction = new CommandAction(window, IWorkbenchCommandConstants.FILE_RESTART);
+        restartAction.setId("restart");
+        restartAction.setText("Restart");
+        register(restartAction);
         importAction = ActionFactory.IMPORT.create(window);
         register(importAction);
         exportAction = ActionFactory.EXPORT.create(window);
@@ -190,6 +205,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         pasteAction = ActionFactory.PASTE.create(window);
         register(pasteAction);
         deleteAction = ActionFactory.DELETE.create(window);
+        deleteAction.setImageDescriptor(ImageManager.getInstance().getImageDescriptor(StandardImages.DELETE_16));
         register(deleteAction);
         selectAllAction = ActionFactory.SELECT_ALL.create(window);
         register(selectAllAction);
@@ -314,8 +330,10 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
         // fileMenu.add(printAction);
         // fileMenu.add(new GroupMarker(IWorkbenchActionConstants.PRINT_EXT));
         // fileMenu.add(new Separator());
-        fileMenu.add(importAction);
-        fileMenu.add(exportAction);
+        fileMenu.add(new Separator());
+//        fileMenu.add(switchWorkspaceAction);
+        fileMenu.add(restartAction);
+        fileMenu.add(new Separator());
         fileMenu.add(new GroupMarker(IWorkbenchActionConstants.IMPORT_EXT));
         fileMenu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
         fileMenu.add(new Separator());

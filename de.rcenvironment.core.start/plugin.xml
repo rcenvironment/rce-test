@@ -31,10 +31,6 @@
                value="%aboutImage">
          </property>
          <property
-               name="startupProgressRect"
-               value="0,280,455,15">
-         </property>
-         <property
                name="appName"
                value="%applicationName">
          </property>
@@ -43,22 +39,10 @@
                value="plugin_customization.ini">
          </property>
          <!-- START ProgressBar im Splash -->
-            <property name="startupProgressRect" value="5,150,570,15"/>
+            <property name="startupProgressRect" value="5,270,490,4"/>
             <property name="startupForegroundColor" value="FFFFFF"/>
-            <property name="startupMessageRect" value="7,130,570,20"/>
 		<!-- END ProgressBar im Splash -->
       </product>
-   </extension>
-   
-  <extension point="org.eclipse.ui.splashHandlers">
-      <splashHandler
-            class="de.rcenvironment.core.start.SplashHandler"
-            id="de.rcenvironment.core.start.SplashHandler">
-      </splashHandler>
-      <splashHandlerProductBinding
-            productId="de.rcenvironment.core.start.product"
-            splashId="de.rcenvironment.core.start.SplashHandler">
-      </splashHandlerProductBinding>
    </extension>
    
 </plugin>

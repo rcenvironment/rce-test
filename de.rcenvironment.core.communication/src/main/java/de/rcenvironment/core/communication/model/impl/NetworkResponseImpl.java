@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,13 +11,15 @@ package de.rcenvironment.core.communication.model.impl;
 import java.io.Serializable;
 import java.util.Map;
 
+import de.rcenvironment.core.communication.common.SerializationException;
+import de.rcenvironment.core.communication.model.NetworkRequest;
 import de.rcenvironment.core.communication.model.NetworkResponse;
 import de.rcenvironment.core.communication.model.internal.AbstractNetworkMessage;
-import de.rcenvironment.core.communication.utils.SerializationException;
+import de.rcenvironment.core.communication.protocol.ProtocolConstants.ResultCode;
 
 /**
- * Implementation of a transport-independent network response. Currently, such responses are
- * exclusively sent in response to received {@link NetworkRequestImpl}s.
+ * Implementation of a transport-independent network response. Currently, such responses are exclusively sent in response to received
+ * {@link NetworkRequest}s.
  * 
  * @author Robert Mischke
  */
@@ -27,6 +29,11 @@ public class NetworkResponseImpl extends AbstractNetworkMessage implements Netwo
      * Response-specific metadata key for the result code.
      */
     public static final String METADATA_KEY_RESULT_CODE = "response.resultCode";
+
+    /**
+     * Cached string representation of the numeric {@link ResultCode#SUCCESS} value.
+     */
+    private static final String SUCCESS_CODE_STRING = Integer.toString(ResultCode.SUCCESS.getCode());
 
     // TODO made this class Serializable for quick prototyping; rework so this is not used anymore
     private static final long serialVersionUID = 5984970957378933267L;
@@ -60,13 +67,13 @@ public class NetworkResponseImpl extends AbstractNetworkMessage implements Netwo
      * 
      * @param body the response body
      * @param requestId the request id to set
-     * @param resultCode the result code to set
+     * @param resultCode the result code to set (as its numeric value)
      */
-    public NetworkResponseImpl(byte[] body, String requestId, int resultCode) {
+    public NetworkResponseImpl(byte[] body, String requestId, ResultCode resultCode) {
         super();
         setContentBytes(body);
         setRequestId(requestId);
-        setResultCode(resultCode);
+        setResultCode(resultCode.getCode());
     }
 
     /**
@@ -87,15 +94,18 @@ public class NetworkResponseImpl extends AbstractNetworkMessage implements Netwo
 
     @Override
     public boolean isSuccess() {
-        return getResultCode() == NetworkResponse.RESULT_CODE_SUCCESS;
+        // optimized with a string constant as it is called frequently
+        return SUCCESS_CODE_STRING.equals(metaDataWrapper.getValue(METADATA_KEY_RESULT_CODE));
     }
 
     @Override
-    public int getResultCode() {
+    public ResultCode getResultCode() {
         try {
-            return Integer.parseInt(metaDataWrapper.getValue(METADATA_KEY_RESULT_CODE));
+            return ResultCode.fromCode(Integer.parseInt(metaDataWrapper.getValue(METADATA_KEY_RESULT_CODE)));
         } catch (NumberFormatException e) {
-            return NetworkResponse.RESULT_CODE_UNDEFINED;
+            return ResultCode.UNDEFINED;
+        } catch (IllegalArgumentException e) {
+            return ResultCode.UNDEFINED;
         }
     }
 

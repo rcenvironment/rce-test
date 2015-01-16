@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -329,10 +329,9 @@ public class ClusterJobMonitorView extends ViewPart {
             Messages.columnRemainingTime,
             Messages.columnStartTime,
             Messages.columnQueueTime,
-            Messages.columnJobState,
-            Messages.columnWorkflowInformation };
+            Messages.columnJobState };
         int[] bounds = { COLUMN_WIDTH, COLUMN_WIDTH, COLUMN_WIDTH, COLUMN_WIDTH, COLUMN_WIDTH,
-            COLUMN_WIDTH, COLUMN_WIDTH, COLUMN_WIDTH_JOBSTATE, COLUMN_WIDTH };
+            COLUMN_WIDTH, COLUMN_WIDTH, COLUMN_WIDTH_JOBSTATE };
 
         for (int i = 0; i < columnTitles.length; i++) {
             // for all columns
@@ -432,7 +431,7 @@ public class ClusterJobMonitorView extends ViewPart {
         try {
             model.getUpdateFromCluster();
         } catch (IOException e) {
-            ErrorMessageDialogFactory.createMessageDialogForConnectionFailure(parent).open();
+            ErrorMessageDialogFactory.createMessageDialogForConnectionFailure(parent, e).open();
             LOGGER.error(CONNECTING_TO_CLUSTER_FAILED, e);
             model.removeConnectedCluster(connectedClusterConfigurationName);
             return false;
@@ -483,14 +482,16 @@ public class ClusterJobMonitorView extends ViewPart {
                                 monitor.beginTask(Messages.updateJobMessage, 3);
                                 monitor.worked(1);
                                 getUpdateOfClusterJobInformation();
-                                monitor.worked(3);
-                                jobInformationTableViewer.getTable().getDisplay().asyncExec(new Runnable() {
+                                monitor.worked(2);
+                                if (!jobInformationTableViewer.getTable().isDisposed()) {
+                                    jobInformationTableViewer.getTable().getDisplay().asyncExec(new Runnable() {
 
-                                    @Override
-                                    public void run() {
-                                        refreshClusterJobInformationTableViewer();
-                                    }
-                                });
+                                        @Override
+                                        public void run() {
+                                            refreshClusterJobInformationTableViewer();
+                                        }
+                                    });                                    
+                                }
                             } finally {
                                 monitor.done();
                             }

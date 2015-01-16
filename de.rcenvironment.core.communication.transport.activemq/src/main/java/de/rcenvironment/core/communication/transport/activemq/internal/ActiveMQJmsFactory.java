@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,11 +11,11 @@ import javax.jms.ConnectionFactory;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
-import de.rcenvironment.core.communication.connection.ServerContactPoint;
+import de.rcenvironment.core.communication.channel.ServerContactPoint;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
 import de.rcenvironment.core.communication.transport.jms.common.JmsArtifactFactory;
 import de.rcenvironment.core.communication.transport.jms.common.JmsBroker;
-import de.rcenvironment.core.communication.transport.jms.common.RemoteInitiatedConnectionFactory;
+import de.rcenvironment.core.communication.transport.jms.common.RemoteInitiatedMessageChannelFactory;
 
 /**
  * Factory for creating embedded ActiveMQ broker instances and related classes. Its purpose is to
@@ -26,7 +26,7 @@ import de.rcenvironment.core.communication.transport.jms.common.RemoteInitiatedC
 public class ActiveMQJmsFactory implements JmsArtifactFactory {
 
     @Override
-    public JmsBroker createBroker(ServerContactPoint scp, RemoteInitiatedConnectionFactory remoteInitiatedConnectionFactory) {
+    public JmsBroker createBroker(ServerContactPoint scp, RemoteInitiatedMessageChannelFactory remoteInitiatedConnectionFactory) {
         return new ActiveMQBroker(scp, remoteInitiatedConnectionFactory);
     }
 

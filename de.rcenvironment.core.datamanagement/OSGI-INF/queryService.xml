@@ -1,6 +1,0 @@
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Query Service">
-	<implementation class="de.rcenvironment.rce.datamanagement.internal.QueryServiceImpl" /> 
-	<service>
-		<provide interface="de.rcenvironment.rce.datamanagement.QueryService" /> 
-	</service>
-</scr:component>

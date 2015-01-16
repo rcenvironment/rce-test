@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -19,6 +19,21 @@ import de.rcenvironment.core.communication.transport.virtual.VirtualTransportTes
  * @author Robert Mischke
  */
 public class VirtualInstanceSelfTest extends AbstractVirtualInstanceTest {
+
+    /**
+     * Minimal test of {@link VirtualInstance} creation.
+     * 
+     * @throws InterruptedException on test interruption
+     */
+    @Test
+    public void testMinimalSetup() throws InterruptedException {
+        VirtualInstance virtualInstance = new VirtualInstance("nodeId", "Node Name");
+        log.debug("Starting virtual instance");
+        virtualInstance.start();
+        log.debug("Shutting down virtual instance");
+        virtualInstance.shutDown();
+        log.debug("Shutdown complete");
+    }
 
     /**
      * Verifies proper behavior of the command-driven state transitions of {@link VirtualInstance}.

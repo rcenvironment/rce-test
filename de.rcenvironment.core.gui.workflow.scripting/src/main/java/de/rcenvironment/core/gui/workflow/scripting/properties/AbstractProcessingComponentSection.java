@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,12 +8,10 @@
 
 package de.rcenvironment.core.gui.workflow.scripting.properties;
 
-import static de.rcenvironment.commons.scripting.ScriptableComponentConstants.FACTORY;
-import static de.rcenvironment.commons.scripting.ScriptableComponentConstants.INIT;
-import static de.rcenvironment.commons.scripting.ScriptableComponentConstants.RUN;
+import static de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.FACTORY;
+import static de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.INIT;
+import static de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.RUN;
 
-import java.io.Serializable;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,16 +34,16 @@ import org.eclipse.ui.forms.widgets.Section;
 import org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetPage;
 import org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetWidgetFactory;
 
-import de.rcenvironment.commons.channel.DataManagementFileReference;
-import de.rcenvironment.commons.scripting.ScriptLanguage;
-import de.rcenvironment.commons.scripting.ScriptableComponentConstants.ComponentRunMode;
-import de.rcenvironment.commons.scripting.ScriptableComponentConstants.ScriptTime;
-import de.rcenvironment.rce.component.workflow.ChannelEvent;
-import de.rcenvironment.rce.component.workflow.ReadableComponentInstanceConfiguration;
-import de.rcenvironment.rce.gui.workflow.editor.properties.ValidatingWorkflowNodePropertySection;
+import de.rcenvironment.core.component.model.endpoint.api.EndpointDescription;
+import de.rcenvironment.core.component.workflow.model.spi.ComponentInstanceProperties;
+import de.rcenvironment.core.datamodel.api.DataType;
+import de.rcenvironment.core.gui.workflow.editor.properties.ValidatingWorkflowNodePropertySection;
+import de.rcenvironment.core.utils.scripting.ScriptLanguage;
+import de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.ComponentRunMode;
+import de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.ScriptTime;
 
 /**
- * {@link de.rcenvironment.rce.gui.workflow.editor.properties.WorkflowNodePropertySection} adding
+ * {@link de.rcenvironment.core.gui.workflow.editor.properties.WorkflowNodePropertySection} adding
  * facilities to configure processing instructions to the lifecycle of a component.
  * 
  * @author Christian Weiss
@@ -55,8 +53,6 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
     private static final String PLACEHOLDER_PATTERN = "${%s}";
 
     private static final int MINIMUM_HEIGHT = 80;
-
-    private static final int MAXIMUM_HEIGHT = 500;
 
     private static final int WIDTH_HINT = 200;
 
@@ -78,10 +74,6 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
 
     private CCombo runCommandLanguageCombo;
 
-    private CCombo initVariablesCombo;
-
-    private Button initVariablesInsertButton;
-
     private CCombo runVariablesCombo;
 
     private Button runVariablesInsertButton;
@@ -93,7 +85,6 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
     @Override
     public void createCompositeContent(final Composite parent, final TabbedPropertySheetPage aTabbedPropertySheetPage) {
         final TabbedPropertySheetWidgetFactory toolkit = aTabbedPropertySheetPage.getWidgetFactory();
-
         final Composite content = new LayoutComposite(parent);
         content.setLayout(new GridLayout(2, true));
 
@@ -103,28 +94,17 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
         runContainer = toolkit.createFlatFormComposite(content);
         initRunCommandSection(toolkit, runContainer);
 
-        parent.getParent().addListener(SWT.Resize,  new Listener() {
-            public void handleEvent(Event e) {
+        parent.getParent().addListener(SWT.Resize, new Listener() {
 
-                if (parent.getParent().getSize().y < MINIMUM_HEIGHT){
-                    ((GridData) initContainer.getLayoutData()).heightHint = MINIMUM_HEIGHT;
-                    ((GridData) runContainer.getLayoutData()).heightHint = MINIMUM_HEIGHT;
-                } else if (parent.getParent().getSize().y > MAXIMUM_HEIGHT) {
-                    ((GridData) initContainer.getLayoutData()).heightHint = MAXIMUM_HEIGHT;
-                    ((GridData) runContainer.getLayoutData()).heightHint = MAXIMUM_HEIGHT;
-                } else {
-                    ((GridData) initContainer.getLayoutData()).heightHint = parent.getParent().getSize().y - 2 * 10;
-                    ((GridData) runContainer.getLayoutData()).heightHint = parent.getParent().getSize().y - 2 * 10;
-                }
-                if (initContainer.getSize().y == MAXIMUM_HEIGHT && parent.getParent().getSize().y < MAXIMUM_HEIGHT + 3 * 5){
-                    ((GridData) initContainer.getLayoutData()).heightHint = parent.getParent().getSize().y - 2 * 10;
-                    ((GridData) runContainer.getLayoutData()).heightHint = parent.getParent().getSize().y - 2 * 10;
-                }
+            @Override
+            public void handleEvent(Event e) {
+                ((GridData) initContainer.getLayoutData()).heightHint = parent.getParent().getSize().y - 2 * 10;
+                ((GridData) runContainer.getLayoutData()).heightHint = parent.getParent().getSize().y - 2 * 10;
             }
         });
 
     }
-    
+
     @Override
     public void aboutToBeShown() {
         super.aboutToBeShown();
@@ -140,7 +120,7 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
             Section.TITLE_BAR | Section.EXPANDED);
         initInvocationSectionSection.setText(Messages.initInvocationSectionTitle);
         final Composite initInvocationClient = toolkit.createComposite(initInvocationSectionSection);
-        initInvocationClient.setLayout(new GridLayout(2, false));
+        initInvocationClient.setLayout(new GridLayout(1, false));
         initCommandText = toolkit.createText(initInvocationClient, "", SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.WRAP);
         initCommandText.setData(CONTROL_PROPERTY_KEY, FACTORY.script(scriptTime, INIT));
         layoutData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_VERTICAL | GridData.FILL_VERTICAL);
@@ -149,8 +129,13 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
         layoutData.widthHint = WIDTH_HINT;
         layoutData.horizontalSpan = 2;
         initCommandText.setLayoutData(layoutData);
-        // language selection
-        final Composite initCommandLanguageComposite = new Composite(initInvocationClient, SWT.NONE);
+        // // language selection
+        final Composite initOptionesComposite = new Composite(initInvocationClient, SWT.NONE);
+        initOptionesComposite.setLayout(new GridLayout(2, false));
+        layoutData = new GridData(GridData.FILL_HORIZONTAL);
+        layoutData.horizontalSpan = 2;
+        initOptionesComposite.setLayoutData(layoutData);
+        final Composite initCommandLanguageComposite = new Composite(initOptionesComposite, SWT.NONE);
         initCommandLanguageComposite.setLayout(new GridLayout(3, false));
         layoutData = new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
         initCommandLanguageComposite.setLayoutData(layoutData);
@@ -161,18 +146,6 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
         toolkit.paintBordersFor(initCommandLanguageCombo);
         layoutData = new GridData(GridData.GRAB_HORIZONTAL);
         initCommandLanguageCombo.setLayoutData(layoutData);
-        // Variables Insertion
-        final Composite initVariablesInsertionComposite = new Composite(initInvocationClient, SWT.NONE);
-        initVariablesInsertionComposite.setLayout(new GridLayout(3, false));
-        layoutData = new GridData(GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_END);
-        initVariablesInsertionComposite.setLayoutData(layoutData);
-        toolkit.createLabel(initVariablesInsertionComposite, Messages.variablesLabel);
-        initVariablesCombo = toolkit.createCCombo(initVariablesInsertionComposite, SWT.DROP_DOWN | SWT.READ_ONLY);
-        toolkit.paintBordersFor(initVariablesCombo);
-        layoutData = new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
-        initVariablesCombo.setLayoutData(layoutData);
-        initVariablesInsertButton = toolkit.createButton(initVariablesInsertionComposite,
-            Messages.variablesInsertButtonLabel, SWT.PUSH);
         initCommandCheckbox = toolkit.createButton(initInvocationClient, Messages.doInitCommandLabel, SWT.CHECK);
         initCommandCheckbox.setData(CONTROL_PROPERTY_KEY, FACTORY.doScript(scriptTime, INIT));
         layoutData = new GridData(GridData.HORIZONTAL_ALIGN_CENTER);
@@ -227,11 +200,13 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
             Messages.variablesInsertButtonLabel, SWT.PUSH);
         runInvocationSectionSection.setClient(runInvocationClient);
     }
-    
+
     private void addItemsToLanguageCombo(final CCombo combo) {
         for (final ScriptLanguage language : ScriptLanguage.values()) {
             final String languageName = language.getName();
-            combo.add(languageName);
+            if (!languageName.equalsIgnoreCase("Python")) {
+                combo.add(languageName);
+            }
         }
         combo.add("", 0);
         combo.select(0);
@@ -269,13 +244,6 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
     }
 
     private void updateVariableInsertControls() {
-        final boolean hasInitVariableReplacements = initVariablesCombo.getItems().length > 0;
-        final boolean enableInitVariableInsertControl = hasInitVariableReplacements & isInitCommandEnabled();
-        initVariablesCombo.setEnabled(enableInitVariableInsertControl);
-        initVariablesInsertButton.setEnabled(enableInitVariableInsertControl);
-        if (hasInitVariableReplacements) {
-            initVariablesCombo.select(0);
-        }
         final boolean hasRunVariableReplacements = runVariablesCombo.getItems().length > 0;
         final boolean enableRunVariableInsertControl = hasRunVariableReplacements & isRunCommandEnabled();
         runVariablesCombo.setEnabled(enableRunVariableInsertControl);
@@ -287,10 +255,10 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
 
     private void updateScriptLanguageSelectionControls() {
         initCommandLanguageCombo.setEnabled(isInitCommandEnabled());
-        final String initCommandLanguage = getProperty(FACTORY.language(scriptTime, INIT), String.class);
+        final String initCommandLanguage = getConfigurationValue(FACTORY.language(scriptTime, INIT));
         selectComboItem(initCommandLanguageCombo, initCommandLanguage);
         runCommandLanguageCombo.setEnabled(isRunCommandEnabled());
-        final String runCommandLanguage = getProperty(FACTORY.language(scriptTime, RUN), String.class);
+        final String runCommandLanguage = getConfigurationValue(FACTORY.language(scriptTime, RUN));
         selectComboItem(runCommandLanguageCombo, runCommandLanguage);
     }
 
@@ -313,44 +281,32 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
 
     @Override
     public void refreshBeforeValidation() {
-        final ReadableComponentInstanceConfiguration configuration = getConfiguration();
+        final ComponentInstanceProperties configuration = getConfiguration();
         variablesPlaceholders.clear();
         // variable combo
         final Map<ComponentRunMode, List<String>> variables = new HashMap<ComponentRunMode, List<String>>();
         variables.put(ComponentRunMode.INIT, new LinkedList<String>());
         variables.put(ComponentRunMode.RUN, new LinkedList<String>());
         if (scriptTime == ScriptTime.PRE) {
-            final List<String> inputNames = new LinkedList<String>(configuration.getDynamicInputDefinitions().keySet());
-            Collections.sort(inputNames);
-            for (final String inputName : inputNames) {
-                final Class<? extends Serializable> type = configuration.getDynamicInputDefinitions().get(inputName);
-                if (!DataManagementFileReference.class.isAssignableFrom(type)) {
-                    final String inputType = configuration.getInputType(inputName);
-                    final String label = Messages.bind(Messages.variablesInputPattern, inputName, inputType);
+            for (EndpointDescription e : configuration.getInputDescriptionsManager().getDynamicEndpointDescriptions()) {
+                if (e.getDataType() != DataType.FileReference) {
+                    final String label = Messages.bind(Messages.variablesInputPattern, e.getName(), e.getDataType());
                     variables.get(ComponentRunMode.RUN).add(label);
-                    final String placeholder = String.format(PLACEHOLDER_PATTERN, inputName);
+                    final String placeholder = String.format(PLACEHOLDER_PATTERN, e.getName());
                     variablesPlaceholders.put(label, placeholder);
                 }
-            }            
+            }
         } else if (scriptTime == ScriptTime.POST) {
-            final List<String> outputNames = new LinkedList<String>(configuration.getDynamicOutputDefinitions().keySet());
-            Collections.sort(outputNames);
-            for (final String outputName : outputNames) {
-                final Class<? extends Serializable> type = configuration.getDynamicOutputDefinitions().get(outputName);
-                if (!DataManagementFileReference.class.isAssignableFrom(type)) {
-                    final String label = Messages.bind(Messages.variablesOutputPattern, outputName);
+            for (EndpointDescription e : configuration.getOutputDescriptionsManager().getDynamicEndpointDescriptions()) {
+                if (e.getDataType() != DataType.FileReference) {
+                    final String label = Messages.bind(Messages.variablesOutputPattern, e.getName());
                     variables.get(ComponentRunMode.INIT).add(label);
                     variables.get(ComponentRunMode.RUN).add(label);
-                    final String placeholder = String.format(PLACEHOLDER_PATTERN, outputName);
+                    final String placeholder = String.format(PLACEHOLDER_PATTERN, e.getName());
                     variablesPlaceholders.put(label, placeholder);
                 }
-            }            
+            }
         }
-        String cwdLabel = Messages.workingDir;
-        variablesPlaceholders.put(cwdLabel, String.format(PLACEHOLDER_PATTERN, "cwd"));
-        variables.get(ComponentRunMode.INIT).add(cwdLabel);
-        variables.get(ComponentRunMode.RUN).add(cwdLabel);
-        refreshSection(ComponentRunMode.INIT, variables, initVariablesCombo, initCommandLanguageCombo);
         refreshSection(ComponentRunMode.RUN, variables, runVariablesCombo, runCommandLanguageCombo);
         updateControls();
     }
@@ -377,14 +333,7 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
         @Override
         public void widgetSelected(final SelectionEvent event, final Control source) {
             final String propertyKey = (String) source.getData(CONTROL_PROPERTY_KEY);
-            if (source == initVariablesInsertButton) {
-                final int selectionIndex = initVariablesCombo.getSelectionIndex();
-                final String selectedLabel = initVariablesCombo.getItem(selectionIndex);
-                if (selectionIndex >= 0 && selectionIndex < variablesPlaceholders.size()) {
-                    final String placeholder = variablesPlaceholders.get(selectedLabel);
-                    replace(initCommandText, placeholder);
-                }
-            } else if (source == runVariablesInsertButton) {
+            if (source == runVariablesInsertButton) {
                 final int selectionIndex = runVariablesCombo.getSelectionIndex();
                 final String selectedLabel = runVariablesCombo.getItem(selectionIndex);
                 if (selectionIndex >= 0 && selectionIndex < variablesPlaceholders.size()) {
@@ -420,16 +369,18 @@ public abstract class AbstractProcessingComponentSection extends ValidatingWorkf
     private class SynchronizerImpl extends DefaultSynchronizer {
 
         @Override
-        public void handlePropertyChange(final String key, final Serializable newValue, final Serializable oldValue) {
+        public void handlePropertyChange(final String key, final String newValue, final String oldValue) {
             super.handlePropertyChange(key, newValue, oldValue);
             updateScriptLanguageSelectionControls();
         }
+        /*
+         * @Override public void handleChannelEvent(final ChannelEvent event) {
+         * updateVariableInsertControls(); }
+         */
+    }
 
-        @Override
-        public void handleChannelEvent(final ChannelEvent event) {
-            updateVariableInsertControls();
-        }
-
+    protected String getConfigurationValue(String key) {
+        return getConfiguration().getConfigurationDescription().getConfigurationValue(key);
     }
 
 }

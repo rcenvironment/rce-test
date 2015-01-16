@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR SC, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -14,7 +14,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 /**
- * Test cases for {@link SshSessionConfigurationFactory}.
+ * Test case for {@link SshSessionConfigurationFactory}.
  * 
  * @author Doreen Seider
  */
@@ -22,7 +22,7 @@ public class SshSessionConfigurationFactoryTest {
     
     private final String destinationHost = RandomStringUtils.randomAlphanumeric(6);
 
-    private final int port = 5;
+    private final int port = 5000;
 
     private final String sshAuthUser = RandomStringUtils.randomAlphanumeric(5);
 

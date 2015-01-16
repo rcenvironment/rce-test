@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,9 +7,9 @@
  */
 package de.rcenvironment.core.communication.transport.activemq;
 
-import de.rcenvironment.core.communication.connection.impl.DefaultNetworkConnectionIdFactoryImpl;
 import de.rcenvironment.core.communication.testutils.TestConfigurationImpl;
 import de.rcenvironment.core.communication.transport.activemq.testutils.ActiveMQNetworkContactPointGenerator;
+import de.rcenvironment.core.communication.transport.spi.DefaultMessageChannelIdFactoryImpl;
 
 /**
  * Test configuration for ActiveMQ tests.
@@ -25,7 +25,7 @@ public class ActiveMQTestConfiguration extends TestConfigurationImpl {
     private static final int DEFAULT_NETWORK_SILENCE_WAIT_TIMEOUT_MSEC = 30000;
 
     public ActiveMQTestConfiguration() {
-        setTransportProvider(new ActiveMQTransportProvider(new DefaultNetworkConnectionIdFactoryImpl()));
+        setTransportProvider(new ActiveMQTransportProvider(new DefaultMessageChannelIdFactoryImpl()));
         setContactPointGenerator(new ActiveMQNetworkContactPointGenerator("localhost"));
         setDefaultTrafficWaitTimeout(DEFAULT_TRAFFIC_WAIT_TIMEOUT_MSEC);
         setDefaultNetworkSilenceWait(DEFAULT_NETWORK_SILENCE_WAIT_MSEC);

@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Bundle-ManifestVersion: 2
-Bundle-Name: RCE Pioneer Component Common
-Bundle-SymbolicName: de.rcenvironment.components.pioneer.common;singleton:=true
-Bundle-Version: 2.4.0.qualifier
-Export-Package: de.rcenvironment.components.pioneer.common
-Bundle-Vendor: DLR
-Bundle-ActivationPolicy: lazy

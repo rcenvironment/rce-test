@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,56 +8,45 @@
 
 package de.rcenvironment.core.communication.routing;
 
-import java.io.Serializable;
-import java.util.Set;
-import java.util.concurrent.Future;
-
-import de.rcenvironment.core.communication.model.NetworkRequest;
-import de.rcenvironment.core.communication.model.NetworkResponse;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
-import de.rcenvironment.core.communication.utils.SerializationException;
-import de.rcenvironment.rce.communication.PlatformIdentifier;
+import de.rcenvironment.core.communication.common.NetworkGraph;
+import de.rcenvironment.core.communication.routing.internal.LinkStateRoutingProtocolManager;
 
 /**
  * A service that provides message routing operations.
  * 
+ * TODO 3.0.0: rework this interface; low cohesion
+ * 
+ * @author Phillip Kroll
  * @author Robert Mischke
  */
 public interface NetworkRoutingService {
 
     /**
-     * Sends a routed {@link NetworkRequest}.
-     * 
-     * @param messageContent the message payload
-     * @param receiver The receivers node id.
-     * @return a {@link Future} representing the {@link NetworkResponse}
-     * @throws SerializationException on serialization failure
+     * @return the current unfiltered ("raw") network/topology graph
      */
-    Future<NetworkResponse> performRoutedRequest(Serializable messageContent, NodeIdentifier receiver) throws SerializationException;
+    NetworkGraph getRawNetworkGraph();
 
     /**
-     * Returns the (optionally filtered) nodes in the known topology.
-     * 
-     * @param restrictToWorkflowHostsAndSelf if true, only the local node and nodes that are marked
-     *        as "workflow hosts" are returned; otherwise, all known nodes are returned
-     * 
-     *        TODO refer to central glossary for "workflow host"?
-     * 
-     * @return the determined set of node ids
+     * @return the current network/topology graph, filtered for reachable nodes
      */
-    Set<PlatformIdentifier> getReachableNodes(boolean restrictToWorkflowHostsAndSelf);
-
-    /**
-     * Broadcast the information that this node is shutting down, and should be removed from the
-     * known network.
-     */
-    void announceShutdown();
+    NetworkGraph getReachableNetworkGraph();
 
     /**
      * Returns a human-readable summary of the current network state.
      * 
+     * @param type the type of formatting to use; currently, "info" and "graphviz" are supported
+     * 
      * @return the network summary text representation
      */
-    String getNetworkSummary();
+    String getFormattedNetworkInformation(String type);
+
+    /**
+     * Makes the {@link LinkStateRoutingProtocolManager} available to other services.
+     * 
+     * TODO refactor?
+     * 
+     * @return the protocol manager
+     */
+    LinkStateRoutingProtocolManager getProtocolManager();
 
 }

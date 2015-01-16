@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,7 +11,7 @@ package de.rcenvironment.core.communication.routing.internal;
 import java.io.Serializable;
 import java.util.Date;
 
-import de.rcenvironment.core.communication.model.NodeIdentifier;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
 
 /**
  * Represents a RCE instance in the network. More abstract a {@link TopologyNode} is a node in a
@@ -28,7 +28,7 @@ public final class TopologyNode implements Comparable<TopologyNode>, Cloneable, 
 
     private final Date createdTime = new Date();
 
-    private final NodeIdentifier nodeIdentifier;
+    private final NodeIdentifier nodeId;
 
     private long lastSequenceNumber = INITIAL_SEQUENCE_NUMBER;
 
@@ -43,15 +43,15 @@ public final class TopologyNode implements Comparable<TopologyNode>, Cloneable, 
     /**
      * The constructor.
      * 
-     * @param nodeIdentifier
+     * @param nodeId
      */
-    public TopologyNode(NodeIdentifier nodeIdentifier) {
-        this.nodeIdentifier = nodeIdentifier;
+    public TopologyNode(NodeIdentifier nodeId) {
+        this.nodeId = nodeId;
         this.routing = true;
     }
 
-    public TopologyNode(NodeIdentifier nodeIdentifier, boolean routing) {
-        this.nodeIdentifier = nodeIdentifier;
+    public TopologyNode(NodeIdentifier nodeId, boolean routing) {
+        this.nodeId = nodeId;
         this.routing = routing;
     }
 
@@ -100,7 +100,7 @@ public final class TopologyNode implements Comparable<TopologyNode>, Cloneable, 
      * @return Returns the node identifier.
      */
     public NodeIdentifier getNodeIdentifier() {
-        return nodeIdentifier;
+        return nodeId;
     }
 
     /**

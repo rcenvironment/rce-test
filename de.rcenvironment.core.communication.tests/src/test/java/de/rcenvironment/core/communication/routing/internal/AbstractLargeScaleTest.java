@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -33,8 +33,6 @@ public abstract class AbstractLargeScaleTest extends AbstractVirtualInstanceTest
     @Before
     public void prepareInstances() throws Exception {
         setupInstances(testSize, usingDuplexTransport, true);
-        // TODO review: TTL based on knowledge of network size? why?
-        instanceUtils.batchSetTimeToLive(allInstances, testSize * 2);
     }
 
     @Override

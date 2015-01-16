@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Bundle-ManifestVersion: 2
-Bundle-Name: RCE Merger Component Common
-Bundle-SymbolicName: de.rcenvironment.components.merger.common;singleton:=true
-Bundle-Version: 2.4.0.qualifier
-Bundle-Vendor: DLR
-Bundle-ClassPath: .
-Export-Package: de.rcenvironment.components.merger.common

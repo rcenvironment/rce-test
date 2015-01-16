@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Fraunhofer SCAI, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -13,6 +13,7 @@ package de.rcenvironment.core.start.common.validation;
  *
  * @author Christian Weiss
  */
+//TODO >5.0.0: rename ("StartupValidationMessage", maybe?) - misc_ro
 public class PlatformMessage {
 
     /**

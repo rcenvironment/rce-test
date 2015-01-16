@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -116,7 +116,7 @@ public class Messages extends NLS {
     /** Constant. */
     public static String maintainAnotherConfigurationNameLabel;
 
-    private static final String BUNDLE_NAME = "de.rcenvironment.core.gui.cluster.configuration.internal.messages"; //$NON-NLS-1$
+    private static final String BUNDLE_NAME = Messages.class.getPackage().getName() + ".messages";
 
     static {
         // initialize resource bundle

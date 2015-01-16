@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,7 +8,6 @@
 package de.rcenvironment.components.converger.gui;
 
 import org.eclipse.osgi.util.NLS;
-
 
 /**
  * Supports language specific messages.
@@ -20,42 +19,76 @@ public class Messages extends NLS {
     /** Constant. */
     public static String absoluteConvergenceMessage;
 
-   
     /** Constant. */
     public static String relativeConvergenceMessage;
 
-    
-    /** Constant.  */
+    /** Constant. */
     public static String add;
-    
-    /** Constant.  */
+
+    /** Constant. */
     public static String edit;
-    
-    /** Constant.  */
+
+    /** Constant. */
     public static String remove;
-    
-    /** Constant.  */
+
+    /** Constant. */
     public static String name;
-    
-    /** Constant.  */
+
+    /** Constant. */
     public static String dataType;
-    
+
     /** Constant. */
     public static String startValue;
 
-    /** Constant.  */
+    /** Constant. */
     public static String addInput;
-    /** Constant.  */
 
+    /** Constant. */
     public static String editInput;
 
-    /** Constant.  */
+    /** Constant. */
     public static String hasStartValue;
 
-    /** Constant.  */
+    /** Constant. */
     public static String none;
+
+    /** Constant. */
+    public static String parameterTitle;
+
+    /** Constant. */
+    public static String inputTitle;
+
+    /** Constant. */
+    public static String noInput;
+
+    /** Constant. */
+    public static String propertyIncorrectFloat;
+
+    /** Constant. */
+    public static String propertyIncorrectInt;
+
+    /** Constant. */
+    public static String smallerZero;
+
+    /** Constant. */
+    public static String smallerEqualsZero;
+
+    /** Constant. */
+    public static String inputs;
+
+    /** Constant. */
+    public static String outputs;
+
+    /** Constant. */
+    public static String maxIterations;
     
-    private static final String BUNDLE_NAME = "de.rcenvironment.components.converger.gui.messages";
+    /** Constant. */
+    public static String iterationsToConsider;
+
+    /** Constant. */
+    public static String noMaxIterations;
+
+    static final String BUNDLE_NAME = Messages.class.getPackage().getName() + ".messages";
 
     static {
         // initialize resource bundle

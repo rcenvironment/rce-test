@@ -1,25 +1,26 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" 
-	activate="activate" deactivate="deactivate" immediate="true" name="Network Routing Service">
+	activate="activate" immediate="true" name="Network Routing Service">
+	
 	<implementation class="de.rcenvironment.core.communication.routing.internal.NetworkRoutingServiceImpl" />
 	<service>
 		<provide interface="de.rcenvironment.core.communication.routing.NetworkRoutingService"/>
+		<provide interface="de.rcenvironment.core.communication.routing.MessageRoutingService"/>
+		<provide interface="de.rcenvironment.core.utils.incubator.ListenerProvider"/>
 	</service>
+	
 	<reference
-		name="NetworkConnectionService" 
-		interface="de.rcenvironment.core.communication.connection.NetworkConnectionService" 
-		cardinality="1..1" 
-		bind="bindNetworkConnectionService" 
-		policy="dynamic"/>
+		name="MessageChannelService" 
+		interface="de.rcenvironment.core.communication.channel.MessageChannelService" 
+		bind="bindMessageChannelService" 
+	/>
 	<reference
 		name="NodeConfigurationService" 
 		interface="de.rcenvironment.core.communication.configuration.NodeConfigurationService" 
-		cardinality="1..1" 
 		bind="bindNodeConfigurationService" 
-		policy="dynamic"
 	/>
 	<reference
 		name="NetworkTopologyChangeListeners" 
-		interface="de.rcenvironment.core.communication.routing.NetworkTopologyChangeListener" 
+		interface="de.rcenvironment.core.communication.spi.NetworkTopologyChangeListener" 
 		cardinality="0..n" 
 		bind="addNetworkTopologyChangeListener" 
 		unbind="removeNetworkTopologyChangeListener" 

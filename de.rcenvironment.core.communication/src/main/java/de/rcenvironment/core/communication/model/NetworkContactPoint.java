@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,6 +7,8 @@
  */
 
 package de.rcenvironment.core.communication.model;
+
+import java.util.Map;
 
 /**
  * Representation of a network "contact point", which consists of a host string, a port number, and
@@ -30,5 +32,10 @@ public interface NetworkContactPoint {
      * @return the opaque id of the transport to use for the connection
      */
     String getTransportId();
+    
+    /**
+     * @return the map of additional attributes
+     */
+    Map<String, String> getAttributes();
 
 }

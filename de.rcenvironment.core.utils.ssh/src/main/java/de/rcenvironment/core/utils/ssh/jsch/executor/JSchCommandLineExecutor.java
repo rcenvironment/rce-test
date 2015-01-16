@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -19,8 +19,8 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
-import de.rcenvironment.commons.executor.AbstractCommandLineExecutor;
-import de.rcenvironment.commons.executor.CommandLineExecutor;
+import de.rcenvironment.core.utils.executor.AbstractCommandLineExecutor;
+import de.rcenvironment.core.utils.executor.CommandLineExecutor;
 import de.rcenvironment.core.utils.ssh.jsch.JschFileTransfer;
 
 /**
@@ -32,8 +32,9 @@ import de.rcenvironment.core.utils.ssh.jsch.JschFileTransfer;
  * 
  * @author Robert Mischke
  */
-public class JSchCommandLineExecutor extends
-    AbstractCommandLineExecutor implements CommandLineExecutor {
+public class JSchCommandLineExecutor extends AbstractCommandLineExecutor implements CommandLineExecutor {
+
+    private static final String SLASH = "/";
 
     private static final int TERMINATION_POLLING_INTERVAL_MSEC = 1000;
 
@@ -134,15 +135,6 @@ public class JSchCommandLineExecutor extends
             executionChannel = null;
         }
     }
-
-    @Override
-    public void downloadFromWorkdir(String remoteLocation, File localFile) throws IOException {
-        try {
-            JschFileTransfer.downloadFile(jschSession, remoteWorkDir + "/" + remoteLocation, localFile);
-        } catch (JSchException e) {
-            throw new IOException(e);
-        }
-    }
     
     @Override
     public void downloadWorkdir(File localDir) throws IOException {
@@ -152,16 +144,83 @@ public class JSchCommandLineExecutor extends
             throw new IOException(e);
         }
     }
-
+    
     @Override
-    public void uploadToWorkdir(File localFile, String remoteLocation) throws IOException {
+    public void uploadFileToWorkdir(File localFile, String remoteLocation) throws IOException {
         try {
-            JschFileTransfer.uploadFile(jschSession, localFile, remoteWorkDir + "/" + remoteLocation);
+            JschFileTransfer.uploadFile(jschSession, localFile, remoteWorkDir + SLASH + remoteLocation);
         } catch (JSchException e) {
             throw new IOException(e);
         }
     }
 
+    @Override
+    public void downloadFileFromWorkdir(String remoteLocation, File localFile) throws IOException {
+        try {
+            JschFileTransfer.downloadFile(jschSession, remoteWorkDir + SLASH + remoteLocation, localFile);
+        } catch (JSchException e) {
+            throw new IOException(e);
+        }
+    }
+    
+    @Override
+    public void uploadDirectoryToWorkdir(File localDirectory, String remoteLocation) throws IOException {
+        try {
+            JschFileTransfer.uploadDirectory(jschSession, localDirectory, remoteWorkDir + SLASH + remoteLocation);
+        } catch (JSchException e) {
+            throw new IOException(e);
+        } catch (InterruptedException e) {
+            throw new IOException(e);
+        }
+    }
+    
+    @Override
+    public void downloadDirectoryFromWorkdir(String remoteLocation, File localDirectory) throws IOException {
+        try {
+            JschFileTransfer.downloadDirectory(jschSession, remoteWorkDir + SLASH + remoteLocation, localDirectory);
+        } catch (JSchException e) {
+            throw new IOException(e);
+        }
+    }
+    
+    @Override
+    public void downloadFile(String remoteSource, File remoteTarget) throws IOException {
+        try {
+            JschFileTransfer.downloadFile(jschSession, remoteSource, remoteTarget);
+        } catch (JSchException e) {
+            throw new IOException(e);
+        }
+    }
+
+    @Override
+    public void downloadDirectory(String remoteLocation, File localDirectory) throws IOException {
+        try {
+            JschFileTransfer.downloadDirectory(jschSession, remoteLocation, localDirectory);
+        } catch (JSchException e) {
+            throw new IOException(e);
+        }
+    }
+    
+    @Override
+    public void uploadFile(File localFile, String remoteLocation) throws IOException {
+        try {
+            JschFileTransfer.uploadFile(jschSession, localFile, remoteLocation);
+        } catch (JSchException e) {
+            throw new IOException(e);
+        }
+    }
+
+    @Override
+    public void uploadDirectory(File localDirectory, String remoteLocation) throws IOException {
+        try {
+            JschFileTransfer.uploadDirectory(jschSession, localDirectory, remoteLocation);
+        } catch (JSchException e) {
+            throw new IOException(e);
+        } catch (InterruptedException e) {
+            throw new IOException(e);
+        }
+    }
+    
     @Override
     public void remoteCopy(String remoteSource, String remoteTarget) throws IOException {
         try {
@@ -172,4 +231,5 @@ public class JSchCommandLineExecutor extends
             throw new IOException(e);
         }
     }
+
 }

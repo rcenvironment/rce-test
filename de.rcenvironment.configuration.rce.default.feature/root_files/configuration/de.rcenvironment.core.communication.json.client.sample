@@ -1,7 +1,0 @@
-// http://www.json.org/json-en.html
-{
-	"remoteContactPoints": [
-		"activemq-tcp:192.168.0.1:20001"
-	]
-	
-}

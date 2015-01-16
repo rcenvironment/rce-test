@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -58,7 +58,7 @@ public class KillClusterJobListenerListener implements SelectionListener {
         if (selection != null && selection instanceof IStructuredSelection) {
             IStructuredSelection sel = (IStructuredSelection) selection;
             for (@SuppressWarnings("unchecked")
-            Iterator<ClusterJobInformation> iterator = sel.iterator(); iterator.hasNext();) {
+                Iterator<ClusterJobInformation> iterator = sel.iterator(); iterator.hasNext();) {
                 ClusterJobInformation informationEntry = iterator.next();
                 jobIds.add(informationEntry.getJobId());
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,9 +7,9 @@
  */
 package de.rcenvironment.core.communication.transport.virtual;
 
-import de.rcenvironment.core.communication.connection.NetworkConnectionIdFactory;
-import de.rcenvironment.core.communication.connection.impl.DefaultNetworkConnectionIdFactoryImpl;
+import de.rcenvironment.core.communication.channel.MessageChannelIdFactory;
 import de.rcenvironment.core.communication.testutils.TestConfigurationImpl;
+import de.rcenvironment.core.communication.transport.spi.DefaultMessageChannelIdFactoryImpl;
 import de.rcenvironment.core.communication.transport.virtual.testutils.VirtualNetworkContactPointGenerator;
 
 /**
@@ -19,7 +19,7 @@ import de.rcenvironment.core.communication.transport.virtual.testutils.VirtualNe
  */
 public class VirtualTransportTestConfiguration extends TestConfigurationImpl {
 
-    private static final int TRAFFIC_WAIT_TIME = 150;
+    private static final int TRAFFIC_WAIT_TIME = 500;
 
     private static final int SILENCE_WAIT_TIME = 250;
 
@@ -27,7 +27,7 @@ public class VirtualTransportTestConfiguration extends TestConfigurationImpl {
 
     public VirtualTransportTestConfiguration(boolean useDuplexTransport) {
         setContactPointGenerator(new VirtualNetworkContactPointGenerator("virtualhost"));
-        NetworkConnectionIdFactory connectionIdFactory = new DefaultNetworkConnectionIdFactoryImpl();
+        MessageChannelIdFactory connectionIdFactory = new DefaultMessageChannelIdFactoryImpl();
         setTransportProvider(new VirtualNetworkTransportProvider(useDuplexTransport, connectionIdFactory));
         setDefaultTrafficWaitTimeout(TRAFFIC_WAIT_TIME);
         setDefaultNetworkSilenceWait(SILENCE_WAIT_TIME);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,7 +7,8 @@
  */
 package de.rcenvironment.components.converger.gui;
 
-import de.rcenvironment.rce.gui.workflow.editor.properties.ComponentFilter;
+import de.rcenvironment.components.converger.common.ConvergerComponentConstants;
+import de.rcenvironment.core.gui.workflow.editor.properties.ComponentFilter;
 
 /**
  * Filter for merger component.
@@ -18,7 +19,13 @@ public class ConvergerComponentFilter extends ComponentFilter {
 
     @Override
     public boolean filterComponentName(String componentId) {
-        return componentId.startsWith("de.rcenvironment.components.converger.execution.ConvergerComponent_Converger");
+        boolean isMatch = false;
+        for (String id : ConvergerComponentConstants.COMPONENT_IDS) {
+            if (componentId.startsWith(id)) {
+                isMatch = true;
+            }
+        }
+        return isMatch;
     }
 
 }

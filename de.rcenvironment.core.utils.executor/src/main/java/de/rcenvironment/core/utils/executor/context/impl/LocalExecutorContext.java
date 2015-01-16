@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -13,15 +13,15 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import de.rcenvironment.commons.TempFileUtils;
-import de.rcenvironment.commons.executor.CommandLineExecutor;
-import de.rcenvironment.commons.executor.LocalCommandLineExecutor;
+import de.rcenvironment.core.utils.common.TempFileService;
+import de.rcenvironment.core.utils.common.TempFileServiceAccess;
+import de.rcenvironment.core.utils.executor.CommandLineExecutor;
+import de.rcenvironment.core.utils.executor.LocalCommandLineExecutor;
 import de.rcenvironment.core.utils.executor.context.spi.ExecutorContext;
 
 /**
- * An {@link ExecutorContext} implementation for local execution using a
- * {@link LocalCommandLineExecutor}. Acquires temporary directories from the default
- * {@link TempFileUtils} instance.
+ * An {@link ExecutorContext} implementation for local execution using a {@link LocalCommandLineExecutor}. Acquires temporary directories
+ * from the default {@link TempFileService}.
  * 
  * @author Robert Mischke
  */
@@ -48,7 +48,7 @@ public class LocalExecutorContext implements ExecutorContext {
             throw new IllegalStateException("The previous sandbox has not been disposed yet");
         }
         // create new sandbox
-        currentSandboxDir = TempFileUtils.getDefaultInstance().createManagedTempDir("sandbox");
+        currentSandboxDir = TempFileServiceAccess.getInstance().createManagedTempDir("sandbox");
         log.debug("Prepared local sandbox at " + currentSandboxDir);
         return new LocalCommandLineExecutor(currentSandboxDir);
     }
@@ -61,13 +61,13 @@ public class LocalExecutorContext implements ExecutorContext {
             return;
         }
         log.debug("Cleaning local sandbox at " + currentSandboxDir.getAbsolutePath());
-        TempFileUtils.getDefaultInstance().disposeManagedTempDirOrFile(currentSandboxDir);
+        TempFileServiceAccess.getInstance().disposeManagedTempDirOrFile(currentSandboxDir);
         currentSandboxDir = null;
     }
 
     @Override
     public String createUniqueTempDir(String contextHint) throws IOException {
-        String tempDirPath = TempFileUtils.getDefaultInstance().createManagedTempDir(contextHint).getAbsolutePath();
+        String tempDirPath = TempFileServiceAccess.getInstance().createManagedTempDir(contextHint).getAbsolutePath();
         log.debug("Created new local temp directory at " + tempDirPath);
         return tempDirPath;
     }

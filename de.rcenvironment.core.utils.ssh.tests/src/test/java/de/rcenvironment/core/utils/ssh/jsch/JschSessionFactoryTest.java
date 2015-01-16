@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR SC, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -28,15 +28,15 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Logger;
 
 /**
- * Test cases for {@link JschSessionFactory}.
+ * Test case for {@link JschSessionFactory}.
  * 
  * @author Doreen Seider
  */
 public class JschSessionFactoryTest {
 
     private static final String LOCALHOST = "localhost";
-
-    private final int port = 22;
+    
+    private static int port;
     
     private SshServer sshServer;
     
@@ -47,6 +47,7 @@ public class JschSessionFactoryTest {
     @SuppressWarnings("serial")
     @Before
     public void setUp() throws IOException {
+        port = Utils.getRandomPortNumber();
         sshServer = SshServer.setUpDefaultServer();
         sshServer.setPort(port);
         sshServer.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());

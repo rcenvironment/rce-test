@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,17 +11,18 @@ package de.rcenvironment.core.communication.testutils;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.common.NodeIdentifierFactory;
+import de.rcenvironment.core.communication.configuration.CommunicationConfiguration;
+import de.rcenvironment.core.communication.configuration.CommunicationIPFilterConfiguration;
 import de.rcenvironment.core.communication.configuration.NodeConfigurationService;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
-import de.rcenvironment.core.communication.model.impl.NetworkNodeInformationImpl;
-import de.rcenvironment.rce.communication.PlatformIdentifierFactory;
-import de.rcenvironment.rce.communication.internal.CommunicationConfiguration;
+import de.rcenvironment.core.communication.model.impl.InitialNodeInformationImpl;
 
 /**
- * Replacement {@link NodeConfigurationService} for {@link VirtualInstance} integrations tests.
- * Defines the configuration of {@link VirtualInstance}s.
+ * Replacement {@link NodeConfigurationService} for {@link VirtualInstance} integrations tests. Defines the configuration of
+ * {@link VirtualInstance}s.
  * 
  * @author Robert Mischke
  */
@@ -31,18 +32,21 @@ public class NodeConfigurationServiceTestStub implements NodeConfigurationServic
 
     private final NodeIdentifier localNodeId;
 
-    private final NetworkNodeInformationImpl localNodeInformation;
+    private final InitialNodeInformationImpl localNodeInformation;
 
     private final List<NetworkContactPoint> serverContactPoints;
 
     private final List<NetworkContactPoint> initialNetworkPeers;
 
-    public NodeConfigurationServiceTestStub(String nodeId, String displayName) {
-        localNodeId = PlatformIdentifierFactory.fromNodeId(nodeId);
-        localNodeInformation = new NetworkNodeInformationImpl(localNodeId);
+    private final boolean isRelay;
+
+    public NodeConfigurationServiceTestStub(String nodeId, String displayName, boolean isRelay) {
+        localNodeId = NodeIdentifierFactory.fromNodeId(nodeId);
+        localNodeInformation = new InitialNodeInformationImpl(localNodeId);
         localNodeInformation.setDisplayName(displayName);
         serverContactPoints = new ArrayList<NetworkContactPoint>();
         initialNetworkPeers = new ArrayList<NetworkContactPoint>();
+        this.isRelay = isRelay;
     }
 
     @Override
@@ -51,7 +55,13 @@ public class NodeConfigurationServiceTestStub implements NodeConfigurationServic
     }
 
     @Override
-    public NetworkNodeInformation getLocalNodeInformation() {
+    @Deprecated
+    public boolean isWorkflowHost() {
+        return false;
+    }
+
+    @Override
+    public InitialNodeInformation getInitialNodeInformation() {
         return localNodeInformation;
     }
 
@@ -63,6 +73,11 @@ public class NodeConfigurationServiceTestStub implements NodeConfigurationServic
     @Override
     public List<NetworkContactPoint> getInitialNetworkContactPoints() {
         return initialNetworkPeers;
+    }
+
+    @Override
+    public boolean isRelay() {
+        return isRelay;
     }
 
     @Override
@@ -98,6 +113,11 @@ public class NodeConfigurationServiceTestStub implements NodeConfigurationServic
      */
     public void addInitialNetworkPeer(NetworkContactPoint contactPoint) {
         initialNetworkPeers.add(contactPoint);
+    }
+
+    @Override
+    public CommunicationIPFilterConfiguration getIPFilterConfiguration() {
+        return new CommunicationIPFilterConfiguration(); // return default settings (no filtering)
     }
 
 }

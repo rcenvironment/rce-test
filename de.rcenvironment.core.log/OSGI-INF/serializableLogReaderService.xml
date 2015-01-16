@@ -1,7 +1,7 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Serializable Log Reader Servivce">
-	<implementation class="de.rcenvironment.rce.log.internal.SerializableLogReaderServiceImpl" />
+	<implementation class="de.rcenvironment.core.log.internal.SerializableLogReaderServiceImpl" />
  	<service>
-     <provide interface="de.rcenvironment.rce.log.SerializableLogReaderService"/>
+     <provide interface="de.rcenvironment.core.log.SerializableLogReaderService"/>
     </service>
     <reference
 		name="Log Reader Service"

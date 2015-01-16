@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -56,7 +56,7 @@ public class Messages extends NLS {
     /** Constant. */
     public static String workingDir;
 
-    private static final String BUNDLE_NAME = Messages.class.getPackage().getName() + ".messages"; //$NON-NLS-1$
+    private static final String BUNDLE_NAME = Messages.class.getPackage().getName() + ".messages";
 
     static {
         // initialize resource bundle

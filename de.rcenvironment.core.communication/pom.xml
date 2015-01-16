@@ -4,24 +4,13 @@
 
 	<artifactId>de.rcenvironment.core.communication</artifactId>
 	<name>RCE Core Communication Bundle</name>
+	<version>6.0.0.qualifier</version>
 	<packaging>eclipse-plugin</packaging>
 
 	<parent>
 		<groupId>de.rcenvironment</groupId>
 		<artifactId>de.rcenvironment.core.parent</artifactId>
-		<version>2.4.0.qualifier</version>
-		<relativePath>../de.rcenvironment.core.common/coreParent.pom</relativePath>
+		<version>1.0.0</version>
+		<relativePath>../de.rcenvironment.core/maven/coreParent.pom</relativePath>
 	</parent>
-	<dependencies>
-		<dependency>
-			<groupId>net.sf.jung</groupId>
-			<artifactId>jung-algorithms</artifactId>
-			<version>2.0.1</version>
-		</dependency>
-		<dependency>
-			<groupId>net.sf.jung</groupId>
-			<artifactId>jung-graph-impl</artifactId>
-			<version>2.0.1</version>
-		</dependency>
-	</dependencies>
 </project>

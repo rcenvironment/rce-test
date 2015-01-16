@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,6 +7,8 @@
  */
  
 package de.rcenvironment.core.gui.cluster.configuration.internal;
+
+import java.util.Map;
 
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 
@@ -25,6 +27,12 @@ public interface PlainClusterConnectionConfiguration {
      * @return remote cluster queuing system
      */
     ClusterQueuingSystem getClusterQueuingSystem();
+    
+    /**
+     * @return path to cluster queuing system commands. Will be empty, if they are known by the environment established via ssh). Key is
+     *         command, value is path.
+     */
+    Map<String, String> getPathToClusterQueuingSystemCommands();
     
     /**
      * @return host

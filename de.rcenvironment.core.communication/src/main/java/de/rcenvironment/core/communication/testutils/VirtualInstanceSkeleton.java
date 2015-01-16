@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -13,24 +13,23 @@ import java.util.concurrent.Semaphore;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import de.rcenvironment.core.communication.common.CommunicationException;
 import de.rcenvironment.core.communication.configuration.NodeConfigurationService;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
 import de.rcenvironment.core.communication.transport.spi.NetworkTransportProvider;
 import de.rcenvironment.core.utils.common.concurrent.SharedThreadPool;
-import de.rcenvironment.rce.communication.CommunicationException;
+import de.rcenvironment.core.utils.common.concurrent.ThreadPool;
 
 /**
- * Base class for {@link VirtualInstance} that provides management of the instance life cycle and
- * the configured test properties.
+ * Base class for {@link VirtualInstance} that provides management of the instance life cycle and the configured test properties.
  * 
  * @author Robert Mischke
  */
 public abstract class VirtualInstanceSkeleton implements CommonVirtualInstanceControl {
 
     /**
-     * Internal state machine controlling the instance life cycle. Triggers asynchronous execution
-     * of startup/shutdown methods.
+     * Internal state machine controlling the instance life cycle. Triggers asynchronous execution of startup/shutdown methods.
      * 
      * @author Robert Mischke
      */
@@ -147,38 +146,39 @@ public abstract class VirtualInstanceSkeleton implements CommonVirtualInstanceCo
 
     }
 
-    private static final SharedThreadPool sharedThreadPool = SharedThreadPool.getInstance();
+    private static final ThreadPool sharedThreadPool = SharedThreadPool.getInstance();
 
-    protected final NetworkNodeInformation nodeInformation;
+    protected final InitialNodeInformation nodeInformation;
 
     protected final Log log = LogFactory.getLog(getClass());
 
-    private final NodeConfigurationServiceTestStub configurationServiceStub;
+    private final NodeConfigurationServiceTestStub nodeConfigurationService;
 
     private final StateMachine stateMachine = new StateMachine();
 
     /**
      * Creates a virtual instance with the given log/display name.
+     * 
      * @param logName the log/display name to use
+     * @param isRelay whether the "is relay" flag of this node should be set
      */
-    public VirtualInstanceSkeleton(String nodeId, String logName) {
-        configurationServiceStub = new NodeConfigurationServiceTestStub(nodeId, logName);
-        nodeInformation = configurationServiceStub.getLocalNodeInformation();
+    public VirtualInstanceSkeleton(String nodeId, String logName, boolean isRelay) {
+        nodeConfigurationService = new NodeConfigurationServiceTestStub(nodeId, logName, isRelay);
+        nodeInformation = nodeConfigurationService.getInitialNodeInformation();
     }
 
     /**
      * Adds a {@link NetworkContactPoint} at which a network server should be run by this instance.
      * 
-     * @param contactPoint the {@link NetworkContactPoint} that defines the server bind address,
-     *        port and transport type
+     * @param contactPoint the {@link NetworkContactPoint} that defines the server bind address, port and transport type
      */
     public void addServerConfigurationEntry(NetworkContactPoint contactPoint) {
-        configurationServiceStub.addServerConfigurationEntry(contactPoint);
+        nodeConfigurationService.addServerConfigurationEntry(contactPoint);
     }
 
     @Override
     public void addInitialNetworkPeer(NetworkContactPoint contactPoint) {
-        configurationServiceStub.addInitialNetworkPeer(contactPoint);
+        nodeConfigurationService.addInitialNetworkPeer(contactPoint);
     }
 
     public VirtualInstanceState getCurrentState() {
@@ -216,8 +216,8 @@ public abstract class VirtualInstanceSkeleton implements CommonVirtualInstanceCo
     @Override
     public abstract void registerNetworkTransportProvider(NetworkTransportProvider provider);
 
-    protected NodeConfigurationService getConfigurationServiceStub() {
-        return configurationServiceStub;
+    protected NodeConfigurationService getNodeConfigurationService() {
+        return nodeConfigurationService;
     }
 
     protected abstract void performStartup() throws InterruptedException, CommunicationException;

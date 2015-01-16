@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -29,7 +29,7 @@ import org.junit.Test;
  */
 public class SharedThreadPoolTest {
 
-    private static final int CALLABLES_TEST_WAIT_MSEC = 50;
+    private static final int CALLABLES_TEST_WAIT_MSEC = 100;
 
     private static final int NUM_CALLABLES_FOR_GROUP_TEST = 50;
 
@@ -50,7 +50,7 @@ public class SharedThreadPoolTest {
      */
     @After
     public void resetAfter() {
-        log.debug(threadPool.getFormattedStatistics());
+        log.debug(threadPool.getFormattedStatistics(false));
         threadPool.reset();
     }
 
@@ -73,7 +73,7 @@ public class SharedThreadPoolTest {
                     latchIn.await();
                     semOut.release();
                 } catch (InterruptedException e) {
-                    log.warn(e);
+                    log.warn(e); // only log compact exception on test interruption
                 }
             }
         };
@@ -119,4 +119,6 @@ public class SharedThreadPoolTest {
     }
 
     // TODO add test for exception-throwing Callables
+
+    // TODO add test for task canceling
 }

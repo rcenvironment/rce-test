@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -9,6 +9,9 @@
 package de.rcenvironment.core.communication.model.impl;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
 
@@ -26,6 +29,8 @@ public class NetworkContactPointImpl implements NetworkContactPoint, Serializabl
     private int port;
 
     private String transportId;
+
+    private Map<String, String> attributes = Collections.unmodifiableMap(new HashMap<String, String>());
 
     /**
      * Default constructor for bean-style initialization.
@@ -70,6 +75,15 @@ public class NetworkContactPointImpl implements NetworkContactPoint, Serializabl
 
     public void setTransportId(String transportId) {
         this.transportId = transportId;
+    }
+
+    @Override
+    public Map<String, String> getAttributes() {
+        return attributes; // read-only map
+    }
+
+    public void setAttributes(Map<String, String> attributes) {
+        this.attributes = Collections.unmodifiableMap(attributes);
     }
 
     @Override

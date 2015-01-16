@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -9,7 +9,7 @@ package de.rcenvironment.core.utils.executor.context.impl;
 
 import java.io.IOException;
 
-import de.rcenvironment.commons.executor.CommandLineExecutor;
+import de.rcenvironment.core.utils.executor.CommandLineExecutor;
 import de.rcenvironment.core.utils.executor.context.spi.ExecutorContext;
 import de.rcenvironment.core.utils.executor.context.spi.SandboxStrategy;
 

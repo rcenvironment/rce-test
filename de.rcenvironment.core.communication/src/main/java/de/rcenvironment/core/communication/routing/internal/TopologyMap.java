@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -19,20 +19,19 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
-import de.rcenvironment.core.communication.model.impl.NetworkNodeInformationImpl;
-import de.rcenvironment.core.communication.model.internal.NodeInformationHolder;
-import de.rcenvironment.core.communication.model.internal.NodeInformationRegistryImpl;
-import de.rcenvironment.rce.communication.PlatformIdentifier;
+import de.rcenvironment.core.communication.common.NetworkGraph;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
+import de.rcenvironment.core.communication.model.impl.InitialNodeInformationImpl;
+import de.rcenvironment.core.communication.model.internal.NetworkGraphImpl;
+import de.rcenvironment.core.communication.model.internal.NetworkGraphLinkImpl;
 import edu.uci.ics.jung.algorithms.shortestpath.DijkstraShortestPath;
 import edu.uci.ics.jung.graph.DirectedSparseMultigraph;
 
 /**
- * Represents a model of the entire network (i.e. topology map or link state database). A node (
- * {@link TopologyNode}) in the graph corresponds to a RCE instance and an edge represents a
- * connection/link ({@link TopologyLink}) between two RCE instances. The graph is a directed sparse
- * multigraph {@link DirectedSparseMultigraph}.
+ * Represents a model of the entire network (i.e. topology map or link state database). A node ( {@link TopologyNode}) in the graph
+ * corresponds to a RCE instance and an edge represents a connection/link ({@link TopologyLink}) between two RCE instances. The graph is a
+ * directed sparse multigraph {@link DirectedSparseMultigraph}.
  * 
  * TODO review: reduce synchronization
  * 
@@ -49,25 +48,23 @@ public final class TopologyMap {
     private static final Log LOGGER = LogFactory.getLog(TopologyMap.class);
 
     /**
-     * @see <a
-     *      href="http://jung.sourceforge.net/doc/api/edu/uci/ics/jung/graph/DirectedSparseMultigraph.html">DirectedSparseMultigraph</a>
+     * @see <a href="http://jung.sourceforge.net/doc/api/edu/uci/ics/jung/graph/DirectedSparseMultigraph.html">DirectedSparseMultigraph</a>
      */
     private final DirectedSparseMultigraph<TopologyNode, TopologyLink> networkModel =
         new DirectedSparseMultigraph<TopologyNode, TopologyLink>();
 
-    private final NetworkNodeInformation localNodeInformation;
+    private final InitialNodeInformation localNodeInformation;
 
     private final NodeIdentifier localNodeId;
 
     /**
      * The constructor.
      * 
-     * @param ownNodeInformation The node that uses the {@link TopologyMap} instance to represent
-     *        its view on the network.
+     * @param ownNodeInformation The node that uses the {@link TopologyMap} instance to represent its view on the network.
      */
-    public TopologyMap(NetworkNodeInformation ownNodeInformation) {
+    public TopologyMap(InitialNodeInformation ownNodeInformation) {
         this.localNodeInformation = ownNodeInformation;
-        this.localNodeId = ownNodeInformation.getWrappedNodeId();
+        this.localNodeId = ownNodeInformation.getNodeId();
         TopologyNode localNode = addNode(localNodeId);
         // initialize sequence number
         localNode.invalidateSequenceNumber();
@@ -77,7 +74,7 @@ public final class TopologyMap {
      * Convenience constructor for unit tests.
      */
     protected TopologyMap(NodeIdentifier nodeId) {
-        this(new NetworkNodeInformationImpl(nodeId));
+        this(new InitialNodeInformationImpl(nodeId));
     }
 
     /**
@@ -98,8 +95,7 @@ public final class TopologyMap {
      * Integrates information from an {@link LinkStateAdvertisement} into the graph.
      * 
      * @param lsa The link state advertisement.
-     * @return Whether the link state advertisement was "accepted" and therefore integrated in the
-     *         graph or considered as being to old.
+     * @return Whether the link state advertisement was "accepted" and therefore integrated in the graph or considered as being to old.
      */
     public synchronized boolean update(LinkStateAdvertisement lsa) {
         // TODO optimize algorithm --krol_ph
@@ -110,8 +106,8 @@ public final class TopologyMap {
             TopologyNode ownNode = getNode(localNodeId);
             // TODO eliminate these from being sent; at least as part of the initial batch response
             // -- misc_ro
-            LOGGER.debug("Ignored an update LSA for the local node: LSA seqNo=" + lsa.getSequenceNumber() + ", local seqNo="
-                + ownNode.getSequenceNumber());
+            // LOGGER.debug("Ignored an update LSA for the local node: LSA seqNo=" + lsa.getSequenceNumber() + ", local seqNo="
+            // + ownNode.getSequenceNumber());
             return false;
         }
 
@@ -119,10 +115,10 @@ public final class TopologyMap {
 
         TopologyNode lsaRoot = getNode(lsaOwner);
 
-        if ((lsaRootPresent && lsaRoot.getSequenceNumber() >= lsa.getSequenceNumber()) 
+        if ((lsaRootPresent && lsaRoot.getSequenceNumber() >= lsa.getSequenceNumber())
             || (!lsaRootPresent && LinkStateAdvertisement.REASON_SHUTDOWN.equals(lsa.getReason()))) {
             // lsa is too old, discard it, do not forward it
-           // we know already that the node is not there anymore
+            // we know already that the node is not there anymore
             return false;
         }
 
@@ -148,12 +144,6 @@ public final class TopologyMap {
             node.setDisplayName(lsa.getDisplayName());
             node.setIsWorkflowHost(lsa.getIsWorkflowHost());
 
-            // TODO temporary approach
-            NodeInformationHolder metaInformationHolder =
-                NodeInformationRegistryImpl.getInstance().getWritableNodeInformation(lsaOwner.getNodeId());
-            metaInformationHolder.setDisplayName(lsa.getDisplayName());
-            metaInformationHolder.setIsWorkflowHost(lsa.getIsWorkflowHost());
-
             // add links (and remote nodes)
             for (TopologyLink link : lsa.getLinks()) {
                 if (!containsNode(link.getDestination())) {
@@ -166,10 +156,10 @@ public final class TopologyMap {
         // if the purpose of the LSA was to tell that an instance is shutting down
         if (LinkStateAdvertisement.REASON_SHUTDOWN.equals(lsa.getReason())) {
             // LOGGER.debug(String.format("%s has been informed that %s will shut down soon.",
-            // owner,
-            // lsa.getOwner()));
-            // FIXME explicitly close/remove connections
+            // owner, // lsa.getOwner()));
             // TODO check: are both incoming and outgoing links removed from topology map?
+            LOGGER.debug("Received a shutdown notice for node " + lsaRoot.getNodeIdentifier()
+                + "; removing it from local topology");
             removeNode(lsaRoot);
         }
 
@@ -177,11 +167,10 @@ public final class TopologyMap {
     }
 
     /**
-     * Computes the shortest path from the source node to the destination node. The Dijkstra
-     * shortest path algorithm is used to determine the shortest path.
+     * Computes the shortest path from the source node to the destination node. The Dijkstra shortest path algorithm is used to determine
+     * the shortest path.
      * 
-     * @see <a
-     *      href="http://jung.sourceforge.net/doc/api/edu/uci/ics/jung/algorithms/shortestpath/DijkstraShortestPath.html">
+     * @see <a href="http://jung.sourceforge.net/doc/api/edu/uci/ics/jung/algorithms/shortestpath/DijkstraShortestPath.html">
      *      DijkstraShortestPath</a>
      * @param source The source platform
      * @param destination The destination platform
@@ -196,9 +185,11 @@ public final class TopologyMap {
         List<NodeIdentifier> nodes = new ArrayList<NodeIdentifier>();
 
         TopologyNode sourceNode = getNode(source);
+        if (sourceNode == null) {
+            throw new IllegalStateException("Consistency error: The local node is not part of the known topology");
+        }
         TopologyNode destinationNode = getNode(destination);
-        // TODO check: behavior if these conditions are NOT met?
-        if (sourceNode != null && destinationNode != null) {
+        if (destinationNode != null) {
             DijkstraShortestPath<TopologyNode, TopologyLink> alg =
                 new DijkstraShortestPath<TopologyNode, TopologyLink>(networkModel);
 
@@ -209,9 +200,12 @@ public final class TopologyMap {
             for (TopologyLink link : path) {
                 nodes.add(networkModel.getEndpoints(link).getSecond().getNodeIdentifier());
             }
+            return new NetworkRoute(source, destination, path, nodes, elapsed);
+            // LOGGER.debug(String.format("Route computation: %s ms", elapsed * 10e-9));
+        } else {
+            LOGGER.warn("Could not determine route to node " + destination + " as it is not part of the known topology");
+            return null;
         }
-        // LOGGER.debug(String.format("Route computation: %s ms", elapsed * 10e-9));
-        return new NetworkRoute(source, destination, path, nodes, elapsed);
     }
 
     /**
@@ -220,8 +214,8 @@ public final class TopologyMap {
      * @param restrictToWorkflowHostsAndSelf No description available.
      * @return Set of platform identifiers.
      */
-    public synchronized Set<PlatformIdentifier> getIdsOfReachableNodes(boolean restrictToWorkflowHostsAndSelf) {
-        Set<PlatformIdentifier> result = new HashSet<PlatformIdentifier>();
+    public synchronized Set<NodeIdentifier> getIdsOfReachableNodes(boolean restrictToWorkflowHostsAndSelf) {
+        Set<NodeIdentifier> result = new HashSet<NodeIdentifier>();
         // get the map of reachable nodes by (ab)using the Dijkstra algorithm;
         // TODO is there a more efficient approach available in JUNG?
         DijkstraShortestPath<TopologyNode, TopologyLink> alg =
@@ -234,17 +228,18 @@ public final class TopologyMap {
                     continue;
                 }
             }
-            // TODO remove typecast once NetworkIdentifier vs. PlatformIdentifier is done
-            result.add((PlatformIdentifier) node.getNodeIdentifier());
+            // TODO remove typecast once NetworkIdentifier vs. NodeIdentifier is done
+            result.add((NodeIdentifier) node.getNodeIdentifier());
         }
         return result;
     }
 
     /**
      * FIXME unspecified semantics; rename or replace for clarity -- misc_ro.
+     * 
      * @return The link state advertisement.
      */
-    public synchronized LinkStateAdvertisement generateLsa() {
+    public synchronized LinkStateAdvertisement generateNewLocalLSA() {
         return generateLsa(getLocalNodeId(), true);
     }
 
@@ -278,8 +273,7 @@ public final class TopologyMap {
             sequenceNumber,
             hashCode(),
             rootNode.isRouting(),
-            networkModel.getOutEdges(rootNode)
-        );
+            networkModel.getOutEdges(rootNode));
     }
 
     /**
@@ -291,8 +285,7 @@ public final class TopologyMap {
         return LinkStateAdvertisement.createShutDownLsa(
             getLocalNodeId(), localNodeInformation.getDisplayName(),
             localNodeInformation.getIsWorkflowHost(),
-            myself.invalidateSequenceNumber()
-        );
+            myself.invalidateSequenceNumber());
     }
 
     /**
@@ -308,8 +301,7 @@ public final class TopologyMap {
             localNodeInformation.getIsWorkflowHost(),
             myself.invalidateSequenceNumber(),
             myself.isRouting(),
-            networkModel.getOutEdges(myself)
-        );
+            networkModel.getOutEdges(myself));
     }
 
     /**
@@ -384,13 +376,13 @@ public final class TopologyMap {
     }
 
     /**
-     * @param nodeIdentifier The node identifier.
+     * @param nodeId The node identifier.
      * @return The network node.
      */
-    public synchronized TopologyNode getNode(NodeIdentifier nodeIdentifier) {
+    public synchronized TopologyNode getNode(NodeIdentifier nodeId) {
         // TODO use map instead of linear search here! -- misc_ro
         for (TopologyNode networkNode : networkModel.getVertices()) {
-            if (networkNode.getNodeIdentifier().equals(nodeIdentifier)) {
+            if (networkNode.getNodeIdentifier().equals(nodeId)) {
                 return networkNode;
             }
         }
@@ -398,8 +390,8 @@ public final class TopologyMap {
     }
 
     /**
-     * Convenience method to get the sequence number for a node by its id. If no matching node
-     * exists, a {@link IllegalArgumentException} is thrown.
+     * Convenience method to get the sequence number for a node by its id. If no matching node exists, a {@link IllegalArgumentException} is
+     * thrown.
      * 
      * @param id the id of the node
      * @return the current sequence number of that node
@@ -407,17 +399,17 @@ public final class TopologyMap {
     public long getSequenceNumberOfNode(NodeIdentifier id) {
         TopologyNode node = getNode(id);
         if (node == null) {
-            throw new IllegalArgumentException("No such node: " + id.getNodeId());
+            throw new IllegalArgumentException("No such node: " + id.getIdString());
         }
         return node.getSequenceNumber();
     }
 
     /**
-     * @param nodeIdentifier The node identifier.
+     * @param nodeId The node identifier.
      * @return Whether graph contains the node.
      */
-    public synchronized boolean containsNode(NodeIdentifier nodeIdentifier) {
-        return containsNode(new TopologyNode(nodeIdentifier));
+    public synchronized boolean containsNode(NodeIdentifier nodeId) {
+        return containsNode(new TopologyNode(nodeId));
     }
 
     /**
@@ -431,8 +423,8 @@ public final class TopologyMap {
     /**
      * @param source The source platform.
      * @param destination The destination platform.
-     * @return Whether the graph contains <code>source</code> and <code>destination</code> platform
-     *         AND at least one edge between both platforms.
+     * @return Whether the graph contains <code>source</code> and <code>destination</code> platform AND at least one edge between both
+     *         platforms.
      */
     public synchronized boolean containsLinkBetween(NodeIdentifier source, NodeIdentifier destination) {
         TopologyNode sourceNode = getNode(source);
@@ -482,11 +474,10 @@ public final class TopologyMap {
     }
 
     /**
-     * Add a link into the network topology.
-     * TODO clean up.
+     * Add a link into the network topology. TODO clean up.
      * 
      * @param networkLink The network link.
-     * @return true 
+     * @return true
      */
     public synchronized boolean addLink(TopologyLink networkLink) {
         if (networkLink.getConnectionId() == null) {
@@ -563,13 +554,13 @@ public final class TopologyMap {
     }
 
     /**
-     * @param nodeIdentifier The platform identifier.
+     * @param nodeId The platform identifier.
      * @return Whether the platform existed in the graph before.
      */
-    public synchronized TopologyNode addNode(NodeIdentifier nodeIdentifier) {
-        TopologyNode existingNetworkNode = getNode(nodeIdentifier);
+    public synchronized TopologyNode addNode(NodeIdentifier nodeId) {
+        TopologyNode existingNetworkNode = getNode(nodeId);
         if (existingNetworkNode == null) {
-            TopologyNode node = new TopologyNode(nodeIdentifier);
+            TopologyNode node = new TopologyNode(nodeId);
             networkModel.addVertex(node);
             return node;
         }
@@ -598,16 +589,15 @@ public final class TopologyMap {
     }
 
     /**
-     * Searches for a network link that is outgoing from the {@link TopologyMap#localNodeId} and
-     * contains the network contact.
+     * Searches for a network link that is outgoing from the {@link TopologyMap#localNodeId} and contains the network contact.
      * 
-     * @param connectionId The network connection id
+     * @param channelId The network connection id
      * @return The found network link or null.
      */
-    public synchronized TopologyLink getLinkForConnection(String connectionId) {
+    public synchronized TopologyLink getLinkForConnection(String channelId) {
         // TODO review: replace by map? -- misc_ro
         for (TopologyLink link : networkModel.getOutEdges(getNode(getLocalNodeId()))) {
-            if (link.getConnectionId().equals(connectionId)) {
+            if (link.getConnectionId().equals(channelId)) {
                 return link;
             }
         }
@@ -616,7 +606,7 @@ public final class TopologyMap {
 
     /**
      * TODO Enter comment!
-     *  
+     * 
      * @param connectionId The connection id.
      * @return Is there a link for the connection.
      */
@@ -647,11 +637,27 @@ public final class TopologyMap {
     }
 
     /**
-     * @param nodeIdentifier The platform identifier.
+     * @param nodeId The platform identifier.
      * @return All successor nodes (platforms) in the current graph.
      */
-    public synchronized Collection<TopologyNode> getSuccessors(NodeIdentifier nodeIdentifier) {
-        return getSuccessors(getNode(nodeIdentifier));
+    public synchronized Collection<TopologyNode> getSuccessors(NodeIdentifier nodeId) {
+        return getSuccessors(getNode(nodeId));
+    }
+
+    /**
+     * @param nodeId the id of the queried node
+     * @return all links starting at the given node
+     */
+    public synchronized Collection<TopologyLink> getAllOutgoingLinks(NodeIdentifier nodeId) {
+        return getOutgoingLinks(getNode(nodeId));
+    }
+
+    /**
+     * @param node the queried {@link TopologyNode}
+     * @return all links starting at the given node
+     */
+    public Collection<TopologyLink> getOutgoingLinks(TopologyNode node) {
+        return networkModel.getOutEdges(node);
     }
 
     /**
@@ -662,11 +668,36 @@ public final class TopologyMap {
         return networkModel.getPredecessors(networkNode);
     }
 
+    public InitialNodeInformation getLocalNodeInformation() {
+        return localNodeInformation;
+    }
+
     /**
      * @return Returns the owner.
      */
     public synchronized NodeIdentifier getLocalNodeId() {
         return localNodeId;
+    }
+
+    /**
+     * @return a new {@link NetworkGraph} containing all (unfiltered) nodes and links of this {@link TopologyMap}
+     */
+    public synchronized NetworkGraph toRawNetworkGraph() {
+        NetworkGraphImpl rawGraph = new NetworkGraphImpl(localNodeId);
+
+        for (TopologyNode node : getNodes()) {
+            NodeIdentifier nodeId = node.getNodeIdentifier();
+            rawGraph.addNode(nodeId);
+        }
+
+        for (TopologyLink link : getAllLinks()) {
+            NetworkGraphLinkImpl graphLink = new NetworkGraphLinkImpl(link.getConnectionId(), link.getSource(), link.getDestination());
+            rawGraph.addLink(graphLink);
+        }
+
+        // rawGraph.getNodeById(localNodeId).setIsLocalNode(true);
+
+        return rawGraph;
     }
 
 }

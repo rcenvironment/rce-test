@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -15,15 +15,14 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import de.rcenvironment.core.utils.cluster.ClusterJobInformation.ClusterJobState;
-import de.rcenvironment.core.utils.cluster.torque.internal.ClusterJobTimesInformation;
 
 /**
- * Test cases for {@link ModifyableClusterJobInformation}.
+ * Test cases for {@link ClusterJobInformationImpl}.
  * @author Doreen Seider
  */
 public class ModifyableClusterJobInformationTest {
 
-    private ModifyableClusterJobInformation information = new ModifyableClusterJobInformation();
+    private ClusterJobInformationImpl information = new ClusterJobInformationImpl();
     
     /** Tests for getters and setters. */
     @Test
@@ -48,10 +47,6 @@ public class ModifyableClusterJobInformationTest {
         information.setUser(randomString);
         assertEquals(randomString, information.getUser());
 
-        randomString = RandomStringUtils.random(5);
-        information.setWorkflowInformation(randomString);
-        assertEquals(randomString, information.getSubmittedFrom());
-        
         assertNotNull(randomString, information.getQueueTime());
         assertNotNull(randomString, information.getStartTime());
         assertNotNull(randomString, information.getRemainingTime());

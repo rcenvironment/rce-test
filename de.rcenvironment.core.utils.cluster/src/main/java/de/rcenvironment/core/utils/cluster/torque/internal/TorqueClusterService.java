@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -9,7 +9,6 @@
 package de.rcenvironment.core.utils.cluster.torque.internal;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,34 +16,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import org.apache.commons.io.IOUtils;
-
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-
-import de.rcenvironment.commons.ServiceUtils;
-import de.rcenvironment.core.utils.cluster.ClusterService;
 import de.rcenvironment.core.utils.cluster.ClusterJobInformation;
 import de.rcenvironment.core.utils.cluster.ClusterJobInformation.ClusterJobState;
-import de.rcenvironment.core.utils.cluster.ClusterJobStateChangeListener;
-import de.rcenvironment.core.utils.cluster.ClusterQueuingSystem;
-import de.rcenvironment.core.utils.cluster.DistributedClusterJobSourceService;
-import de.rcenvironment.core.utils.cluster.internal.ModifyableClusterJobInformation;
-import de.rcenvironment.core.utils.ssh.jsch.JschSessionFactory;
-import de.rcenvironment.core.utils.ssh.jsch.SshParameterException;
+import de.rcenvironment.core.utils.cluster.ClusterService;
+import de.rcenvironment.core.utils.cluster.internal.AbstractClusterService;
+import de.rcenvironment.core.utils.cluster.internal.ClusterJobInformationImpl;
+import de.rcenvironment.core.utils.cluster.internal.ClusterJobTimesInformation;
 import de.rcenvironment.core.utils.ssh.jsch.SshSessionConfiguration;
-import de.rcenvironment.core.utils.ssh.jsch.executor.JSchCommandLineExecutor;
 
 /**
  * TORQUE implementation of {@link ClusterService}.
  * @author Doreen Seider
  */
-public class TorqueClusterService implements ClusterService {
-
-    private static final String REMOTE_WORK_DIR = "~";
+public class TorqueClusterService extends AbstractClusterService {
 
     private static final int INDEX_JOBID = 0;
     
@@ -68,64 +53,30 @@ public class TorqueClusterService implements ClusterService {
     
     private static final int SECTION_BLOCKED_JOBS = 2;
     
-    private static DistributedClusterJobSourceService informationService
-        = ServiceUtils.createNullService(DistributedClusterJobSourceService.class);
-    
-    private SshSessionConfiguration sshConfiguration;
-    
-    private Session jschSession;
-    
-    private volatile long latestFetch = 0;
-    
-    private Map<String, ClusterJobInformation> latestFetchedJobInformation;
-    
-    private Map<String, ClusterJobState> lastClusterJobStates = new HashMap<String, ClusterJobInformation.ClusterJobState>();
-    
-    private final Map<String, ClusterJobStateChangeListener> listeners = new HashMap<String, ClusterJobStateChangeListener>();
-
-    private Timer fetchInformationTimer;
-    
+    // only for OSGi
+    @Deprecated
     public TorqueClusterService() {}
     
-    public TorqueClusterService(SshSessionConfiguration sshConfiguration) {
-        this.sshConfiguration = sshConfiguration;
+    public TorqueClusterService(SshSessionConfiguration sshConfiguration, Map<String, String> pathToQueuingSystemCommands) {
+        super(sshConfiguration, pathToQueuingSystemCommands);
     }
-    
-    protected void bindClusterJobSourceService(DistributedClusterJobSourceService newService) {
-        informationService = newService;
-    }
-    
-    protected void unbindDistributedClusterJobSourceInformationService(DistributedClusterJobSourceService oldService) {}
-    
+
     @Override
-    public Set<ClusterJobInformation> fetchClusterJobInformation() throws IOException {
-        synchronized (this) {
-            if (jschSession == null) {
-                try {
-                    jschSession = JschSessionFactory.setupSession(sshConfiguration.getDestinationHost(),
-                        sshConfiguration.getPort(), sshConfiguration.getSshAuthUser(), null,
-                        sshConfiguration.getSshAuthPhrase(), null);
-                } catch (JSchException e) {
-                    throw new IOException("Establishing connection to cluster failed", e);
-                } catch (SshParameterException e) {
-                    throw new IOException("Establishing connection to cluster failed", e);
-                }
-            }   
-        }
-        String stdout = executesCommand(jschSession, "qstat -a", REMOTE_WORK_DIR);
+    protected Set<ClusterJobInformation> fetchAndParseClusterJobInformation() throws IOException {
+        String stdout = executesCommand(jschSession, buildMainCommand("qstat") + " -a", REMOTE_WORK_DIR);
         Map<String, ClusterJobInformation> jobInformation = parseStdoutForClusterJobInformation(stdout);
 
         latestFetchedJobInformation = Collections.unmodifiableMap(jobInformation);
         latestFetch = new Date().getTime();
         
-        stdout = executesCommand(jschSession, "showq", REMOTE_WORK_DIR);
+        stdout = executesCommand(jschSession, buildMainCommand("showq"), REMOTE_WORK_DIR);
         Map<String, ClusterJobTimesInformation> jobTimesInformation = parseStdoutForClusterJobTimesInformation(stdout);
         return enhanceClusterJobInformation(jobInformation, jobTimesInformation);
     }
     
     @Override
     public String cancelClusterJobs(List<String> jobIds) throws IOException {
-        StringBuilder commandBuilder = new StringBuilder("qdel ");
+        StringBuilder commandBuilder = new StringBuilder(buildMainCommand("qdel") + " ");
         for (String jobId : jobIds) {
             commandBuilder.append(" ");
             commandBuilder.append(jobId);
@@ -137,89 +88,8 @@ public class TorqueClusterService implements ClusterService {
         }
         return "";
     }
-
-        
-    @Override
-    public void addClusterJobStateChangeListener(String jobId, final ClusterJobStateChangeListener listener) {
-        synchronized (listeners) {
-            listeners.put(jobId, listener);
-            if (fetchInformationTimer == null) {
-                fetchInformationTimer = new Timer("Fetch Cluster Job Information Timer", true);
-                TimerTask fetchInformationTimerTask = new TimerTask() {
-                    
-                    @Override
-                    public void run() {
-                        final int oneSecond = 1000;
-                        if (latestFetchedJobInformation == null || new Date().getTime() - latestFetch > FETCH_INTERVAL + oneSecond) {
-                            try {
-                                fetchClusterJobInformation();
-                            } catch (IOException e) {
-                                throw new RuntimeException("Fetching cluster job information failed", e);
-                            }
-                        }
-                        notifyClusterJobStateChangeListener();
-                    }
-                };
-                fetchInformationTimer.schedule(fetchInformationTimerTask, 0, ClusterService.FETCH_INTERVAL);                
-            }
-        }
-    }
     
-    private void notifyClusterJobStateChangeListener() {
-
-        Set<String> listenersToRemove = new HashSet<String>();
-        
-        synchronized (listeners) {
-            for (String jobId : listeners.keySet()) {
-                ClusterJobInformation.ClusterJobState lastState = lastClusterJobStates.get(jobId);
-                if (latestFetchedJobInformation.containsKey(jobId)) {
-                    ClusterJobInformation.ClusterJobState latestState = latestFetchedJobInformation.get(jobId).getJobState();
-                    if (lastState == null || !lastState.equals(latestState)) {
-                        if (!listeners.get(jobId).onClusterJobStateChanged(latestState)) {
-                            listenersToRemove.add(jobId);
-                        }
-                    }
-                    lastState = latestState;
-                } else {
-                    if (!listeners.get(jobId).onClusterJobStateChanged(ClusterJobInformation.ClusterJobState.Unknown)) {
-                        listenersToRemove.add(jobId);
-                    }
-                }
-            }
-            
-            for (String jobId : listenersToRemove) {
-                listeners.remove(jobId);
-            }
-            
-            
-            if (listeners.isEmpty()) {
-                fetchInformationTimer.cancel();
-                fetchInformationTimer = null;
-            }
-        }
-    }
-    
-    private String executesCommand(Session ajschSession, String command, String remoteWorkDir)
-        throws IOException {
-        JSchCommandLineExecutor commandLineExecutor = new JSchCommandLineExecutor(ajschSession, remoteWorkDir);
-        commandLineExecutor.start(command);
-        InputStream stdoutStream = commandLineExecutor.getStdout();
-        InputStream stderrStream = commandLineExecutor.getStderr();
-        try {
-            commandLineExecutor.waitForTermination();
-        } catch (InterruptedException e) {
-            throw new IOException(e);
-        }
-        String stderr = IOUtils.toString(stderrStream);
-        IOUtils.closeQuietly(stderrStream);
-        if (stderr != null && !stderr.isEmpty()) {
-            throw new IOException(stderr);
-        }
-        String stdout = IOUtils.toString(stdoutStream);
-        IOUtils.closeQuietly(stdoutStream);
-        return stdout;
-    }
-
+    // visibility is protected for test purposes
     protected Map<String, ClusterJobInformation> parseStdoutForClusterJobInformation(String stdout) {
         Map<String, ClusterJobInformation> jobInformation = new HashMap<String, ClusterJobInformation>();
         
@@ -249,6 +119,7 @@ public class TorqueClusterService implements ClusterService {
         return jobInformation;
     }
     
+    // visibility is protected for test purposes
     protected Map<String, ClusterJobTimesInformation> parseStdoutForClusterJobTimesInformation(String stdout) {
         Map<String, ClusterJobTimesInformation> information = new HashMap<String, ClusterJobTimesInformation>();
         
@@ -284,12 +155,12 @@ public class TorqueClusterService implements ClusterService {
 
         return information;
     }
-    
+
+    // visibility is protected for test purposes
     protected Set<ClusterJobInformation> enhanceClusterJobInformation(Map<String, ClusterJobInformation> jobInformation,
         Map<String, ClusterJobTimesInformation> jobTimesInformation) {
         
         jobInformation = enhanceClusterJobInformationWithTimesInformation(jobInformation, jobTimesInformation);
-        jobInformation = enhanceClusterJobInformationWithSubmissionSourceInformation(jobInformation);
 
         return new HashSet<ClusterJobInformation>(jobInformation.values());
     }
@@ -300,28 +171,12 @@ public class TorqueClusterService implements ClusterService {
         for (ClusterJobInformation information : jobInformation.values()) {
             String jobName = information.getJobId().split("\\.")[0];
             if (jobTimesInformation.containsKey(jobName)) {
-                ((ModifyableClusterJobInformation) information).setClusterJobTimesInformation(jobTimesInformation.get(jobName));
+                ((ClusterJobInformationImpl) information).setClusterJobTimesInformation(jobTimesInformation.get(jobName));
             } else {
-                ((ModifyableClusterJobInformation) information).setClusterJobTimesInformation(new ClusterJobTimesInformation());
+                ((ClusterJobInformationImpl) information).setClusterJobTimesInformation(new ClusterJobTimesInformation());
             }
         }
         return jobInformation;
-    }
-    
-    private Map<String, ClusterJobInformation> enhanceClusterJobInformationWithSubmissionSourceInformation(
-        Map<String, ClusterJobInformation> jobInformation) {
-
-        Map<String, String> sourceInformation = informationService.getSourceInformation(ClusterQueuingSystem.TORQUE,
-            sshConfiguration.getDestinationHost(), sshConfiguration.getPort());
-
-        for (String jobId : sourceInformation.keySet()) {
-            if (jobInformation.containsKey(jobId)) {
-                ((ModifyableClusterJobInformation) jobInformation.get(jobId)).setWorkflowInformation(sourceInformation.get(jobId));
-            }
-        }
-
-        return jobInformation;
-        
     }
     
     private ClusterJobTimesInformation extractClusterJobTimesInformation(String[] lineTokens, int section) {
@@ -354,11 +209,10 @@ public class TorqueClusterService implements ClusterService {
     }
     
     private ClusterJobInformation extractClusterJobInformation(String[] lineTokens) {
-        ModifyableClusterJobInformation information = new ModifyableClusterJobInformation();
+        ClusterJobInformationImpl information = new ClusterJobInformationImpl();
         
         information.setJobId(lineTokens[INDEX_JOBID]);
         information.setUser(lineTokens[INDEX_USER]);
-        information.setQueue(lineTokens[INDEX_QUEUE]);
         information.setQueue(lineTokens[INDEX_QUEUE]);
         information.setJobName(lineTokens[INDEX_JOBNAME]);
         information.setJobState(getClusterJobState(lineTokens[INDEX_JOBSTATE]));

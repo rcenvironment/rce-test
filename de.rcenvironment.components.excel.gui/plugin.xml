@@ -2,6 +2,17 @@
 <?eclipse version="3.2"?>
 <plugin>
 
+	<!-- Hide from Windows->Show View -->
+	<extension point="org.eclipse.ui.activities">  
+	  <activity id="de.rcenvironment.components.excel.gui.activity.suppress.runtime" name="Suppress runtime view">
+	  </activity>
+	  <activityPatternBinding
+	     activityId="de.rcenvironment.components.excel.gui.activity.suppress.runtime"
+	     isEqualityPattern="true"
+	     pattern="de.rcenvironment.components.excel.gui/de.rcenvironment.components.excel.gui.view.ExcelView">
+	  </activityPatternBinding>
+	 </extension>
+	 
    <!-- Property Sections -->
    <extension
          point="org.eclipse.ui.views.properties.tabbed.propertySections">
@@ -9,24 +20,31 @@
             contributorId="de.rcenvironment.rce.gui.workflow.editor.WorkflowEditor">
          <propertySection
                tab="workflow.editor.tab.excel.File"
-               class="de.rcenvironment.rce.components.excel.gui.properties.FileSection"
-               id="workflow.editor.tab.Properties.Section"
-               filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter"
+               class="de.rcenvironment.components.excel.gui.properties.FileSection"
+               id="workflow.editor.tab.Properties.Section.File"
+               filter="de.rcenvironment.components.excel.gui.properties.ExcelComponentFilter"
                enablesFor="1">
          </propertySection>
          <propertySection
                tab="workflow.editor.tab.excel.Variables"
-               class="de.rcenvironment.rce.components.excel.gui.properties.VariablesSection"
-               id="workflow.editor.tab.Properties.Section"
-               filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter"
+               class="de.rcenvironment.components.excel.gui.properties.VariablesSection"
+               id="workflow.editor.tab.Properties.Section.Variables"
+               filter="de.rcenvironment.components.excel.gui.properties.ExcelComponentFilter"
                enablesFor="1">
          </propertySection>
          <propertySection
                tab="workflow.editor.tab.excel.Macros"
-               class="de.rcenvironment.rce.components.excel.gui.properties.MacrosSection"
-               id="workflow.editor.tab.Properties.Section"
-               filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter"
+               class="de.rcenvironment.components.excel.gui.properties.MacrosSection"
+               id="workflow.editor.tab.Properties.Section.Macros"
+               filter="de.rcenvironment.components.excel.gui.properties.ExcelComponentFilter"
                enablesFor="1">
+         </propertySection>
+         <propertySection
+               class="de.rcenvironment.core.gui.workflow.editor.properties.ComponentHistoryDataSection"
+               enablesFor="1"
+               filter="de.rcenvironment.components.excel.gui.properties.ExcelComponentFilter"
+               id="workflow.editor.tab.HistoryData.Section"
+               tab="workflow.editor.tab.HistoryData">
          </propertySection>
       </propertySections>
    </extension>
@@ -53,34 +71,39 @@
                afterTab="workflow.editor.tab.excel.Variables"
                id="workflow.editor.tab.excel.Macros">
          </propertyTab>
+         <propertyTab
+               category="history"
+               id="workflow.editor.tab.HistoryData"
+               label="History Data"
+               afterTab="workflow.editor.tab.excel.Macros">
+         </propertyTab>
       </propertyTabs>
    </extension>
    
 	<!-- Runtime View -->
    <extension point="org.eclipse.ui.views">
-        <view category="de.rcenvironment.rce.components"
-            allowMultiple="true"
+        <view allowMultiple="true"
             name="Excel"
             icon="resources/excel_16.png"
-            class="de.rcenvironment.rce.components.excel.gui.view.ExcelView"
-            id="de.rcenvironment.rce.components.excel.gui.view.ExcelView"
+            class="de.rcenvironment.components.excel.gui.view.ExcelView"
+            id="de.rcenvironment.components.excel.gui.view.ExcelView"
             restorable="false">
         </view>
     </extension>
     
     <!-- Register Runtime View -->
-    <extension point="de.rcenvironment.rce.gui.workflow.monitoring">
-        <monitor component="de.rcenvironment.rce.components.excel.*"
-            view="de.rcenvironment.rce.components.excel.gui.view.ExcelView"
+    <extension point="de.rcenvironment.core.gui.workflow.monitoring">
+        <monitor component="de.rcenvironment.excel"
+            view="de.rcenvironment.components.excel.gui.view.ExcelView"
             default="true">
         </monitor>
     </extension>
     
     <!-- View Location -->
     <extension point="org.eclipse.ui.perspectiveExtensions">
-		<perspectiveExtension targetID="de.rcenvironment.rce">
-			<view id="de.rcenvironment.rce.components.excel.*" relationship="stack"
-				relative="de.rcenvironment.rce.Perspective.bottom" visible="false">
+		<perspectiveExtension targetID="de.rcenvironment.core">
+			<view id="de.rcenvironment.components.excel.*" relationship="stack"
+				relative="de.rcenvironment.core.Perspective.bottom" visible="false">
 			</view>
 		</perspectiveExtension>
 	</extension>
@@ -88,25 +111,28 @@
     <!-- Dynamic Help -->
     <extension point="org.eclipse.help.contexts">
         <contexts 
-            file="resources/contexts.xml">
+            file="resources/help/contexts.xml">
          </contexts>
         <contexts 
-            file="resources/contexts.xml" plugin="de.rcenvironment.rce.components.excel">
+            file="resources/help/contexts.xml" plugin="de.rcenvironment">
          </contexts>
      </extension>
    
     <!-- Component configuration validator -->
     <extension
-         point="de.rcenvironment.rce.gui.workflow.nodeValidators">
+         point="de.rcenvironment.core.gui.workflow.nodeValidators">
       <validator
-            class="de.rcenvironment.rce.components.excel.gui.properties.ExcelMacroWorkflowNodeValidator"
-            filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter">
+            class="de.rcenvironment.components.excel.gui.properties.ExcelMacroWorkflowNodeValidator"
+            filter="de.rcenvironment.components.excel.gui.properties.ExcelComponentFilter">
       </validator>
       <validator
-            class="de.rcenvironment.rce.components.excel.gui.properties.ExcelWorkflowNodeValidator"
-            filter="de.rcenvironment.rce.components.excel.gui.properties.ExcelComponentFilter">
+            class="de.rcenvironment.components.excel.gui.properties.ExcelWorkflowNodeValidator"
+            filter="de.rcenvironment.components.excel.gui.properties.ExcelComponentFilter">
       </validator>
    </extension>
   
-  
+	<extension point="de.rcenvironment.core.gui.datamanagement.browser.historysubtreebuilder">
+      <builder class="de.rcenvironment.components.excel.gui.dm.ExcelHistoryDataItemSubtreeBuilder"/>
+   </extension>
+   
 </plugin>

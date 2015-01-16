@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,7 +11,7 @@ package de.rcenvironment.core.communication.routing.internal;
 import java.io.Serializable;
 import java.util.List;
 
-import de.rcenvironment.core.communication.model.NodeIdentifier;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
 
 /**
  * This class represents an entry in the routing table (see {@link RoutingTable}).

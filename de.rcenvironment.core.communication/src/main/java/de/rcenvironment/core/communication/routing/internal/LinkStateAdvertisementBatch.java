@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.rcenvironment.core.communication.model.NodeIdentifier;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
 
 /**
  * Grouping of multiple LSAs in one batch.
@@ -25,7 +25,7 @@ public class LinkStateAdvertisementBatch extends HashMap<NodeIdentifier, LinkSta
 
     public LinkStateAdvertisementBatch() {}
 
-    public LinkStateAdvertisementBatch(Map<? extends NodeIdentifier, ? extends LinkStateAdvertisement> m) {
+    public LinkStateAdvertisementBatch(Map<NodeIdentifier, ? extends LinkStateAdvertisement> m) {
         super(m);
     }
 

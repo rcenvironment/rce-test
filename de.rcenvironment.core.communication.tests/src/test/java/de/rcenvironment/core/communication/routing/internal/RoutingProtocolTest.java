@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -13,6 +13,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -20,11 +21,15 @@ import org.easymock.EasyMock;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import de.rcenvironment.core.communication.connection.NetworkConnectionListener;
-import de.rcenvironment.core.communication.model.NetworkConnection;
+import de.rcenvironment.core.communication.channel.MessageChannelLifecycleListener;
+import de.rcenvironment.core.communication.channel.MessageChannelService;
+import de.rcenvironment.core.communication.common.CommunicationException;
+import de.rcenvironment.core.communication.common.NetworkGraphLink;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.common.NodeIdentifierFactory;
+import de.rcenvironment.core.communication.model.MessageChannel;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
-import de.rcenvironment.core.communication.model.impl.NetworkNodeInformationImpl;
+import de.rcenvironment.core.communication.model.NetworkResponse;
 import de.rcenvironment.core.communication.testutils.AbstractVirtualInstanceTest;
 import de.rcenvironment.core.communication.testutils.NetworkContactPointGenerator;
 import de.rcenvironment.core.communication.testutils.TestConfiguration;
@@ -32,8 +37,6 @@ import de.rcenvironment.core.communication.testutils.VirtualInstance;
 import de.rcenvironment.core.communication.testutils.VirtualInstanceGroup;
 import de.rcenvironment.core.communication.transport.spi.NetworkTransportProvider;
 import de.rcenvironment.core.communication.transport.virtual.VirtualTransportTestConfiguration;
-import de.rcenvironment.rce.communication.CommunicationException;
-import de.rcenvironment.rce.communication.PlatformIdentifierFactory;
 
 /**
  * Unit tests for {@link LinkStateRoutingProtocolManager}.
@@ -41,17 +44,18 @@ import de.rcenvironment.rce.communication.PlatformIdentifierFactory;
  * @author Phillip Kroll
  * @author Robert Mischke
  */
+// TODO rework to general topology tests? - misc_ro
 public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
 
     private static final int DEFAULT_REQUEST_TIMEOUT = 10000;
 
     private static final int TEST_SIZE = 10;
 
-    private static final NodeIdentifier NODE_1 = PlatformIdentifierFactory.fromNodeId("ramdomstring:1");
+    private static final NodeIdentifier NODE_1 = NodeIdentifierFactory.fromNodeId("ramdomstring:1");
 
-    private static final NodeIdentifier NODE_2 = PlatformIdentifierFactory.fromNodeId("ramdomstring:2");
+    private static final NodeIdentifier NODE_2 = NodeIdentifierFactory.fromNodeId("ramdomstring:2");
 
-    private static final NodeIdentifier NODE_3 = PlatformIdentifierFactory.fromNodeId("ramdomstring:3");
+    private static final NodeIdentifier NODE_3 = NodeIdentifierFactory.fromNodeId("ramdomstring:3");
 
     private static final String CONNECTION_ID_1 = "#1";
 
@@ -72,6 +76,8 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
         instanceUtils.connectToChainTopology(allInstances);
         waitForNextMessage();
         waitForNetworkSilence();
+
+        // TODO actually verify topology state
     }
 
     /**
@@ -83,35 +89,30 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
     public void testRingOfInstances() throws Exception {
         setupInstances(TEST_SIZE, false, true);
 
+        for (VirtualInstance vi : allInstances) {
+            assertFalse("The network graph of any instance is not supposed to be the same.",
+                instanceUtils.allInstancesHaveSameRawNetworkGraph(allInstances));
+        }
+
         prepareWaitForNextMessage();
         instanceUtils.connectToRingTopology(allInstances);
         waitForNextMessage();
         waitForNetworkSilence();
 
-        // TODO review test logic
-        for (VirtualInstance vi : allInstances) {
-            assertFalse("The network graph of any instance is not supposed to be the same.",
-                vi.hasSameTopologyHashesForAllNodes());
+        try {
+            assertAllInstancesKnowSameTopology();
+        } catch (AssertionError e) {
+            throw new RuntimeException(e);
         }
 
-        prepareWaitForNextMessage();
-        instanceUtils.batchSendLinkStateAdvertisement(allInstances);
-        waitForNextMessage();
-        waitForNetworkSilence();
+        // arbitrary number of iterations; using test size
+        for (int i = 0; i < TEST_SIZE; i++) {
+            VirtualInstance sender = instanceUtils.getRandomInstance(allInstances);
+            VirtualInstance receiver = instanceUtils.getRandomInstance(allInstances, sender);
 
-        // After two lsa updates, everyone should agree
-        for (VirtualInstance vi : allInstances) {
-            assertTrue(vi.getFormattedNetworkGraph() + NETWORK_NOT_FULLY_CONVERGED,
-                vi.hasSameTopologyHashesForAllNodes());
+            // check a random route
+            assertTrue(String.format(ERROR_MSG_A_NO_ROUTE_TO_B, sender, receiver), sender.getRouteTo(receiver) != null);
         }
-
-        // TODO perform several iterations
-        VirtualInstance sender = instanceUtils.getRandomInstance(allInstances);
-        VirtualInstance receiver = instanceUtils.getRandomInstance(allInstances, sender);
-
-        // check a random route
-        assertTrue(String.format(ERROR_MSG_A_NO_ROUTE_TO_B, sender, receiver), sender.getRouteTo(receiver).validate());
-
     }
 
     /**
@@ -135,29 +136,12 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
         assertAllInstancesKnowSameTopology();
 
         prepareWaitForNextMessage();
-        instanceUtils.batchSendLinkStateAdvertisement(allInstances);
-        waitForNextMessage();
-        waitForNetworkSilence();
-
-        prepareWaitForNextMessage();
         group.shutDown();
         waitForNextMessage();
         waitForNetworkSilence();
 
         prepareWaitForNextMessage();
         group.start();
-        waitForNextMessage();
-        waitForNetworkSilence();
-
-        // send lsa
-        prepareWaitForNextMessage();
-        instanceUtils.batchSendLinkStateAdvertisement(allInstances);
-        waitForNextMessage();
-        waitForNetworkSilence();
-
-        // send lsa again
-        prepareWaitForNextMessage();
-        instanceUtils.batchSendLinkStateAdvertisement(allInstances);
         waitForNextMessage();
         waitForNetworkSilence();
 
@@ -170,7 +154,7 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
      * @throws Exception on uncaught exceptions
      */
     @Test
-    public void testContactAddition() throws Exception {
+    public void testClosingChainToRing() throws Exception {
         setupInstances(TEST_SIZE, false, true);
 
         VirtualInstance firstInstance = allInstances[0];
@@ -182,28 +166,17 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
         waitForNetworkSilence();
 
         // connect last and first instance to create a ring
-        firstInstance.addRuntimeNetworkPeer(lastInstance.getConfigurationService().getServerContactPoints().get(0));
-
         prepareWaitForNextMessage();
-        instanceUtils.batchSendLinkStateAdvertisement(allInstances);
+        firstInstance.connectAsync(lastInstance.getConfigurationService().getServerContactPoints().get(0));
         waitForNextMessage();
         waitForNetworkSilence();
-
-        prepareWaitForNextMessage();
-        instanceUtils.batchSendLinkStateAdvertisement(allInstances);
-        waitForNextMessage();
-        waitForNetworkSilence();
-
-        log.info(lastInstance.getFormattedNetworkGraph());
-
-        assertTrue(instanceUtils.allInstancesConverged(allInstances));
 
         // TODO This should not fail.
-        assertTrue(instanceUtils.allInstancesConverged(allInstances));
+        assertTrue(instanceUtils.allInstancesHaveSameRawNetworkGraph(allInstances));
 
-        assertTrue(String.format(ERROR_MSG_A_NO_ROUTE_TO_B, firstInstance, lastInstance), firstInstance.getRouteTo(lastInstance)
-            .validate());
-        assertEquals(1, firstInstance.getRouteTo(lastInstance).getLength());
+        List<? extends NetworkGraphLink> route = firstInstance.getRouteTo(lastInstance);
+        assertTrue(String.format(ERROR_MSG_A_NO_ROUTE_TO_B, firstInstance, lastInstance), route != null);
+        assertEquals(1, route.size());
     }
 
     /**
@@ -211,6 +184,9 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
      */
     @Test
     public void testCrashingNodeInSingleDirectionRing() throws Exception {
+
+        VirtualInstance.setRememberRuntimePeersAfterRestarts(true);
+
         setupInstances(TEST_SIZE, false, true);
 
         prepareWaitForNextMessage();
@@ -231,13 +207,10 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
         failingNode.simulateCrash();
 
         // there should still be a link in the topology map of the predecessor
-        TopologyMap topologyMap = failingNodePredecessor.getTopologyMap();
-        assertTrue(topologyMap.containsLinkBetween(
-            failingNodePredecessor.getNodeId(),
-            failingNode.getNodeId()));
+        assertTrue(failingNodePredecessor.knownTopologyContainsLinkTo(failingNode));
 
         // sender should falsely believe that there is a route.
-        assertTrue(String.format(ERROR_MSG_A_NO_ROUTE_TO_B, firstNode, lastNode), firstNode.getRouteTo(lastNode).validate());
+        assertTrue(String.format(ERROR_MSG_A_NO_ROUTE_TO_B, firstNode, lastNode), firstNode.getRouteTo(lastNode) != null);
 
         dummyContent = instanceUtils.generateUniqueMessageToken();
 
@@ -255,25 +228,24 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
         waitForNetworkSilence();
 
         // the link from the predecessor to the crashed node should now be gone
-        synchronized (topologyMap) {
-            assertFalse("Topology link should be gone after failed delivery",
-                topologyMap.containsLinkBetween(failingNodePredecessor.getNodeId(), failingNode.getNodeId()));
-        }
+        // TODO necessary to ensure thread visibility here?
+        assertFalse("Topology link should be gone after failed delivery",
+            failingNodePredecessor.knownTopologyContainsLinkTo(failingNode));
 
         prepareWaitForNextMessage();
         // restart the crashed node
         failingNode.start();
         // TODO reconnect actively until event-driven reconnect is available
-        failingNodePredecessor.addRuntimeNetworkPeer(failingNode.getConfigurationService().getServerContactPoints().get(0));
+        failingNodePredecessor.connectAsync(failingNode.getConfigurationService().getServerContactPoints().get(0));
         waitForNextMessage();
         waitForNetworkSilence();
 
         assertAllInstancesKnowSameTopology();
 
         // the channel should now be there again
-        assertTrue(topologyMap.containsLinkBetween(failingNodePredecessor.getNodeId(), failingNode.getNodeId()));
+        assertTrue(failingNodePredecessor.knownTopologyContainsLinkTo(failingNode));
 
-        assertTrue(String.format(ERROR_MSG_A_NO_ROUTE_TO_B, firstNode, lastNode), firstNode.getRouteTo(lastNode).validate());
+        assertTrue(String.format(ERROR_MSG_A_NO_ROUTE_TO_B, firstNode, lastNode), firstNode.getRouteTo(lastNode) != null);
 
         dummyContent = instanceUtils.generateUniqueMessageToken();
 
@@ -304,8 +276,9 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
 
         prepareWaitForNextMessage();
         try {
-            log.debug(allInstances[0].getFormattedNetworkGraph());
-            assertTrue(sender.performRoutedRequest(uniqueMessageToken, receiver.getNodeId(), DEFAULT_REQUEST_TIMEOUT).isSuccess());
+            // log.debug(allInstances[0].getFormattedNetworkGraph());
+            NetworkResponse response = sender.performRoutedRequest(uniqueMessageToken, receiver.getNodeId(), DEFAULT_REQUEST_TIMEOUT);
+            assertTrue("Request failed, code " + response.getResultCode(), response.isSuccess());
         } catch (CommunicationException e) {
             fail(e.getMessage());
         }
@@ -320,7 +293,8 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
      */
     @Test
     @Ignore
-    // TODO review this whole test
+    @Deprecated
+    // TODO old test; review and probably remove - misc_ro, Nov 2013
     public void testDiscoveryByRandomLSAs() throws Exception {
         final int maxIterations = TEST_SIZE * 10;
         setupInstances(TEST_SIZE, false, true);
@@ -348,7 +322,8 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
             VirtualInstance randomInstance = instanceUtils.getRandomInstance(allInstances);
 
             prepareWaitForNextMessage();
-            randomInstance.getRoutingService().getProtocolManager().broadcastLsa();
+            // NOTE: commented out as the target method has been removed
+            // randomInstance.getRoutingService().getProtocolManager().broadcastLsa();
             // FIXME there should always be traffic; check
             waitForNextMessage();
             waitForNetworkSilence();
@@ -357,7 +332,7 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
             for (VirtualInstance vi : allInstances) {
                 fullConvercenceForEveryone &= vi.hasSameTopologyHashesForAllNodes();
             }
-            log.info("Iteration " + j + ": " + randomInstance.getFormattedNetworkGraph());
+            // log.info("Iteration " + j + ": " + randomInstance.getFormattedNetworkGraph());
         }
 
         assertTrue("Networks did not converge after the maximum of " + max + " iterations", j < max);
@@ -367,7 +342,7 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
         VirtualInstance receiver = instanceUtils.getRandomInstance(allInstances, sender);
 
         prepareWaitForNextMessage();
-        log.info(sender.getFormattedNetworkGraph());
+        // log.info(sender.getFormattedNetworkGraph());
         assertTrue(sender.performRoutedRequest(uniqueMessageToken, receiver.getNodeId(), DEFAULT_REQUEST_TIMEOUT).isSuccess());
         waitForNextMessage();
         waitForNetworkSilence();
@@ -402,12 +377,15 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
         NetworkContactPoint client2ContactPoint = contactPointGenerator.createContactPoint();
         client2.addServerConfigurationEntry(client2ContactPoint);
 
-        NetworkConnectionListener connectionListener = EasyMock.createMock(NetworkConnectionListener.class);
+        MessageChannelLifecycleListener connectionListener = EasyMock.createMock(MessageChannelLifecycleListener.class);
         // FIXME why does this not work?
-        // connectionListener.onConnectionEstablished(EasyMock.createMock(NetworkConnection.class));
-        // connectionListener.onConnectionEstablished(EasyMock.createMock(NetworkConnection.class));
-        // EasyMock.replay(connectionListener);
-        client1.getConnectionService().addConnectionListener(connectionListener);
+        // connectionListener.onOutgoingConnectionEstablished(EasyMock.createMock(MessageChannel.class));
+        // connectionListener.onOutgoingConnectionEstablished(EasyMock.createMock(MessageChannel.class));
+        EasyMock.replay(connectionListener);
+        client1.getMessageChannelService().addChannelLifecycleListener(connectionListener);
+
+        // network graphs should not be the same
+        assertFalse(instancesHaveSameUnfilteredNetworkGraph(client1, client2));
 
         try {
             // startup instances
@@ -417,27 +395,19 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
             fail("Failed to start virtual instances.");
         }
 
-        // FIXME This should be done before startup
-        // client 1 should know client 2 from the beginning
-        client1.addRuntimeNetworkPeer(client2ContactPoint);
-        // client 2 should know client 1 from the beginning
-        client2.addRuntimeNetworkPeer(client1ContactPoint);
-
         // network graphs should not be the same
-        assertFalse(client1.getTopologyMap().equals(client2.getTopologyMap()));
+        assertFalse(instancesHaveSameUnfilteredNetworkGraph(client1, client2));
 
         prepareWaitForNextMessage();
-        client1.getRoutingService().getProtocolManager().broadcastLsa();
-        client2.getRoutingService().getProtocolManager().broadcastLsa();
-        // TODO Why does this fail?
+        client1.connectAsync(client2ContactPoint);
+        client2.connectAsync(client1ContactPoint);
         waitForNextMessage();
         waitForNetworkSilence();
 
         // network graphs should now be the same
-        assertEquals(client1.getTopologyMap(), client2.getTopologyMap());
+        assertTrue(instancesHaveSameUnfilteredNetworkGraph(client1, client2));
 
-        // EasyMock.verify(connectionListener);
-
+        EasyMock.verify(connectionListener);
     }
 
     /**
@@ -445,14 +415,17 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
      * 
      * @throws Exception on uncaught exceptions
      */
+    @SuppressWarnings("unused") // Currently not used code below remains commented in to be sensitive to refactoring.
+    // Dead code warning should be suppressed anyways.
     @Test
     public void testAClientTalkingToAServer() throws Exception {
-        // TODO recheck test; hangs after reworking startup mechanism
+        // TODO recheck test; hangs after reworking startup mechanism; adapt comment at annotation "SuppressWarnings" above
         if (true) {
             // deactivating in JUnit 3
             return;
         }
 
+        // currently not used code
         VirtualTransportTestConfiguration testConfiguration = new VirtualTransportTestConfiguration(true);
         NetworkTransportProvider transportProvider = testConfiguration.getTransportProvider();
         NetworkContactPointGenerator contactPointGenerator = testConfiguration.getContactPointGenerator();
@@ -486,12 +459,14 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
 
         try {
             // client connecting to server
-            Future<NetworkConnection> connection = client.getConnectionService().connect(serverContactPoint, true);
-            NetworkConnection clientToServer = connection.get();
+            MessageChannelService messageChannelService = client.getMessageChannelService();
+            Future<MessageChannel> connection = messageChannelService.connect(serverContactPoint, true);
+            MessageChannel clientToServer = connection.get();
+            messageChannelService.registerNewOutgoingChannel(clientToServer);
 
             assertEquals(
-                server.getConfigurationService().getLocalNodeInformation().getWrappedNodeId(),
-                clientToServer.getRemoteNodeInformation().getWrappedNodeId());
+                server.getConfigurationService().getInitialNodeInformation().getNodeId(),
+                clientToServer.getRemoteNodeInformation().getNodeId());
 
             // send messages
             client.performRoutedRequest("hello", server.getNodeId(), DEFAULT_REQUEST_TIMEOUT);
@@ -514,16 +489,23 @@ public class RoutingProtocolTest extends AbstractVirtualInstanceTest {
      * Test graph updates with different {@link LinkStateAdvertisement}s.
      */
     @Test
+    @Ignore
+    @Deprecated
+    // TODO old test; review and probably delete - misc_ro, Nov 2013
     public void testLsaIntegration1() {
 
-        VirtualInstance instance1 = new VirtualInstance("instance1", "The Instance 1");
-        VirtualInstance instance2 = new VirtualInstance("instance2", "The Instance 2");
+        VirtualInstance instance1 = new VirtualInstance(NODE_1.getIdString(), "The Instance 1");
+        VirtualInstance instance2 = new VirtualInstance(NODE_2.getIdString(), "The Instance 2");
 
         // TODO Not such a nice workaround to get a connection service instance.
         LinkStateRoutingProtocolManager protocolManager1 =
-            new LinkStateRoutingProtocolManager(new NetworkNodeInformationImpl(NODE_1), instance1.getConnectionService());
+            instance1.getRoutingService().getProtocolManager();
+        // new LinkStateRoutingProtocolManager(new InitialNodeInformationImpl(NODE_1),
+        // instance1.getConnectionService());
         LinkStateRoutingProtocolManager protocolManager2 =
-            new LinkStateRoutingProtocolManager(new NetworkNodeInformationImpl(NODE_2), instance2.getConnectionService());
+            instance2.getRoutingService().getProtocolManager();
+        // new LinkStateRoutingProtocolManager(new InitialNodeInformationImpl(NODE_2),
+        // instance2.getConnectionService());
 
         protocolManager1.getTopologyMap().addLink(NODE_1, NODE_3, CONNECTION_ID_1);
         protocolManager2.getTopologyMap().addLink(NODE_3, NODE_1, CONNECTION_ID_1);

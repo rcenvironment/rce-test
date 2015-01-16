@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -9,10 +9,15 @@
 package de.rcenvironment.core.gui.cluster.configuration.internal;
 
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
+
+import de.rcenvironment.core.utils.cluster.ClusterQueuingSystem;
+import de.rcenvironment.core.utils.cluster.ClusterQueuingSystemConstants;
 
 
 /**
@@ -42,6 +47,7 @@ public class EditClusterConnectionConfigurationDialog extends CreateClusterConne
         super.createButtonsForButtonBar(parent);
         createButton.setText(Messages.editButtonTitle2);
     }
+    
     @Override
     protected boolean isConfigurationNameValid() {
         boolean valid = true;
@@ -64,6 +70,15 @@ public class EditClusterConnectionConfigurationDialog extends CreateClusterConne
     }
     
     private void prefillForm() {
+        if (configuration.getClusterQueuingSystem() == ClusterQueuingSystem.TORQUE) {
+            queuingSystemCombo.select(1);
+        }
+
+        Map<String, String> paths = configuration.getPathToClusterQueuingSystemCommands();
+        prefillCommandPath(ClusterQueuingSystemConstants.COMMAND_QSTAT, qstatPathText, paths);
+        prefillCommandPath(ClusterQueuingSystemConstants.COMMAND_QDEL, qdelPathText, paths);
+        prefillCommandPath(ClusterQueuingSystemConstants.COMMAND_SHOWQ, showqPathText, paths);
+        
         hostText.setText(configuration.getHost());
         portText.setText(String.valueOf(configuration.getPort()));
         usernameText.setText(configuration.getUsername());
@@ -75,5 +90,11 @@ public class EditClusterConnectionConfigurationDialog extends CreateClusterConne
         configurationNameText.setText(configuration.getConfigurationName());
         configurationNameText.setEnabled(true);
         defaultConfigurationNameCheckbox.setSelection(false);
+    }
+    
+    private void prefillCommandPath(String command, Text pathText, Map<String, String> paths) {
+        if (paths.containsKey(command)) {
+            pathText.setText(paths.get(command));            
+        }
     }
 }

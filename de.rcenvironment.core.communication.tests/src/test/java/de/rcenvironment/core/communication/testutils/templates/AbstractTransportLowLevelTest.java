@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -12,6 +12,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.easymock.Capture;
@@ -20,26 +21,29 @@ import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Test;
 
-import de.rcenvironment.core.communication.connection.NetworkConnectionEndpointHandler;
-import de.rcenvironment.core.communication.connection.ServerContactPoint;
-import de.rcenvironment.core.communication.model.BrokenConnectionListener;
-import de.rcenvironment.core.communication.model.NetworkConnection;
+import de.rcenvironment.core.communication.channel.MessageChannelState;
+import de.rcenvironment.core.communication.channel.ServerContactPoint;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.configuration.IPWhitelistConnectionFilter;
+import de.rcenvironment.core.communication.messaging.RawMessageChannelEndpointHandler;
+import de.rcenvironment.core.communication.model.BrokenMessageChannelListener;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
+import de.rcenvironment.core.communication.model.MessageChannel;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
 import de.rcenvironment.core.communication.model.NetworkRequest;
 import de.rcenvironment.core.communication.model.NetworkResponse;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
 import de.rcenvironment.core.communication.model.RawNetworkResponseHandler;
-import de.rcenvironment.core.communication.model.impl.NetworkNodeInformationImpl;
-import de.rcenvironment.core.communication.model.impl.NetworkRequestImpl;
+import de.rcenvironment.core.communication.model.impl.InitialNodeInformationImpl;
 import de.rcenvironment.core.communication.model.impl.NetworkResponseImpl;
+import de.rcenvironment.core.communication.protocol.MessageMetaData;
+import de.rcenvironment.core.communication.protocol.NetworkRequestFactory;
+import de.rcenvironment.core.communication.protocol.ProtocolConstants;
 import de.rcenvironment.core.communication.testutils.AbstractTransportBasedTest;
 import de.rcenvironment.core.communication.utils.MessageUtils;
-import de.rcenvironment.core.communication.utils.MetaDataWrapper;
 
 /**
- * A common base class that defines common tests to verify proper transport operation. Subclasses
- * implement {@link #defineTestConfiguration()} to create a transport-specific test.
+ * A common base class that defines common tests to verify proper transport operation. Subclasses implement
+ * {@link #defineTestConfiguration()} to create a transport-specific test.
  * 
  * @author Robert Mischke
  */
@@ -47,10 +51,11 @@ public abstract class AbstractTransportLowLevelTest extends AbstractTransportBas
 
     private static final int DEFAULT_REQUEST_TIMEOUT = 1000;
 
+    private static final long WAIT_FOR_INBOUND_CHANNEL_CLOSING_EVENT_MSEC = 1000;
+
     /**
-     * This test verifies the basic functions of a network transport. It covers
-     * {@link ServerContactPoint} startup, connection initiation, initial node information
-     * handshake, and the basic request/response loop.
+     * This test verifies the basic functions of a network transport. It covers {@link ServerContactPoint} startup, connection initiation,
+     * initial node information handshake, and the basic request/response loop.
      * 
      * @author Robert Mischke
      * @throws Exception on uncaught exceptions
@@ -61,49 +66,55 @@ public abstract class AbstractTransportLowLevelTest extends AbstractTransportBas
         int messageRepetitions = 10;
 
         // create mock server config
-        NetworkNodeInformationImpl mockServerNodeInformation = new NetworkNodeInformationImpl("serverId");
+        InitialNodeInformationImpl mockServerNodeInformation = new InitialNodeInformationImpl("serverId");
         mockServerNodeInformation.setDisplayName("Mock Server");
         // configure mock endpoint handler
-        NetworkConnectionEndpointHandler serverEndpointHandler = EasyMock.createMock(NetworkConnectionEndpointHandler.class);
+        RawMessageChannelEndpointHandler serverEndpointHandler = EasyMock.createMock(RawMessageChannelEndpointHandler.class);
         // configure handshake response
-        EasyMock.expect(serverEndpointHandler.exchangeNodeInformation(EasyMock.anyObject(NetworkNodeInformation.class))).andReturn(
+        EasyMock.expect(serverEndpointHandler.exchangeNodeInformation(EasyMock.anyObject(InitialNodeInformation.class))).andReturn(
             mockServerNodeInformation);
         // expect passive connection event (if applicable)
         if (transportProvider.supportsRemoteInitiatedConnections()) {
-            serverEndpointHandler.onRemoteInitiatedConnectionEstablished(EasyMock.anyObject(NetworkConnection.class),
+            serverEndpointHandler.onRemoteInitiatedChannelEstablished(EasyMock.anyObject(MessageChannel.class),
                 EasyMock.anyObject(ServerContactPoint.class));
         }
         EasyMock.replay(serverEndpointHandler);
-        BrokenConnectionListener brokenConnectionListener = EasyMock.createMock(BrokenConnectionListener.class);
+        BrokenMessageChannelListener brokenConnectionListener = EasyMock.createMock(BrokenMessageChannelListener.class);
         EasyMock.replay(brokenConnectionListener);
         // create server contact point
         NetworkContactPoint ncp = contactPointGenerator.createContactPoint();
-        ServerContactPoint scp = new ServerContactPoint(transportProvider, ncp, serverEndpointHandler);
+        IPWhitelistConnectionFilter ipFilter = new IPWhitelistConnectionFilter();
+        // allow test connections from IPv4 localhost; adapt if necessary
+        ipFilter.configure(Arrays.asList(new String[] { "127.0.0.1" }));
+        ServerContactPoint scp = new ServerContactPoint(transportProvider, ncp, serverEndpointHandler, ipFilter);
         // start it
         assertFalse(scp.isAcceptingMessages());
         scp.start();
         assertTrue(scp.isAcceptingMessages());
 
         // create mock client config
-        NetworkNodeInformationImpl clientNodeInformation =
-            new NetworkNodeInformationImpl("clientNodeId");
+        InitialNodeInformationImpl clientNodeInformation =
+            new InitialNodeInformationImpl("clientNodeId");
         // connect
         // (allows duplex connections, but omits client endpoint handler as it should not be used)
-        NetworkConnection connection =
+        MessageChannel channel =
             transportProvider.connect(ncp, clientNodeInformation, true, null, brokenConnectionListener);
+
+        assertEquals(MessageChannelState.ESTABLISHED, channel.getState());
+        assertTrue(channel.isReadyToUse());
 
         // verify server side of handshake
         EasyMock.verify(serverEndpointHandler);
         // verify client side of handshake
-        assertNotNull(connection.getConnectionId());
-        assertNotNull(connection.getRemoteNodeInformation());
-        assertEquals(mockServerNodeInformation, connection.getRemoteNodeInformation());
+        assertNotNull(channel.getChannelId());
+        assertNotNull(channel.getRemoteNodeInformation());
+        assertEquals(mockServerNodeInformation, channel.getRemoteNodeInformation());
 
         // define server response behavior
         final String requestString = "Hi world";
         final String responseSuffix = "#response"; // arbitrary
         EasyMock.reset(serverEndpointHandler);
-        serverEndpointHandler.onRawRequestReceived(EasyMock.isA(NetworkRequestImpl.class), EasyMock.isA(NodeIdentifier.class));
+        serverEndpointHandler.onRawRequestReceived(EasyMock.isA(NetworkRequest.class), EasyMock.isA(NodeIdentifier.class));
 
         EasyMock.expectLastCall().andAnswer(new IAnswer<NetworkResponse>() {
 
@@ -113,7 +124,7 @@ public abstract class AbstractTransportLowLevelTest extends AbstractTransportBas
                     NetworkRequest request = (NetworkRequest) EasyMock.getCurrentArguments()[0];
                     String responseString = request.getDeserializedContent().toString() + responseSuffix;
                     byte[] responseBytes = MessageUtils.serializeSafeObject(responseString);
-                    return new NetworkResponseImpl(responseBytes, MetaDataWrapper.createEmpty().getInnerMap());
+                    return new NetworkResponseImpl(responseBytes, MessageMetaData.create().getInnerMap());
                 } catch (RuntimeException e) {
                     log.warn("RTE in mock", e);
                     return null;
@@ -132,8 +143,13 @@ public abstract class AbstractTransportLowLevelTest extends AbstractTransportBas
         EasyMock.replay(serverEndpointHandler, responseHandler);
         // send request(s)
         for (int i = 0; i < messageRepetitions; i++) {
-            connection.sendRequest(new NetworkRequestImpl(requestString, MetaDataWrapper.createEmpty().getInnerMap()), responseHandler,
-                DEFAULT_REQUEST_TIMEOUT);
+            byte[] contentBytes = MessageUtils.serializeSafeObject(requestString);
+            // note: message type is arbitrary, but must be valid
+            NetworkRequest request =
+                NetworkRequestFactory.createNetworkRequest(contentBytes, ProtocolConstants.VALUE_MESSAGE_TYPE_HEALTH_CHECK,
+                    clientNodeInformation.getNodeId(),
+                    mockServerNodeInformation.getNodeId());
+            channel.sendRequest(request, responseHandler, DEFAULT_REQUEST_TIMEOUT);
         }
         // TODO improve; quick&dirty hack to test larger message repetition counts
         Thread.sleep(testConfiguration.getDefaultTrafficWaitTimeout() + messageRepetitions * 10);
@@ -149,10 +165,15 @@ public abstract class AbstractTransportLowLevelTest extends AbstractTransportBas
             assertEquals(requestString + responseSuffix, response.getDeserializedContent());
         }
 
-        // TODO close passive connection as well?
-        connection.close();
+        // close channel and verify that the remote endpoint handler is notified
+        EasyMock.reset(serverEndpointHandler);
+        serverEndpointHandler.onInboundChannelClosing(channel.getChannelId());
+        EasyMock.replay(serverEndpointHandler);
+        channel.close();
+        Thread.sleep(WAIT_FOR_INBOUND_CHANNEL_CLOSING_EVENT_MSEC);
+        EasyMock.verify(serverEndpointHandler);
 
-        transportProvider.stopServer(scp);
+        scp.shutDown();
         assertFalse(scp.isAcceptingMessages());
     }
 

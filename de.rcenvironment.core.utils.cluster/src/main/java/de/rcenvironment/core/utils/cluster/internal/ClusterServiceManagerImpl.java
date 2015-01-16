@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,56 +11,59 @@ package de.rcenvironment.core.utils.cluster.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
+
 import de.rcenvironment.core.utils.cluster.ClusterService;
 import de.rcenvironment.core.utils.cluster.ClusterServiceManager;
 import de.rcenvironment.core.utils.cluster.ClusterQueuingSystem;
+import de.rcenvironment.core.utils.cluster.sge.internal.SgeClusterService;
 import de.rcenvironment.core.utils.cluster.torque.internal.TorqueClusterService;
+import de.rcenvironment.core.utils.common.StringUtils;
 import de.rcenvironment.core.utils.ssh.jsch.SshSessionConfiguration;
 import de.rcenvironment.core.utils.ssh.jsch.SshSessionConfigurationFactory;
 
 /**
  * Implementation of {@link ClusterServiceManager}.
+ * 
  * @author Doreen Seider
  */
 public class ClusterServiceManagerImpl implements ClusterServiceManager {
 
-    private static final String SEPARATOR = "!§$%&";
-    
     private Map<String, ClusterService> informationServices = new HashMap<String, ClusterService>();
 
     @Override
-    public synchronized ClusterService retrieveSshBasedClusterJobInformationService(ClusterQueuingSystem system, String host,
-        int port, String sshAuthUser, String sshAuthPhrase) {
+    public synchronized ClusterService retrieveSshBasedClusterService(ClusterQueuingSystem system,
+        Map<String, String> pathsToQueuingSystemCommands, String host, int port, String sshAuthUser, String sshAuthPhrase) {
         
-        String informationServiceId = createIdentifier(system, host, port, sshAuthUser);
+        String informationServiceId = createIdentifier(system, host, port, sshAuthUser, sshAuthPhrase,
+            pathsToQueuingSystemCommands.toString());
+        
         ClusterService informationService;
         
         if (informationServices.containsKey(informationServiceId)) {
             informationService = informationServices.get(informationServiceId);
         } else {
+            SshSessionConfiguration sshConfiguration = SshSessionConfigurationFactory
+                .createSshSessionConfigurationWithAuthPhrase(host, port, sshAuthUser, sshAuthPhrase);
             switch (system) {
             case TORQUE:
-                SshSessionConfiguration sshConfiguration = SshSessionConfigurationFactory
-                    .createSshSessionConfigurationWithAuthPhrase(host, port, sshAuthUser, sshAuthPhrase);
-                informationService = new TorqueClusterService(sshConfiguration);
-                informationServices.put(informationServiceId, informationService);
+                informationService = new TorqueClusterService(sshConfiguration, pathsToQueuingSystemCommands);
+                break;
+            case SGE:
+                informationService = new SgeClusterService(sshConfiguration, pathsToQueuingSystemCommands);
                 break;
             default:
                 throw new UnsupportedOperationException("Cluster queuing system not supported: " + system);
-            }            
+            }
+            informationServices.put(informationServiceId, informationService);
         }
         return informationService;
     }
     
-    private String createIdentifier(ClusterQueuingSystem system, String host, int port, String sshAuthUser) {
-        StringBuffer buffer = new StringBuffer(host);
-        buffer.append(SEPARATOR);
-        buffer.append(port);
-        buffer.append(SEPARATOR);
-        buffer.append(system.toString());
-        buffer.append(SEPARATOR);
-        buffer.append(sshAuthUser);
-        return buffer.toString();
+    private String createIdentifier(ClusterQueuingSystem system, String host, int port, String sshAuthUser, String sshAuthPhrase,
+        String pathsToCommands) {
+        return StringUtils.escapeAndConcat(system.name(), host, String.valueOf(port), sshAuthUser,
+            String.valueOf(Base64.encodeBase64(sshAuthPhrase.getBytes())), pathsToCommands);
     }
 
 }

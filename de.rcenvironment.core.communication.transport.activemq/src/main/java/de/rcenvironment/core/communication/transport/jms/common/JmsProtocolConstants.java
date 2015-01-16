@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -15,9 +15,8 @@ package de.rcenvironment.core.communication.transport.jms.common;
 public abstract class JmsProtocolConstants {
 
     /**
-     * The maximum time JMS messages are preserved after creation by their producer; applied via
-     * {@link MessageProducer#setTimeToLive(long)). Its main purpose in RCE is to prevent stale
-     * messages from remaining in abandoned queues forever.
+     * The maximum time JMS messages are preserved after creation by their producer; applied via {@link MessageProducer#setTimeToLive(long)
+     * ). Its main purpose in RCE is to prevent stale messages from remaining in abandoned queues forever.
      */
     public static final int JMS_MESSAGES_TTL_MSEC = 60 * 1000;
 
@@ -27,21 +26,32 @@ public abstract class JmsProtocolConstants {
     public static final String MESSAGE_FIELD_MESSAGE_TYPE = "messageType";
 
     /**
+     * JMS property key for the protocol compatibility check string.
+     */
+    public static final String MESSAGE_FIELD_PROTOCOL_VERSION = "protocol.version";
+
+    /**
      * JMS property key for the metadata map.
      */
     public static final String MESSAGE_FIELD_METADATA = "metadata";
 
     /**
-     * JMS property key for transporting the client-to-broker request queue name during the initial
-     * handshake.
+     * JMS property key for transporting the queue name to use for remote-initiated requests; used in both directions.
+     * 
+     * Note that "remote-initiated request" is always relative to the side that sends this message; do not confuse this with
+     * "remote-initiated message channel", which is relative to who initiated the underlying network (usually, TCP) connection.
      */
-    public static final String MESSAGE_FIELD_ACTIVE_C2B_REQUEST_INBOX = "queuename.requests.c2b";
+    public static final String MESSAGE_FIELD_REMOTE_INITIATED_REQUEST_INBOX = "queuename.requests.incoming";
 
     /**
-     * JMS property key for transporting the broker-to-client request queue name during the initial
-     * handshake.
+     * JMS property key for transporting the client-to-broker request queue name during the initial handshake.
      */
-    public static final String MESSAGE_FIELD_PASSIVE_B2C_REQUEST_INBOX = "queuename.requests.b2c";
+    public static final String MESSAGE_FIELD_C2S_REQUEST_INBOX = "queuename.requests.c2s";
+
+    /**
+     * JMS property key for transporting a C2B channel name. Used for C2B shutdown messages.
+     */
+    public static final String MESSAGE_FIELD_CHANNEL_ID = "channel.id";
 
     /**
      * Message type value for the initial handshake request.
@@ -56,7 +66,12 @@ public abstract class JmsProtocolConstants {
     /**
      * Message type value for queue shutdown signals.
      */
-    public static final String MESSAGE_TYPE_QUEUE_SHUTDOWN = "shutdown";
+    public static final String MESSAGE_TYPE_QUEUE_SHUTDOWN = "shutdown.queue.s2c";
+
+    /**
+     * Message type value for client-to-broker channel shutdown signals.
+     */
+    public static final String MESSAGE_TYPE_CHANNEL_CLOSING = "shutdown.channel";
 
     /**
      * The JMS queue name for the initial handshake inbox.
@@ -69,8 +84,8 @@ public abstract class JmsProtocolConstants {
     public static final String QUEUE_NAME_C2B_REQUEST_INBOX = "requests/c2b/common";
 
     /**
-     * The naming pattern for broker-to-client request JMS queues.
+     * The time to wait after sending a channel shutdown notice before actually closing the JMS connection. This prevents unnecessary JMS
+     * exceptions on the remote side.
      */
-    public static final String QUEUE_NAME_PATTERN_B2C_REQUEST_INBOX = "requests/b2c/%s/%s";
-
+    public static final long WAIT_AFTER_SENDING_SHUTDOWN_MESSAGE_MSEC = 300;
 }

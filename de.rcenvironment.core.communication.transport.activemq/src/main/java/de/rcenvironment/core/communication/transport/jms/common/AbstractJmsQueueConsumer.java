@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -52,33 +52,36 @@ public abstract class AbstractJmsQueueConsumer implements Runnable {
             Queue queue = session.createQueue(queueName);
             MessageConsumer consumer = session.createConsumer(queue);
             log.debug("Running listener for queue " + queue.getQueueName() + " in thread " + Thread.currentThread().getName());
-            while (true) {
-                Message message;
-                try {
-                    message = consumer.receive();
-                    if (message == null) {
-                        log.debug("Clean shutdown of queue listener for " + queue.getQueueName() + ": received NULL");
+            try {
+                while (true) {
+                    Message message;
+                    try {
+                        message = consumer.receive();
+                        if (message == null) {
+                            log.debug("Clean shutdown of queue listener for " + queue.getQueueName() + ": received NULL");
+                            break;
+                        }
+                    } catch (JMSException e) {
+                        log.warn("Exception while listening on queue " + queue.getQueueName() + "; unclean shutdown?", e);
                         break;
                     }
-                } catch (JMSException e) {
-                    log.warn("Exception while listening on queue " + queue.getQueueName() + "; unclean shutdown?", e);
-                    break;
-                }
-                try {
-                    if (checkForShutdown(message)) {
-                        log.debug("Clean shutdown of queue listener for " + queue.getQueueName() + ": received shutdown message");
-                        break;
+                    try {
+                        if (checkForShutdown(message)) {
+                            log.debug("Clean shutdown of queue listener for " + queue.getQueueName() + ": received shutdown message");
+                            break;
+                        }
+                        dispatchMessage(message, jmsConnection);
+                    } catch (JMSException e) {
+                        log.warn("Error while processing received message; continuing to listen", e);
                     }
-                    dispatchMessage(message, jmsConnection);
-                } catch (JMSException e) {
-                    log.warn("Error while processing received message; continuing to listen", e);
                 }
-            }
-            if (session != null) {
-                try {
-                    session.close();
-                } catch (JMSException e1) {
-                    log.warn("Error while closing inbox consumer session", e1);
+            } finally {
+                if (session != null) {
+                    try {
+                        session.close();
+                    } catch (JMSException e1) {
+                        log.warn("Error while closing inbox consumer session", e1);
+                    }
                 }
             }
         } catch (JMSException e) {
@@ -87,8 +90,8 @@ public abstract class AbstractJmsQueueConsumer implements Runnable {
     }
 
     /**
-     * Provides a direct way to shut down this listener (instead of posting a shutdown message to
-     * the queue). Can be called from any thread, and does not wait for the shutdown to complete.
+     * Provides a direct way to shut down this listener (instead of posting a shutdown message to the queue). Can be called from any thread,
+     * and does not wait for the shutdown to complete.
      * 
      * @throws JMSException on internal JMS errors
      */

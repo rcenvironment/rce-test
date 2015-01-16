@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,7 +11,8 @@ package de.rcenvironment.rce.components.excel.commons;
 import java.io.File;
 import java.io.Serializable;
 
-import de.rcenvironment.rce.component.datatype.Table;
+import de.rcenvironment.core.datamodel.api.TypedDatumSerializer;
+import de.rcenvironment.core.datamodel.types.api.SmallTableTD;
 
 
 /**
@@ -32,7 +33,7 @@ public class ChannelValue implements Serializable {
     /**
      * Array containing the values of channels.
      */
-    private Table values = null;  
+    private String valuesSerialized = null;
     
     /**
      * Plain text name of channel.
@@ -44,16 +45,19 @@ public class ChannelValue implements Serializable {
      */
     private boolean expand = false;
     
-    private File excelFile;
+    private File excelFile;    
+    private String preMacro = null;
+    private String runMacro = null;
+    private String postMacro = null;
     
     private long iteration;
     
     private ExcelAddress excelAddress;
 
-    
-    
-    
-    
+
+
+
+
     /**
      * Constructor.
      * 
@@ -72,7 +76,6 @@ public class ChannelValue implements Serializable {
         this.isInputValue = isInputValue;
         iteration = iterationStep;
     }
-
     
     /**
      * Returns true of value is from input channel.
@@ -104,16 +107,18 @@ public class ChannelValue implements Serializable {
      * Gets all values of one concrete channel value. 
      * @return Returns the values or null if no plain values are set.
      */
-    public Table getValues() {
-        return values;
+    public SmallTableTD getValues() {
+        TypedDatumSerializer serializer = new ServiceHolder().getSerializer();
+        return (SmallTableTD) serializer.deserialize(valuesSerialized);
     }
     
     /**
      * Sets values of a concrete channel value. Should be used if vals are only a few.
      * @param vals The values to set.
      */
-    public void setValues(final Table vals) {
-        this.values = vals;
+    public void setValues(final SmallTableTD vals) {
+        TypedDatumSerializer serializer = new ServiceHolder().getSerializer();
+        valuesSerialized = serializer.serialize(vals);   
     }
    
     
@@ -143,5 +148,60 @@ public class ChannelValue implements Serializable {
      */
     public File getFile() {
         return excelFile;
+    }
+    
+    /**
+     * Returns name of macro which runs before insertion of input channels.
+     * 
+     * @return name of macro
+     */
+    public String getPreMacro() {
+        return preMacro;
+    }
+
+    
+    /**
+     * Sets the name of macro which runs before insertion of input channels.
+     * 
+     * @param preMacro name of macro
+     */
+    public void setPreMacro(String preMacro) {
+        this.preMacro = preMacro;
+    }
+
+    /**
+     * Returns name of macro which runs after insertion of input channels.
+     * 
+     * @return name of macro
+     */
+    public String getRunMacro() {
+        return runMacro;
+    }
+
+    /**
+     * Sets the name of macro which runs after insertion of input channels.
+     * 
+     * @param runMacro name of macro
+     */
+    public void setRunMacro(String runMacro) {
+        this.runMacro = runMacro;
+    }
+
+    /**
+     * Returns name of macro which runs after reading of output channels.
+     * 
+     * @return name of macro
+     */
+    public String getPostMacro() {
+        return postMacro;
+    }
+
+    /**
+     * Sets the name of macro which runs after reading of output channels.
+     * 
+     * @param postMacro name of macro
+     */
+    public void setPostMacro(String postMacro) {
+        this.postMacro = postMacro;
     }
 }

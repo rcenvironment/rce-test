@@ -1,24 +1,24 @@
 /*
- * Copyright (C) 2006-2011 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
  * http://www.rcenvironment.de/
  */
- 
+
 package de.rcenvironment.core.gui.workflow.scripting.properties;
 
-import static de.rcenvironment.commons.scripting.ScriptableComponentConstants.FACTORY;
-import static de.rcenvironment.commons.scripting.ScriptableComponentConstants.INIT;
-import static de.rcenvironment.commons.scripting.ScriptableComponentConstants.RUN;
+import static de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.FACTORY;
+import static de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.INIT;
+import static de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.RUN;
 
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.rcenvironment.commons.scripting.ScriptableComponentConstants.ScriptTime;
-import de.rcenvironment.rce.gui.workflow.editor.validator.AbstractWorkflowNodeValidator;
-import de.rcenvironment.rce.gui.workflow.editor.validator.WorkflowNodeValidationMessage;
+import de.rcenvironment.core.gui.workflow.editor.validator.AbstractWorkflowNodeValidator;
+import de.rcenvironment.core.gui.workflow.editor.validator.WorkflowNodeValidationMessage;
+import de.rcenvironment.core.utils.scripting.ScriptableComponentConstants.ScriptTime;
 
 /**
  * Validator for {@link BasicWrapperComponent}s.
@@ -41,12 +41,14 @@ public class AbstractProcessingWorkflowNodeValidator extends AbstractWorkflowNod
         final String initLanguageKey = FACTORY.language(scriptTime, INIT);
         final boolean hasInitScriptProperties = hasProperty(initScriptKey) && hasProperty(initLanguageKey);
         final boolean doInitScript = hasInitScriptProperties
-                && (!hasProperty(doInitScriptKey) || getProperty(doInitScriptKey, Boolean.class, false));
+            && (!hasProperty(doInitScriptKey) || Boolean.parseBoolean(getConfigurationValue(doInitScriptKey)));
         if (doInitScript) {
-            final String initScript = getProperty(initScriptKey, String.class, "");
-            final String initLanguage = getProperty(initLanguageKey, String.class, "");
-            final boolean scriptMissing = initScript.isEmpty() && hasProperty(doInitScriptKey);
-            final boolean languageMissing = initLanguage.isEmpty() && (!initScript.isEmpty() || hasProperty(doInitScriptKey));
+            final String initScript = getConfigurationValue(initScriptKey);
+            final String initLanguage = getConfigurationValue(initLanguageKey);
+            final boolean scriptMissing = ((initScript == null || initScript.isEmpty()) && hasProperty(doInitScriptKey));
+            final boolean languageMissing =
+                (initLanguage == null || initLanguage.isEmpty())
+                    && (initScript == null || !initScript.isEmpty() || hasProperty(doInitScriptKey));
             if (scriptMissing) {
                 final WorkflowNodeValidationMessage message =
                     new WorkflowNodeValidationMessage(
@@ -68,8 +70,14 @@ public class AbstractProcessingWorkflowNodeValidator extends AbstractWorkflowNod
         }
         final String runScriptKey = FACTORY.script(scriptTime, RUN);
         final String runLanguageKey = FACTORY.language(scriptTime, RUN);
-        final String runScript = getProperty(runScriptKey, String.class, "");
-        final String runLanguage = getProperty(runLanguageKey, String.class, "");
+        String runScript = getConfigurationValue(runScriptKey);
+        if (runScript == null) {
+            runScript = "";
+        }
+        String runLanguage = getConfigurationValue(runLanguageKey);
+        if (runLanguage == null) {
+            runLanguage = "";
+        }
         final boolean doRunScript = !runScript.isEmpty() || !runLanguage.isEmpty();
         if (doRunScript && runScript.isEmpty()) {
             final WorkflowNodeValidationMessage message =
@@ -92,4 +100,7 @@ public class AbstractProcessingWorkflowNodeValidator extends AbstractWorkflowNod
         return messages;
     }
 
+    protected String getConfigurationValue(String key) {
+        return getWorkflowNode().getConfigurationDescription().getConfigurationValue(key);
+    }
 }

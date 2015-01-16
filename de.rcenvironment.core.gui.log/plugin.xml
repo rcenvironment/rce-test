@@ -6,20 +6,20 @@
 	<extension 
 		point="org.eclipse.ui.views">
   		<view
-        category="de.rcenvironment.rce"
-        class="de.rcenvironment.rce.gui.log.internal.LogView"
+        category="de.rcenvironment.core"
+        class="de.rcenvironment.core.gui.log.internal.LogView"
         icon="resources/images/log.gif"
-        id="de.rcenvironment.rce.gui.log.LogView"
+        id="de.rcenvironment.core.gui.log.LogView"
         name="Log">
   </view>
 	</extension>
 
 	<!-- Log view part of Default Perspective -->
    <extension point="org.eclipse.ui.perspectiveExtensions">
-      <perspectiveExtension targetID="de.rcenvironment.rce">
-         <view id="de.rcenvironment.rce.gui.log.LogView"
+      <perspectiveExtension targetID="de.rcenvironment.core">
+         <view id="de.rcenvironment.core.gui.log.LogView"
          	relationship="stack"
-            relative="de.rcenvironment.rce.Perspective.bottom">
+            relative="de.rcenvironment.core.Perspective.bottom">
          </view>
       </perspectiveExtension>
    </extension>

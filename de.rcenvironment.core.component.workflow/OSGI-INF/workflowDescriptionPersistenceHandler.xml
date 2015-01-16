@@ -1,14 +1,15 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Workflow Description Persistence Handler">
-	<implementation class="de.rcenvironment.rce.component.workflow.WorkflowDescriptionPersistenceHandler"/>
-	<reference name="Distributed Component Registry"
-		interface="de.rcenvironment.rce.component.DistributedComponentRegistry"
-		bind="bindDistributedComponentRegistry"
-		unbind="unbindDistributedComponentRegistry"
+	<implementation class="de.rcenvironment.core.component.workflow.model.api.WorkflowDescriptionPersistenceHandler"/>
+	
+	<reference name="Distributed Component Knowledge Service"
+		interface="de.rcenvironment.core.component.api.DistributedComponentKnowledgeService"
+		bind="bindDistributedComponentKnowledgeService"
+		unbind="unbindDistributedComponentKnowledgeService"
 		cardinality="1..1"
 		policy="dynamic"
 		/>
 	<reference name="Platform Service"
-		interface="de.rcenvironment.rce.communication.PlatformService"
+		interface="de.rcenvironment.core.communication.api.PlatformService"
 		cardinality="1..1"
 		bind="bindPlatformService"
 		unbind="unbindPlatformService"

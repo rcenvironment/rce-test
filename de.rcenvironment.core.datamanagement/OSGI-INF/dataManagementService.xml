@@ -1,18 +1,18 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Data Management Service">
-	<implementation class="de.rcenvironment.rce.datamanagement.internal.DataManagementServiceImpl" /> 
+	<implementation class="de.rcenvironment.core.datamanagement.internal.DataManagementServiceImpl" /> 
 	<service>
-		<provide interface="de.rcenvironment.rce.datamanagement.DataManagementService" /> 
+		<provide interface="de.rcenvironment.core.datamanagement.DataManagementService" /> 
 	</service>
 	<reference bind="bindFileDataService"
  		cardinality="1..1"
- 		interface="de.rcenvironment.rce.datamanagement.DistributedFileDataService"
+ 		interface="de.rcenvironment.core.datamanagement.DistributedFileDataService"
  		name="Distributed Data Service"
  		policy="dynamic"
  	/>
- 	<reference bind="bindQueryService"
+ 	<reference bind="bindDataReferenceService"
  		cardinality="1..1"
- 		interface="de.rcenvironment.rce.datamanagement.DistributedQueryService"
- 		name="Distributed Query Service"
+ 		interface="de.rcenvironment.core.datamanagement.DistributedDataReferenceService"
+ 		name="Distributed DataReference Service"
  		policy="dynamic"
  	/>
 </scr:component>

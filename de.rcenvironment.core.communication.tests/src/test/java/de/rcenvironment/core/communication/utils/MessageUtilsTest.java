@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -16,8 +16,9 @@ import java.io.Serializable;
 
 import org.junit.Test;
 
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
-import de.rcenvironment.core.communication.model.impl.NetworkNodeInformationImpl;
+import de.rcenvironment.core.communication.common.SerializationException;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
+import de.rcenvironment.core.communication.model.impl.InitialNodeInformationImpl;
 
 /**
  * {@link MessageUtils} test case.
@@ -34,16 +35,16 @@ public class MessageUtilsTest {
     @Test
     public void basicRoundTrip() throws SerializationException {
         // create arbitrary serializable object
-        NetworkNodeInformationImpl testObject = new NetworkNodeInformationImpl();
+        InitialNodeInformationImpl testObject = new InitialNodeInformationImpl();
         String testValue = "test value";
         testObject.setDisplayName(testValue);
         // perform round-trip
         byte[] serialized = MessageUtils.serializeObject(testObject);
         Serializable restored1 = MessageUtils.deserializeObject(serialized);
-        NetworkNodeInformationImpl restored2 = MessageUtils.deserializeObject(serialized, NetworkNodeInformationImpl.class);
+        InitialNodeInformationImpl restored2 = MessageUtils.deserializeObject(serialized, InitialNodeInformationImpl.class);
         // verify
-        assertTrue(restored1 instanceof NetworkNodeInformationImpl);
-        assertEquals(testValue, ((NetworkNodeInformation) restored1).getDisplayName());
+        assertTrue(restored1 instanceof InitialNodeInformationImpl);
+        assertEquals(testValue, ((InitialNodeInformation) restored1).getDisplayName());
         assertEquals(testValue, restored2.getDisplayName());
     }
 
@@ -56,7 +57,7 @@ public class MessageUtilsTest {
     public void nullRoundTrip() throws SerializationException {
         byte[] serialized = MessageUtils.serializeObject(null);
         Serializable restored1 = MessageUtils.deserializeObject(serialized);
-        NetworkNodeInformationImpl restored2 = MessageUtils.deserializeObject(serialized, NetworkNodeInformationImpl.class);
+        InitialNodeInformationImpl restored2 = MessageUtils.deserializeObject(serialized, InitialNodeInformationImpl.class);
         // verify
         assertNotNull(serialized);
         assertNull(restored1);

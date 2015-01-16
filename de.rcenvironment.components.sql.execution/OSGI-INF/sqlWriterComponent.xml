@@ -3,45 +3,30 @@
 		factory="de.rcenvironment.rce.component"
 		name="SQL Writer">
 
-	<implementation class="de.rcenvironment.rce.components.sql.SQLWriterComponent"/>
+	<implementation class="de.rcenvironment.components.sql.execution.SQLWriterComponent"/>
 	<service>
-		<provide interface="de.rcenvironment.rce.component.Registerable"/>
+		<provide interface="de.rcenvironment.core.component.registration.api.Registerable"/>
 	</service>
 	
-    <reference
-	        name="JDBC Service"
-	        interface="de.rcenvironment.rce.components.sql.commons.JDBCService"
-	        cardinality="1..1"
-	        bind="bindJdbcService"
-	        unbind="unbindJdbcService"
-	        policy="dynamic"
-    />
-	
-	<property name="rce.component.configuration" type="String">
-		tableName:java.lang.String:output_${componentSqlId}
-		sqlquery:java.lang.String:insert into ${tableName} (...) values (...)
-	    jdbcProfile:java.lang.String:
-		sqlSetup:java.lang.String:
-		sqlCleanup:java.lang.String:
-		sqlDispose:java.lang.String:
-		inputMode:java.lang.String:BLOCK
-		inputMapping:java.lang.String:
-		createTable:java.lang.Boolean:false
-		dropTable:java.lang.Boolean:false
-		dropTableOn:java.lang.String:DISPOSE
+	<property name="rce.component.id" type="String">
+		de.rcenvironment.sqlwriter
+		de.rcenvironment.components.sql.execution.SQLWriterComponent_SQL Writer
 	</property>
 	
-    <property name="rce.component.outputs" type="String">
-       meta.tableName:java.lang.String
-       meta.sqlSuccess:java.lang.Integer
-    </property>
+	<property name="rce.component.configuration" type="String" value="/resources/sqlWriterConfiguration.json"/>
+    
+    <property name="rce.component.inputs" type="String" value="/resources/sqlInputs.json"/>
+    
+    <property name="rce.component.outputs" type="String" value="/resources/sqlOutputs.json"/>
     
 	<property name="rce.component.name" type="String" value="SQL Writer"/>
 	
 	<property name="rce.component.group" type="String" value="Data"/>
 	
-	<property name="rce.component.class" type="String" value="de.rcenvironment.rce.components.sql.SQLWriterComponent"/>
+	<property name="rce.component.class" type="String" value="de.rcenvironment.components.sql.execution.SQLWriterComponent"/>
 	
-	<property name="rce.component.icon-16" type="String" value="/resources/databasewriter_16.png"/>
-    <property name="rce.component.icon-32" type="String" value="/resources/databasewriter_32.png"/>
+	<property name="rce.component.version" type="String" value="3.0"/>
+	
+	<property name="rce.component.icon-16" type="String" value="platform:/plugin/de.rcenvironment.components.sql.common/resources/sqlWriter_16.png"/>
+    <property name="rce.component.icon-32" type="String" value="platform:/plugin/de.rcenvironment.components.sql.common/resources/sqlWriter_32.png"/>
 </scr:component> 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR SC, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -10,6 +10,7 @@ package de.rcenvironment.core.utils.ssh.jsch;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.sshd.SshServer;
@@ -30,6 +31,10 @@ public final class Utils {
 
     /** Time out for test methods interacting with embedded SSH server. */
     public static final int TIMEOUT = 30000;
+    
+    private static final int PORT_RANGE = 1000;
+
+    private static final int MIN_PORT = 9000;
     
     private Utils() {}
     
@@ -60,6 +65,12 @@ public final class Utils {
     }
     
     /**
+     * @return random port number (port range: 9000 - 10000)
+     */
+    public static int getRandomPortNumber() {
+        return new Random().nextInt(PORT_RANGE) + MIN_PORT;
+    }
+    /**
      * Create a {@link CommandFactory}.
      * @return {@link CommandFactory}
      */
@@ -77,7 +88,22 @@ public final class Utils {
      * @throws IOException on error
      * @throws InterruptedException on error
      */
-    public static void createFileOnServerSide(SshServer sshServer, Session session, final String filename,
+    public static void createFileOnServerSidesWorkDir(SshServer sshServer, Session session, final String filename,
+        final String fileContent, JSchCommandLineExecutor executor) throws IOException, InterruptedException {
+        createFileOnServerSide(sshServer, session, DummyCommand.WORKDIR_REMOTE + filename, fileContent, executor);
+    }
+    
+    /**
+     * Creates a file on server side.
+     * @param sshServer {@link SshServer} to use
+     * @param session {@link Session} to use
+     * @param filepath absolute path to file
+     * @param fileContent content of file to create
+     * @param executor executor to use
+     * @throws IOException on error
+     * @throws InterruptedException on error
+     */
+    public static void createFileOnServerSide(SshServer sshServer, Session session, final String filepath,
         final String fileContent, JSchCommandLineExecutor executor) throws IOException, InterruptedException {
 
         final String createFileCommand = "Create file!";
@@ -91,7 +117,7 @@ public final class Utils {
                         
                         @Override
                         public void start(Environment env) throws IOException {
-                            File file = new File(DummyCommand.WORKDIR + filename);
+                            File file = new File(filepath);
                             file.createNewFile();
                             FileUtils.writeByteArrayToFile(file, fileContent.getBytes());
                             exitCallback.onExit(0);
@@ -109,6 +135,60 @@ public final class Utils {
     }
     
     /**
+     * Creates a dir on server side.
+     * @param sshServer {@link SshServer} to use
+     * @param session {@link Session} to use
+     * @param dirname name of dir to create
+     * @param executor executor to use
+     * @throws IOException on error
+     * @throws InterruptedException on error
+     */
+    public static void createDirOnServerSidesWorkDir(SshServer sshServer, Session session, final String dirname,
+        JSchCommandLineExecutor executor) throws IOException, InterruptedException {
+        createDirOnServerSide(sshServer, session, DummyCommand.WORKDIR_REMOTE + dirname, executor);
+    }
+
+    /**
+     * Creates a dir on server side.
+     * @param sshServer {@link SshServer} to use
+     * @param session {@link Session} to use
+     * @param dirpath absolute path to dir to create
+     * @param executor executor to use
+     * @throws IOException on error
+     * @throws InterruptedException on error
+     */
+    public static void createDirOnServerSide(SshServer sshServer, Session session, final String dirpath,
+        JSchCommandLineExecutor executor) throws IOException, InterruptedException {
+
+        final String createFileCommand = "Create dir!";
+
+        sshServer.setCommandFactory(new CommandFactory() {
+            
+            @Override
+            public Command createCommand(String command) {
+                if (command.contains(createFileCommand)) {
+                    return new DummyCommand() {
+                        
+                        @Override
+                        public void start(Environment env) throws IOException {
+                            File dir = new File(dirpath);
+                            dir.mkdirs();
+                            exitCallback.onExit(0);
+                            dir.deleteOnExit();
+                        }
+                        
+                    };                    
+                } else  {
+                    return new UnknownCommand(command);
+                }
+            }
+        });
+
+        executor.start(createFileCommand);
+        executor.waitForTermination();
+    }
+
+    /**
      * Creates a file on server side.
      * @param sshServer {@link SshServer} to use
      * @param session {@link Session} to use
@@ -119,7 +199,8 @@ public final class Utils {
      */
     public static void createFileOnServerSide(SshServer sshServer, Session session, String filename, String fileContent)
         throws IOException, InterruptedException {
-        createFileOnServerSide(sshServer, session, filename, fileContent, new JSchCommandLineExecutor(session, DummyCommand.WORKDIR));
+        createFileOnServerSidesWorkDir(sshServer, session, filename, fileContent,
+            new JSchCommandLineExecutor(session, DummyCommand.WORKDIR_REMOTE));
         
     }
     

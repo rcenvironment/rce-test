@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,7 +11,9 @@ package de.rcenvironment.core.communication.model;
 import java.io.Serializable;
 import java.util.Map;
 
-import de.rcenvironment.core.communication.utils.SerializationException;
+import de.rcenvironment.core.communication.common.SerializationException;
+import de.rcenvironment.core.communication.protocol.MessageMetaData;
+import de.rcenvironment.core.communication.protocol.ProtocolConstants;
 
 /**
  * Represents a single message sent over the communication layer. In the typical request-response
@@ -22,6 +24,14 @@ import de.rcenvironment.core.communication.utils.SerializationException;
  * @author Robert Mischke
  */
 public interface NetworkMessage {
+
+    /**
+     * Returns the top-level message type. See the VALUE_MESSAGE_TYPE_* constants in
+     * {@link ProtocolConstants} for possible values.
+     * 
+     * @return the String id of the message type
+     */
+    String getMessageType();
 
     /**
      * Provides access to the raw payload bytes without triggering deserialization.
@@ -40,8 +50,15 @@ public interface NetworkMessage {
     Serializable getDeserializedContent() throws SerializationException;
 
     /**
-     * Provides access to the internal metadata map. Changes to the returned map affect the internal
-     * state of the {@link NetworkMessage}.
+     * Provides read-write access to this message's metadata.
+     * 
+     * @return the internal {@link MessageMetaData}
+     */
+    MessageMetaData accessMetaData();
+
+    /**
+     * Provides direct access to the internal metadata map. Changes to the returned map affect the
+     * internal state of the {@link NetworkMessage}.
      * 
      * @return a mutable reference to the internal metadata map
      */

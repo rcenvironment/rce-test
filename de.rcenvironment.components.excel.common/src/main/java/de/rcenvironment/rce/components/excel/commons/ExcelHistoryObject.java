@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -18,6 +18,7 @@ import java.util.List;
  *
  * @author Markus Kunde
  */
+@Deprecated
 public class ExcelHistoryObject implements Serializable {
 
     private static final long serialVersionUID = 7807032311798848955L;

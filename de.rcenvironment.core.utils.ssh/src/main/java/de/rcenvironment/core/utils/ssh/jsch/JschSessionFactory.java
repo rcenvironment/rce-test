@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -157,6 +157,9 @@ public final class JschSessionFactory {
         // validate parameters
         if (host.length() == 0) {
             throw new SshParameterException("The host name or address cannot be empty");
+        }
+        if (port < 0) {
+            throw new SshParameterException("The port must be greater than zero");
         }
         if (user.length() == 0) {
             throw new SshParameterException("The user name cannot be empty");

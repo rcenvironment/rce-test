@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
  * http://www.rcenvironment.de/
  */
- 
+
 package de.rcenvironment.core.gui.workflow.executor.properties;
 
 import java.io.File;
@@ -15,9 +15,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.eclipse.ui.PartInitException;
 
-import de.rcenvironment.commons.FileEncodingUtils;
-import de.rcenvironment.commons.TempFileUtils;
-import de.rcenvironment.gui.commons.EditorsHelper;
+import de.rcenvironment.core.gui.utils.common.EditorsHelper;
+import de.rcenvironment.core.utils.common.TempFileServiceAccess;
+import de.rcenvironment.core.utils.common.legacy.FileEncodingUtils;
 
 /**
  * Opens file for scripting and load content of configuration if there is already some script stuff.
@@ -27,12 +27,14 @@ import de.rcenvironment.gui.commons.EditorsHelper;
 public abstract class AbstractEditScriptRunnable implements Runnable {
 
     private static final Log LOGGER = LogFactory.getLog(AbstractEditScriptRunnable.class);
-    
+
+    private File tempFile;
+
     @Override
     public void run() {
         try {
-            final File tempFile = TempFileUtils.getDefaultInstance()
-                .createTempFileWithFixedFilename("script.py");
+            tempFile = TempFileServiceAccess.getInstance()
+                .createTempFileWithFixedFilename(getScriptName());
             // if script content already exist, load it to temp file
             if (getScript() != null) {
                 FileEncodingUtils.saveUnicodeStringToFile(getScript(), tempFile);
@@ -41,6 +43,7 @@ public abstract class AbstractEditScriptRunnable implements Runnable {
             EditorsHelper.openExternalFileInEditor(tempFile, new Runnable[] {
                 new Runnable() {
 
+                    @Override
                     public void run() {
                         try {
                             // save new tempFile in component's configuration
@@ -57,9 +60,22 @@ public abstract class AbstractEditScriptRunnable implements Runnable {
             LOGGER.error(e);
         }
     }
-    
+
+    /**
+     * @param script to update in the editor view
+     */
+    public void update(String script) {
+        try {
+            FileEncodingUtils.saveUnicodeStringToFile(script, tempFile);
+        } catch (IOException e) {
+            LOGGER.error(e.getStackTrace());
+        }
+    }
+
+    protected abstract String getScriptName();
+
     protected abstract void setScript(String script);
-    
+
     protected abstract String getScript();
 
 }

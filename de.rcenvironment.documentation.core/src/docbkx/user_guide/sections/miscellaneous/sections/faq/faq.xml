@@ -1,0 +1,63 @@
+<!DOCTYPE sect1 PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<sect1 id="faq">
+	<title>Frequently Asked Questions</title>
+	<para>Frequently asked questions and their answers are listed in this section.
+	</para>
+	
+	 <sect2>
+		<title>How can I update RCE to the latest version?</title>
+		<para>To update RCE to the latest version, select <emphasis role="italic">Help->Check for
+				Updates</emphasis> from the main menu. If a new version is available you will be
+			guided through an update wizard. Otherwise, a dialog will inform you that your current
+			version is up to date.</para>
+		<para>Alternatively, you can download a full RCE release at any time again. In most cases, this is
+			less convenient than using the update option mentioned above, because you will lose all
+			settings (window positions etc.) you made in the old RCE instance. However, your
+			projects and the workflow files inside of them are stored in the workspace folder
+			(located in {rce installation dir}/workspace by default). To transfer them to the new
+			installation, either move this folder to the default location of the new installation
+			(as above, this is {rce installation dir}/workspace), or choose the old workspace folder
+			location when starting the new instance.<note>
+				<para>If you choose the second way (full reinstallation), make sure that you do not
+					accidentally delete the workspace folder along with the old installation.</para>
+			</note></para>
+	</sect2>
+	<sect2>
+		<title>Why doesn't RCE start up? </title>
+		<para>Known issues are:</para>
+		<itemizedlist>
+			<listitem>
+				<para>You may not have Java 7 installed. You can check this by executing the
+					following line in a command/terminal window (command prompt etc.): <code>java
+						-version</code>. If you get a message telling you that Java 7 is
+					installed, everything is fine. Otherwise, please install a Java Runtime
+					Environment (JRE) of version 7 first.</para>
+			</listitem>
+			<listitem>
+				<para>There may not be enough available RAM on the target system. In the {rce installation
+					dir}/rce.ini file, two parameters control how much memory RCE tries to allocate.
+					The <code>-Xms</code> option specifies the minimum amout (which is used right
+					after startup), and the <code>-Xmx</code> option specifies the maximum amount of
+					RAM to use. For example, <code>-Xms256m -Xmx512m</code> defines that the
+					instance starts with 256 Mb, and may use at most 512 Mb. <note>
+						<para>For technical reasons, the exact RAM usage will be slightly higher, as
+							these numbers only control a certain type of memory the application
+							uses.</para>
+					</note></para>
+				<para>Decrease the default parameters and try to start RCE again. Adjust until you
+					find the highest amount that you can allocate on the target system.<note>
+						<para>Memory-intensive operations may fail when running RCE with a reduced
+							maximum memory pool (the <code>-Xmx</code> option).</para>
+					</note></para>
+			</listitem>
+		</itemizedlist>
+	</sect2>
+	<sect2>
+		<title>How to suppress the splash screen in headless (non-GUI) mode? </title>
+		<para>Start RCE with the command line parameter <code>-noSplash</code>.</para>
+		<para>If you don't like to suppress the splash screen via a command line parameter on every RCE
+			start, you can suppress the splash screen permanently by adding the
+			appropriate command line parameter to the rce.ini: Open the {rce installation
+			dir}/rce.ini file in a text editor and add somewhere above <code>-vmargs</code> the line <code>-noSplash</code>.</para>
+	</sect2>
+</sect1>

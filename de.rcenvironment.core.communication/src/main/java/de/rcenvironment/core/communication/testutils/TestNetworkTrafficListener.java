@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -12,20 +12,19 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import de.rcenvironment.core.communication.connection.NetworkTrafficListener;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.messaging.RawMessageChannelTrafficListener;
 import de.rcenvironment.core.communication.model.NetworkRequest;
 import de.rcenvironment.core.communication.model.NetworkResponse;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
-import de.rcenvironment.core.communication.utils.MetaDataWrapper;
 
 /**
- * A {@link NetworkTrafficListener} intended for keeping track of all message traffic in virtual
+ * A {@link RawMessageChannelTrafficListener} intended for keeping track of all message traffic in virtual
  * network tests. Can be used to wait until no message has been sent for a certain time using 
  * {@link #waitForNetworkSilence(int, int).
  * 
  * @author Robert Mischke
  */
-public class TestNetworkTrafficListener implements NetworkTrafficListener {
+public class TestNetworkTrafficListener implements RawMessageChannelTrafficListener {
 
     private long lastTrafficTimestamp = 0;
 
@@ -42,30 +41,37 @@ public class TestNetworkTrafficListener implements NetworkTrafficListener {
     private Semaphore trafficOccured = new Semaphore(0);
 
     @Override
-    public void onRequestReceived(NetworkRequest request, NodeIdentifier sourceId) {
-
+    public void onRequestSent(NetworkRequest request) {
         onTraffic(true);
     }
 
     @Override
-    public void onResponseGenerated(NetworkResponse response, NetworkRequest request, NodeIdentifier sourceId) {
+    public void onRawRequestReceived(NetworkRequest request, NodeIdentifier sourceId) {
+        onTraffic(false);
+    }
+
+    @Override
+    public void onRawResponseGenerated(NetworkResponse response, NetworkRequest request, NodeIdentifier sourceId) {
         // note: strictly speaking, the traffic has not happened yet, but is about to
-        if (MetaDataWrapper.createLsaMessage().matches(request.accessRawMetaData())) {
-            lsaMessages++;
-        }
 
-        if (MetaDataWrapper.createRoutedMessage().matches(request.accessRawMetaData())) {
-            routedMessages++;
-        }
-
-        if (MetaDataWrapper.wrap(request.accessRawMetaData()).getHopCount() > largestObservedHopCount) {
-            largestObservedHopCount = MetaDataWrapper.wrap(request.accessRawMetaData()).getHopCount();
-        }
-
-        if (!response.isSuccess()) {
-            unsuccessfulResponses++;
-        }
-
+        // TODO restore statistics?
+        // if (MessageMetaData.createLsaMessage().matches(request.accessRawMetaData())) {
+        // lsaMessages++;
+        // }
+        //
+        // if (MessageMetaData.createRoutedMessage().matches(request.accessRawMetaData())) {
+        // routedMessages++;
+        // }
+        //
+        // if (MessageMetaData.wrap(request.accessRawMetaData()).getHopCount() >
+        // largestObservedHopCount) {
+        // largestObservedHopCount =
+        // MessageMetaData.wrap(request.accessRawMetaData()).getHopCount();
+        // }
+        //
+        // if (!response.isSuccess()) {
+        // unsuccessfulResponses++;
+        // }
         onTraffic(false);
     }
 
@@ -163,4 +169,32 @@ public class TestNetworkTrafficListener implements NetworkTrafficListener {
         return routedMessages;
     }
 
+    /**
+     * Formats traffic statistics to a string.
+     * 
+     * @param topologySize The number of instances.
+     * @return A string representation for debugging/displaying.
+     */
+    public String getFormattedTrafficReport(int topologySize) {
+
+        if (topologySize <= 0) {
+            throw new IllegalArgumentException("Argument must be >=1");
+        }
+
+        return String.format("Total requests sent:                %d\n"
+            + "Average requests sent per node:     %d\n"
+            + "Total LSA messages sent:            %d\n"
+            + "Average LSA messages sent per node: %d\n"
+            + "Total routed messages sent:         %d\n"
+            + "Largest observed hop count:         %d (%d)\n"
+            + "Unsuccessful responses received:    %d\n",
+            getRequestCount(),
+            getRequestCount() / topologySize,
+            getLsaMessages(),
+            getLsaMessages() / topologySize,
+            getRoutedMessages(),
+            getLargestObservedHopCount(),
+            topologySize,
+            getUnsuccessfulResponses());
+    }
 }

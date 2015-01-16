@@ -4,13 +4,14 @@
 
 	<artifactId>de.rcenvironment.core.datamanagement</artifactId>
 	<name>RCE Core Data Management Bundle</name>
+	<version>6.0.0.qualifier</version>
 	<packaging>eclipse-plugin</packaging>
 
 	<parent>
 		<groupId>de.rcenvironment</groupId>
 		<artifactId>de.rcenvironment.core.parent</artifactId>
-		<version>2.4.0.qualifier</version>
-		<relativePath>../de.rcenvironment.core.common/coreParent.pom</relativePath>
+		<version>1.0.0</version>
+		<relativePath>../de.rcenvironment.core/maven/coreParent.pom</relativePath>
 	</parent>
 
 </project>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -31,6 +31,8 @@ public interface ClusterJobInformation {
         Moved,
         Waiting,
         Suspended,
+        DepWait,
+        Unsched,
         Unknown
     }
     
@@ -74,10 +76,4 @@ public interface ClusterJobInformation {
      */
     ClusterJobState getJobState();
     
-    /**
-     * @return information about job submission source. e.g. if submitted from a workflow it will be
-     *         returned: [component name]@[workflow name]. "-" if submission source is unknown.
-     */
-    String getSubmittedFrom();
-
 }

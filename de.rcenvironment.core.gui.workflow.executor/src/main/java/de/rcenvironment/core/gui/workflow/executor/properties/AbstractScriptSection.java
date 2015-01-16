@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,79 +8,67 @@
 
 package de.rcenvironment.core.gui.workflow.executor.properties;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.forms.widgets.Section;
 import org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetPage;
 import org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetWidgetFactory;
 
-import de.rcenvironment.core.component.executor.ScriptUsage;
 import de.rcenvironment.core.component.executor.SshExecutorConstants;
-import de.rcenvironment.rce.gui.workflow.editor.properties.AbstractWorkflowNodeCommand;
-import de.rcenvironment.rce.gui.workflow.editor.properties.ValidatingWorkflowNodePropertySection;
+import de.rcenvironment.core.component.workflow.model.api.WorkflowNode;
+import de.rcenvironment.core.gui.workflow.editor.properties.ValidatingWorkflowNodePropertySection;
 
 /**
  * Abstract component for the ScriptSection.
- * @author Sascha Zur 
+ * 
+ * @author Sascha Zur
  */
-public abstract class AbstractScriptSection extends ValidatingWorkflowNodePropertySection{
+public abstract class AbstractScriptSection extends ValidatingWorkflowNodePropertySection {
 
-    /***/
-    public static final int LOCAL_FILE = 1; 
-    /***/
-    public static final int REMOTE_FILE = 2; 
-    /***/
-    public static final int NEW_SCRIPT_FILE = 4; 
-    /***/
-    public static final int NO_SCRIPT_FILENAME = 8; 
-    /***/
-    public static final int ALL = LOCAL_FILE | REMOTE_FILE | NEW_SCRIPT_FILE;
+    /** Load script from local file system should be supported. */
+    public static final int LOCAL_FILE = 1;
 
+    /** Use script from built-in editor should be supported. */
+    public static final int NEW_SCRIPT_FILE = 4;
 
+    /** Both supported. */
+    public static final int ALL = LOCAL_FILE | NEW_SCRIPT_FILE;
+
+    /** None supported. */
+    public static final int NO_SCRIPT_FILENAME = 8;
 
     private static final int MINIMUM_HEIGHT_OF_JOB_SCRIPTING_TEXT = 500;
 
-    private static Log log = LogFactory.getLog(ScriptSection.class);
+    protected Button openInEditorButton;
 
-    private Button useLocalScriptRadioButton;
+    protected Composite newScriptArea;
 
-    private Button useRemoteScriptRadioButton;
+    protected EditScriptRunnable esr = null;
 
-    private Text localScriptPathText;
+    private StyledText scriptingText;
 
-    private Button selectLocalScriptButton;
+    private final String scriptName;
 
-    private Text remoteScriptPathText;
+    public AbstractScriptSection(int style, String scriptName) {
+        this.scriptName = scriptName;
+    }
 
-    private Button useNewScriptRadioButton;
+    /**
+     * Template method to allow subclasses to add content at the very top.
+     */
+    protected void createCompositeContentAtVeryTop(Composite composite, TabbedPropertySheetWidgetFactory factory) {
 
-    private Composite newScriptArea;
-
-    private Text remoteUploadPathText;
-
-    private Text scriptingText;
-
-    private int style;
-
-    public AbstractScriptSection(int style){
-        this.style = style;
     }
 
     @Override
@@ -93,6 +81,8 @@ public abstract class AbstractScriptSection extends ValidatingWorkflowNodeProper
 
         Composite jobParent = factory.createFlatFormComposite(jobSection);
 
+        createCompositeContentAtVeryTop(jobParent, factory);
+
         GridLayout layout = new GridLayout();
         layout.numColumns = 1;
         jobParent.setLayout(layout);
@@ -101,139 +91,86 @@ public abstract class AbstractScriptSection extends ValidatingWorkflowNodeProper
         gridData.grabExcessHorizontalSpace = true;
         gridData.horizontalAlignment = GridData.FILL;
 
-        if ((style & LOCAL_FILE) > 0){
-            useLocalScriptRadioButton = factory.createButton(jobParent, "Use local script", SWT.RADIO);
-            useLocalScriptRadioButton.setData(CONTROL_PROPERTY_KEY, SshExecutorConstants.CONFIG_KEY_USAGEOFSCRIPT);
-            useLocalScriptRadioButton.setData(ENUM_TYPE_KEY, ScriptUsage.class);
-            useLocalScriptRadioButton.setData(ENUM_VALUE_KEY, ScriptUsage.LOCAL);
+        openInEditorButton = factory.createButton(jobParent, Messages.openInEditor, SWT.PUSH);
+        openInEditorButton.addSelectionListener(new SelectionListener() {
 
-
-            Composite localPathArea = factory.createFlatFormComposite(jobParent);
-            localPathArea.setLayoutData(gridData);
-
-            layout = new GridLayout();
-            layout.numColumns = 3;
-            localPathArea.setLayout(layout);
-
-            factory.createLabel(localPathArea, "Local script:");
-
-            gridData = new GridData();
-            gridData.grabExcessHorizontalSpace = true;
-            gridData.horizontalAlignment = GridData.FILL;
-
-            localScriptPathText = factory.createText(localPathArea, "");
-            localScriptPathText.setLayoutData(gridData);
-            localScriptPathText.setData(CONTROL_PROPERTY_KEY, SshExecutorConstants.CONFIG_KEY_LOCALSCRIPTNAME);
-
-            selectLocalScriptButton = factory.createButton(localPathArea, "...", SWT.NONE);
-        }
-
-        if ((style & REMOTE_FILE) > 0){
-            useRemoteScriptRadioButton = factory.createButton(jobParent, "Use script on host", SWT.RADIO);
-            useRemoteScriptRadioButton.setData(CONTROL_PROPERTY_KEY, SshExecutorConstants.CONFIG_KEY_USAGEOFSCRIPT);
-            useRemoteScriptRadioButton.setData(ENUM_TYPE_KEY, ScriptUsage.class);
-            useRemoteScriptRadioButton.setData(ENUM_VALUE_KEY, ScriptUsage.REMOTE);
-
-            gridData = new GridData();
-            gridData.grabExcessHorizontalSpace = true;
-            gridData.horizontalAlignment = GridData.FILL;
-
-            Composite remotePathArea = factory.createFlatFormComposite(jobParent);
-            remotePathArea.setLayoutData(gridData);
-
-            layout = new GridLayout();
-            layout.numColumns = 2;
-            remotePathArea.setLayout(layout);
-
-            factory.createLabel(remotePathArea, "Path on cluster:");
-
-            gridData = new GridData();
-            gridData.grabExcessHorizontalSpace = true;
-            gridData.horizontalAlignment = GridData.FILL;
-
-            remoteScriptPathText = factory.createText(remotePathArea, "");
-            remoteScriptPathText.setLayoutData(gridData);
-            remoteScriptPathText.setData(CONTROL_PROPERTY_KEY, SshExecutorConstants.CONFIG_KEY_REMOTEPATHOFSCRIPT);
-        }
-
-
-        if ((style & NEW_SCRIPT_FILE) > 0){
-
-            useNewScriptRadioButton = factory.createButton(jobParent, "Write script here", SWT.RADIO);
-            useNewScriptRadioButton.setData(CONTROL_PROPERTY_KEY, SshExecutorConstants.CONFIG_KEY_USAGEOFSCRIPT);
-            useNewScriptRadioButton.setData(ENUM_TYPE_KEY, ScriptUsage.class);
-            useNewScriptRadioButton.setData(ENUM_VALUE_KEY, ScriptUsage.NEW);
-
-            Button openInEditorButton = factory.createButton(jobParent, "Open in Editor", SWT.PUSH);
-            openInEditorButton.addSelectionListener(new SelectionListener() {
-
-                @Override
-                public void widgetSelected(SelectionEvent arg0) {
-                    new EditScriptRunnable().run();
-                }
-
-                @Override
-                public void widgetDefaultSelected(SelectionEvent arg0) {
-                    widgetSelected(arg0);
-
-                }
-            });
-            gridData = new GridData();
-            gridData.grabExcessHorizontalSpace = true;
-            gridData.horizontalAlignment = GridData.FILL;
-
-            newScriptArea = factory.createFlatFormComposite(jobParent);
-            newScriptArea.setLayoutData(gridData);
-
-            layout = new GridLayout();
-            layout.numColumns = 2;
-            newScriptArea.setLayout(layout);
-
-            gridData = new GridData();
-            gridData.grabExcessHorizontalSpace = true;
-            gridData.horizontalAlignment = GridData.FILL;
-
-            if ((style & NO_SCRIPT_FILENAME)  == 0){
-                factory.createLabel(newScriptArea, "Script file name:");
-
-                remoteUploadPathText = factory.createText(newScriptArea, "");
-                remoteUploadPathText.setLayoutData(gridData);
-                remoteUploadPathText.setData(CONTROL_PROPERTY_KEY, SshExecutorConstants.CONFIG_KEY_NAMEOFNEWJOBSCRIPT);
+            @Override
+            public void widgetSelected(SelectionEvent arg0) {
+                esr = new EditScriptRunnable(node);
+                esr.run();
             }
 
-            gridData = new GridData();
-            gridData.horizontalSpan = 2;
-            gridData.grabExcessHorizontalSpace = true;
-            gridData.horizontalAlignment = GridData.FILL;
-            gridData.grabExcessVerticalSpace = true;
-            gridData.verticalAlignment = GridData.FILL;
+            @Override
+            public void widgetDefaultSelected(SelectionEvent arg0) {
+                widgetSelected(arg0);
 
-            scriptingText = factory.createText(newScriptArea, "", SWT.MULTI);
-            scriptingText.setLayoutData(gridData);
-            scriptingText.setData(CONTROL_PROPERTY_KEY, SshExecutorConstants.CONFIG_KEY_SCRIPT);
-            ((GridData) newScriptArea.getLayoutData()).heightHint = MINIMUM_HEIGHT_OF_JOB_SCRIPTING_TEXT;
+            }
+        });
 
-            addResizingListenerForJobScriptingText(parent.getParent());
+        gridData = new GridData();
+        gridData.grabExcessHorizontalSpace = true;
+        gridData.horizontalAlignment = GridData.FILL;
 
+        newScriptArea = factory.createFlatFormComposite(jobParent);
+        newScriptArea.setLayoutData(gridData);
 
-        }
+        layout = new GridLayout();
+        layout.numColumns = 2;
+        newScriptArea.setLayout(layout);
+
+        gridData = new GridData();
+        gridData.grabExcessHorizontalSpace = true;
+        gridData.horizontalAlignment = GridData.FILL;
+
+        gridData = new GridData();
+        gridData.horizontalSpan = 2;
+        gridData.grabExcessHorizontalSpace = true;
+        gridData.horizontalAlignment = GridData.FILL;
+        gridData.grabExcessVerticalSpace = true;
+        gridData.verticalAlignment = GridData.FILL;
+
+        final int aKeyCode = 97;
+
+        scriptingText = new StyledText(newScriptArea, SWT.MULTI | SWT.V_SCROLL | SWT.BORDER);
+        scriptingText.setFont(JFaceResources.getFont(JFaceResources.TEXT_FONT));
+        scriptingText.addKeyListener(new KeyAdapter() {
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.stateMask == SWT.CTRL && e.keyCode == aKeyCode) {
+                    scriptingText.selectAll();
+                }
+                updateEditor(node);
+            }
+
+        });
+
+        scriptingText.setLayoutData(gridData);
+        scriptingText.setData(CONTROL_PROPERTY_KEY, SshExecutorConstants.CONFIG_KEY_SCRIPT);
+        ((GridData) newScriptArea.getLayoutData()).heightHint = MINIMUM_HEIGHT_OF_JOB_SCRIPTING_TEXT;
+
+        addResizingListenerForJobScriptingText(parent.getParent());
+
         jobSection.setClient(jobParent);
     }
 
-    @Override
-    protected Updater createUpdater() {
-        return new JobUpdater();
+    private void updateEditor(WorkflowNode node) {
+        if (esr != null && scriptingText != null && esr.getNode().equals(node)) {
+            esr.update(scriptingText.getText());
+        }
     }
 
     @Override
-    protected Controller createController() {
-        return new JobController();
+    public void aboutToBeShown() {
+        super.aboutToBeShown();
+        refresh();
     }
 
     private void addResizingListenerForJobScriptingText(final Composite parent) {
 
-        parent.addListener(SWT.Resize,  new Listener() {
+        parent.addListener(SWT.Resize, new Listener() {
 
+            @Override
             public void handleEvent(Event e) {
                 setSizeOfJobScriptingText(parent);
             }
@@ -242,7 +179,7 @@ public abstract class AbstractScriptSection extends ValidatingWorkflowNodeProper
 
     private void setSizeOfJobScriptingText(Composite parent) {
         final int topMargin = 125;
-        if (parent.getSize().y < MINIMUM_HEIGHT_OF_JOB_SCRIPTING_TEXT){
+        if (parent.getSize().y < MINIMUM_HEIGHT_OF_JOB_SCRIPTING_TEXT) {
             ((GridData) newScriptArea.getLayoutData()).heightHint = MINIMUM_HEIGHT_OF_JOB_SCRIPTING_TEXT;
         } else {
             ((GridData) newScriptArea.getLayoutData()).heightHint = parent.getSize().y - topMargin;
@@ -250,21 +187,6 @@ public abstract class AbstractScriptSection extends ValidatingWorkflowNodeProper
         }
     }
 
-    private void setLocalScriptAreaEnabled(boolean enabled) {
-        localScriptPathText.setEnabled(enabled);
-        selectLocalScriptButton.setEnabled(enabled);
-    }
-
-    private void setRemoteScriptAreaEnabled(boolean enabled) {
-        remoteScriptPathText.setEnabled(enabled);
-    }
-
-    private void setNewScriptAreaEnabled(boolean enabled) {
-        if ((style & NO_SCRIPT_FILENAME) == 0){
-            remoteUploadPathText.setEnabled(enabled);
-        }
-        scriptingText.setEnabled(enabled);
-    }
     /**
      * Implementation of {@link AbstractEditScriptRunnable}.
      * 
@@ -272,106 +194,32 @@ public abstract class AbstractScriptSection extends ValidatingWorkflowNodeProper
      */
     private class EditScriptRunnable extends AbstractEditScriptRunnable {
 
+        private final WorkflowNode node;
+
+        public EditScriptRunnable(WorkflowNode node) {
+            this.node = node;
+        }
+
+        public WorkflowNode getNode() {
+            return node;
+        }
+
+        @Override
         protected void setScript(String script) {
-            setProperty(SshExecutorConstants.CONFIG_KEY_SCRIPT, script);
+            node.getComponentDescription().getConfigurationDescription()
+                .setConfigurationValue(SshExecutorConstants.CONFIG_KEY_SCRIPT, script);
         }
 
+        @Override
         protected String getScript() {
-            return getProperty(SshExecutorConstants.CONFIG_KEY_SCRIPT, String.class);
-        }
-    }
-    /**
-     * Custom {@link DefaultUpdater} extension to synchronize managed GUI elements that need special handling.
-     *
-     * @author Doreen Seider
-     */
-    private final class JobUpdater extends DefaultUpdater {
-
-        @Override
-        public void updateControl(final Control control, final String propertyName, final Serializable newValue,
-            final Serializable oldValue) {
-            super.updateControl(control, propertyName, newValue, oldValue);
-
-            if (control == useLocalScriptRadioButton || control == useRemoteScriptRadioButton || control == useNewScriptRadioButton) {
-                if ((style & LOCAL_FILE) > 0){
-                    setLocalScriptAreaEnabled(useLocalScriptRadioButton.getSelection());
-                }
-                if ((style & REMOTE_FILE) > 0){
-                    setRemoteScriptAreaEnabled(useRemoteScriptRadioButton.getSelection());
-                }
-                if ((style & NEW_SCRIPT_FILE) > 0){
-                    setNewScriptAreaEnabled(useNewScriptRadioButton.getSelection());
-                }
-            }
-        }
-
-    }
-
-    /**
-     * Custom {@link DefaultController} implementation to handle the activation of the GUI
-     * controls.
-     * 
-     * @author Doreen Seider
-     */
-    private final class JobController extends DefaultController {
-
-        @Override
-        protected void widgetSelected(final SelectionEvent event, final Control source) {
-            super.widgetSelected(event, source);
-
-            if (source == useLocalScriptRadioButton || source == useRemoteScriptRadioButton || source == useNewScriptRadioButton) {
-                if ((style & LOCAL_FILE) > 0){
-                    setLocalScriptAreaEnabled(useLocalScriptRadioButton.getSelection());
-                }
-                if ((style & REMOTE_FILE) > 0){
-                    setRemoteScriptAreaEnabled(useRemoteScriptRadioButton.getSelection());
-                }
-                if ((style & NEW_SCRIPT_FILE) > 0){
-                    setNewScriptAreaEnabled(useNewScriptRadioButton.getSelection());
-                }
-            } else if (source == selectLocalScriptButton) {
-                FileDialog selectFilesDialog = new FileDialog(source.getShell(), SWT.OPEN);
-                selectFilesDialog.setText("Select script");
-                String path = selectFilesDialog.open();
-                if (path != null) {
-                    try {
-                        File file = new File(path);
-                        new LocalScriptCommand(getProperty(SshExecutorConstants.CONFIG_KEY_LOCALSCRIPT,  String.class),
-                            FileUtils.readFileToString(file)).execute();
-                        localScriptPathText.setText(file.getName());
-                    } catch (IOException e) {
-                        log.error("Adding local script file failed", e);
-                    }
-                }
-            }
-        }
-
-    }
-
-    /**
-     * Abstract workflow command for adding local script.
-     * @author Doreen Seider
-     */
-    private final class LocalScriptCommand extends AbstractWorkflowNodeCommand {
-
-        protected final String oldScript;
-
-        protected final String newScript;
-
-        private LocalScriptCommand(String oldScript, String newScript) {
-            this.oldScript = oldScript;
-            this.newScript = newScript;
+            return node.getComponentDescription().getConfigurationDescription()
+                .getConfigurationValue(SshExecutorConstants.CONFIG_KEY_SCRIPT);
         }
 
         @Override
-        protected void execute2() {
-            setProperty(SshExecutorConstants.CONFIG_KEY_LOCALSCRIPT, newScript);
+        protected String getScriptName() {
+            return scriptName;
         }
-
-        @Override
-        protected void undo2() {
-            setProperty(SshExecutorConstants.CONFIG_KEY_LOCALSCRIPT, oldScript);
-        }
-
     }
+
 }

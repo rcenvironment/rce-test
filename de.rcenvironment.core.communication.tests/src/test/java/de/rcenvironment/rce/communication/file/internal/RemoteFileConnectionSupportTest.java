@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Fraunhofer SCAI, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,9 +8,7 @@
 
 package de.rcenvironment.rce.communication.file.internal;
 
-import static de.rcenvironment.rce.communication.CommunicationTestHelper.FILE_CONTACT;
-import static de.rcenvironment.rce.communication.CommunicationTestHelper.LOCAL_PLATFORM;
-import static de.rcenvironment.rce.communication.CommunicationTestHelper.URI;
+import static de.rcenvironment.core.communication.testutils.CommunicationTestHelper.URI;
 
 import java.net.URI;
 
@@ -21,13 +19,11 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
-import de.rcenvironment.rce.authentication.User;
-import de.rcenvironment.rce.communication.CommunicationException;
-import de.rcenvironment.rce.communication.CommunicationTestHelper;
-import de.rcenvironment.rce.communication.file.spi.RemoteFileConnection;
-import de.rcenvironment.rce.communication.file.spi.RemoteFileConnectionFactory;
-import de.rcenvironment.rce.communication.internal.CommunicationContactMap;
-import de.rcenvironment.rce.communication.internal.CommunicationType;
+import de.rcenvironment.core.authentication.User;
+import de.rcenvironment.core.communication.common.CommunicationException;
+import de.rcenvironment.core.communication.fileaccess.api.RemoteFileConnection;
+import de.rcenvironment.core.communication.fileaccess.internal.RemoteFileConnectionSupport;
+import de.rcenvironment.core.communication.fileaccess.spi.RemoteFileConnectionFactory;
 
 /**
  * Test cases for {@link RemoteFileConnectionSupport}.
@@ -47,11 +43,6 @@ public class RemoteFileConnectionSupportTest extends TestCase {
     @Override
     protected void setUp() throws Exception {
         support = new RemoteFileConnectionSupport();
-
-        CommunicationTestHelper.activateCommunicationContactMap();
-
-        CommunicationContactMap.removeAllMappings();
-        CommunicationContactMap.setMapping(CommunicationType.FILE_TRANSFER, LOCAL_PLATFORM, FILE_CONTACT);
     }
 
     /**

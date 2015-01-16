@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -16,14 +16,19 @@ import java.io.InputStream;
 import java.io.Serializable;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.Name;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import de.rcenvironment.components.excel.common.ExcelComponentConstants;
+import de.rcenvironment.components.excel.common.ExcelException;
+import de.rcenvironment.components.excel.common.GarbageDestroyer;
+
 
 /**
  * Excel address representation.
@@ -78,9 +83,9 @@ public class ExcelAddress implements Serializable {
      * @param ExcelException thrown if not a real Excel file
      */
     public ExcelAddress(final File excelFile, final String rawAddress) throws ExcelException {
-        
+        InputStream inp = null;
         try {
-            InputStream inp = new FileInputStream(excelFile);
+            inp = new FileInputStream(excelFile);
             org.apache.poi.ss.usermodel.Workbook wb = WorkbookFactory.create(inp);
             Name name = wb.getName(rawAddress);
 
@@ -92,7 +97,8 @@ public class ExcelAddress implements Serializable {
                 userDefinedNameForAddress = name.getNameName();
 
                 worksheetName = name.getSheetName();
-
+                worksheetName = cutBeginningAndEndingApostrophe(worksheetName);
+                
                 AreaReference ar = new AreaReference(fullAddress);
 
                 firstCell = StringUtils.split(ar.getFirstCell().formatAsString(), ExcelComponentConstants.DIVIDER_TABLECELLADDRESS)[1];
@@ -128,21 +134,26 @@ public class ExcelAddress implements Serializable {
                     if (splitAddress.length != 2
                         || !(lastAddressToken.matches("^\\$?([A-Za-z]{0,3})\\$?([0-9]{0,7}):?\\$?([A-Za-z]{0,3})\\$?([0-9]{0,7})$"))
                         || (lastAddressToken.matches("[A-Za-z]+"))
-                        || (lastAddressToken.matches("[0-9]+"))) {
+                        || (lastAddressToken.matches("[0-9]+"))
+                        || (lastAddressToken.startsWith(ExcelComponentConstants.DIVIDER_CELLADDRESS))
+                        || (lastAddressToken.endsWith(ExcelComponentConstants.DIVIDER_CELLADDRESS))) {
                         throw new ExcelException("Validation of address fails. Maybe not a valid Excel cell address?");
                     }
                 } else {
                     if (splitAddress.length != 2
                         || !(lastAddressToken.matches("^\\$?([A-Za-z]{0,2})\\$?([0-9]{0,5}):?\\$?([A-Za-z]{0,2})\\$?([0-9]{0,5})$"))
                         || (lastAddressToken.matches("[A-Za-z]+"))
-                        || (lastAddressToken.matches("[0-9]+"))) {
+                        || (lastAddressToken.matches("[0-9]+"))
+                        || (lastAddressToken.startsWith(ExcelComponentConstants.DIVIDER_CELLADDRESS))
+                        || (lastAddressToken.endsWith(ExcelComponentConstants.DIVIDER_CELLADDRESS))) {
                         throw new ExcelException("Validation of address fails. Maybe not a valid Excel cell address?");
                     }
                 }
                 String rawAddressWithoutAbsoluteFlag = StringUtils.remove(rawAddress, ExcelComponentConstants.ABSOLUTEFLAG);
 
                 worksheetName = StringUtils.split(rawAddressWithoutAbsoluteFlag, ExcelComponentConstants.DIVIDER_TABLECELLADDRESS)[0];
-
+                worksheetName = cutBeginningAndEndingApostrophe(worksheetName);
+                
                 firstCell = getAddressPart(rawAddressWithoutAbsoluteFlag, true, isNewXlFile);
 
                 lastCell = getAddressPart(rawAddressWithoutAbsoluteFlag, false, isNewXlFile);
@@ -161,7 +172,11 @@ public class ExcelAddress implements Serializable {
                 // Test if full address
                 AreaReference ar = new AreaReference(fullAddress);
                 fullAddress = ar.formatAsString();
-
+                
+                Sheet sheet = wb.getSheet(worksheetName);
+                if (sheet == null) {
+                    throw new ExcelException("Cannot discover sheet in Excel file.");
+                }
             }
         } catch (NumberFormatException e) {
             throw new ExcelException(e);
@@ -172,8 +187,27 @@ public class ExcelAddress implements Serializable {
         } catch (IllegalArgumentException e) {
             throw new ExcelException("File is no Excel file.", e);
         }  catch (IOException e) {
-            throw new ExcelException("Excel file is not found or cannot be opened", e);
+            throw new ExcelException("Excel file is not found or cannot be opened.", e);
+        } finally {
+            if (inp != null) {
+                try {
+                    inp.close();
+                } catch (IOException e) {
+                    throw new ExcelException("Cannot close access to Excel file.", e);
+                }
+            }
+            
+            //Not nice, but workbook-object will not released.
+            new Thread(new GarbageDestroyer()).start();
         }
+    }
+    
+    private static String cutBeginningAndEndingApostrophe(final String rawString) {
+        String resultString;
+        resultString = StringUtils.removeStart(rawString, "'");
+        resultString = StringUtils.removeEnd(resultString, "'");
+        
+        return resultString;
     }
 
     /**

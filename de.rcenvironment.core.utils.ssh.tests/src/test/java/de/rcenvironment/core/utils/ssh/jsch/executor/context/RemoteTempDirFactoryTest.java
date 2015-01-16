@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR SC, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,12 +11,13 @@ package de.rcenvironment.core.utils.ssh.jsch.executor.context;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 /**
- * Test cases for {@link RemoteTempDirFactory}.
+ * Test case for {@link RemoteTempDirFactory}.
  * @author Doreen Seider
  */
 public class RemoteTempDirFactoryTest {
@@ -30,6 +31,14 @@ public class RemoteTempDirFactoryTest {
     public void testGetRootDir() {
         RemoteTempDirFactory factory = new RemoteTempDirFactory(givenRootDir);        
         assertEquals(normalizedRootDir, factory.getRootDir());
+        
+        try {
+            new RemoteTempDirFactory(null);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertTrue(true);
+        }
+        
     }
     
     /** Test. */

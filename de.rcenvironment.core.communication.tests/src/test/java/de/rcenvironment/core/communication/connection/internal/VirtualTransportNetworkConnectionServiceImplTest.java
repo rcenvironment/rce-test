@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -18,7 +18,7 @@ import de.rcenvironment.core.communication.transport.virtual.VirtualNetworkTrans
 import de.rcenvironment.core.communication.transport.virtual.VirtualTransportTestConfiguration;
 
 /**
- * Unit test for {@link NetworkConnectionServiceImpl} using the
+ * Unit test for {@link MessageChannelServiceImpl} using the
  * {@link VirtualNetworkTransportProvider}.
  * 
  * @author Robert Mischke

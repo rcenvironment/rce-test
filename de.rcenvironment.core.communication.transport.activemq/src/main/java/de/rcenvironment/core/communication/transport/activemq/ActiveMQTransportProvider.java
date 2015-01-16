@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,10 +7,10 @@
  */
 package de.rcenvironment.core.communication.transport.activemq;
 
-import de.rcenvironment.core.communication.connection.NetworkConnectionIdFactory;
-import de.rcenvironment.core.communication.connection.impl.DefaultNetworkConnectionIdFactoryImpl;
+import de.rcenvironment.core.communication.channel.MessageChannelIdFactory;
 import de.rcenvironment.core.communication.transport.activemq.internal.ActiveMQJmsFactory;
 import de.rcenvironment.core.communication.transport.jms.common.AbstractJmsTransportProvider;
+import de.rcenvironment.core.communication.transport.spi.DefaultMessageChannelIdFactoryImpl;
 
 /**
  * ActiveMQ variant of the generic JMS transport provider.
@@ -25,11 +25,11 @@ public class ActiveMQTransportProvider extends AbstractJmsTransportProvider {
     public static final String TRANSPORT_ID = "activemq-tcp";
 
     public ActiveMQTransportProvider() {
-        this(new DefaultNetworkConnectionIdFactoryImpl());
+        this(new DefaultMessageChannelIdFactoryImpl());
     }
 
     // explicit constructor for unit tests
-    public ActiveMQTransportProvider(NetworkConnectionIdFactory connectionIdFactory) {
+    public ActiveMQTransportProvider(MessageChannelIdFactory connectionIdFactory) {
         super(connectionIdFactory, new ActiveMQJmsFactory());
     }
 

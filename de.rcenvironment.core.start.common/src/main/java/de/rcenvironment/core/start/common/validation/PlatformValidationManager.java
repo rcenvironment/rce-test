@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -12,21 +12,26 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.ui.statushandlers.StatusManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import de.rcenvironment.core.start.common.Platform;
 import de.rcenvironment.core.start.common.validation.internal.PlatformValidatorsRegistry;
 
 /**
  * A manager class that manages the validation of the RCE platform thru the registered {@link PlatformValidator}s.
- *
+ * 
  * @author Christian Weiss
  */
+// TODO >5.0.0: rename ("StartupValidationManager", maybe?) - misc_ro
 public class PlatformValidationManager {
-    
+
+    private static final String VALIDATION_ERROR_LOG_PREFIX = "Validation error: ";
+
+    private static final Log LOGGER = LogFactory.getLog(PlatformValidationManager.class);
+
     private PlatformValidatorsRegistry validatorsRegistry;
+
     /**
      * Returns the {@link PlatformValidatorsRegistry}.
      * 
@@ -38,7 +43,7 @@ public class PlatformValidationManager {
         }
         return validatorsRegistry;
     }
-    
+
     /**
      * Sets the {@link PlatformValidatorsRegistry}.
      * 
@@ -54,54 +59,37 @@ public class PlatformValidationManager {
     /**
      * Validates the RCE platform.
      * 
+     * @param headless true, if RCE is started in headless mode
      * @return the state of the RCE platform
      */
-    public boolean validate() {
+    public boolean validate(boolean headless) {
         final List<PlatformMessage> messages = new LinkedList<PlatformMessage>();
         final List<PlatformValidator> validators = getValidatorsRegistry().getValidators();
         for (final PlatformValidator validator : validators) {
             try {
                 final Collection<PlatformMessage> validationMessages = validator.validatePlatform();
                 messages.addAll(validationMessages);
-            } catch (RuntimeException ex) {
+            } catch (RuntimeException e) {
+                LOGGER.error(String.format("The execution of the validator '%s' caused an exception",
+                    validator.getClass().getName()), e);
                 messages.add(new PlatformMessage(
-                        PlatformMessage.Type.ERROR,
-                        "de.rcenvironment.rce.gui",
-                        String.format(
-                                "The execution of the validator '%s' caused an exception ('%s').",
-                                validator.getClass().getName(),
-                                ex.getLocalizedMessage())));
+                    PlatformMessage.Type.ERROR, "de.rcenvironment.rce.gui",
+                    String.format("The execution of the validator '%s' caused an exception ('%s').",
+                        validator.getClass().getName(), e.getLocalizedMessage())));
             }
         }
         if (messages.size() > 0) {
-            // the last encountered error is cached, as only the last error
-            // needs to be displayed in BLOCK style
-            PlatformMessage lastError = null;
             boolean hasError = false;
-            for (final PlatformMessage error : messages) {
-                if (lastError != null) {
-                    handleError(lastError, StatusManager.SHOW);
-                }
-                if (error.getType() == PlatformMessage.Type.ERROR) {
+            for (final PlatformMessage message : messages) {
+                LOGGER.error(VALIDATION_ERROR_LOG_PREFIX + message.getMessage());
+                if (message.getType() == PlatformMessage.Type.ERROR) {
                     hasError = true;
                 }
-                lastError = error;
             }
-            handleError(lastError, StatusManager.BLOCK);
+            Platform.getRunner().onValidationErrors(messages);
             return !hasError;
         }
         return true;
-    }
-
-    protected void handleError(final PlatformMessage error, final int style) {
-        final String errorMessageLabel = String.format("%s: %s", error.getType(), error.getMessage());
-        final IStatus status = new Status(Status.ERROR, error.getBundleSymbolicName(),
-                errorMessageLabel);
-        if (Platform.isHeadless()) {
-            System.err.println(errorMessageLabel);
-        } else {
-            StatusManager.getManager().handle(status, style);
-        }
     }
 
 }

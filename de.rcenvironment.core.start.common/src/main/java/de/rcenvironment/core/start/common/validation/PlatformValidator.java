@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2010 DLR, Fraunhofer SCAI, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -15,6 +15,7 @@ import java.util.Collection;
  *
  * @author Christian Weiss
  */
+// TODO >5.0.0: rename ("StartupValidator", maybe?) - misc_ro
 public interface PlatformValidator {
     
     /**

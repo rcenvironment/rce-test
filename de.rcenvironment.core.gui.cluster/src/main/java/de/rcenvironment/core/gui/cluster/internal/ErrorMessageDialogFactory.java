@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,6 +8,7 @@
  
 package de.rcenvironment.core.gui.cluster.internal;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Composite;
 
@@ -35,11 +36,13 @@ public final class ErrorMessageDialogFactory {
     /**
      * Create a {@link MessageDialog}.
      * @param parent parent shell
+     * @param e exception representing the error
      * @return {@link MessageDialog}
      */
-    public static MessageDialog createMessageDialogForConnectionFailure(Composite parent) {
+    public static MessageDialog createMessageDialogForConnectionFailure(Composite parent, Exception e) {
         MessageDialog dialog = new MessageDialog(parent.getShell(), Messages.connectionFailureDialogTitle, null,
-            Messages.connectionFailureDialogMessage, MessageDialog.ERROR, new String[] { Messages.ok }, 0);
+            String.format(Messages.connectionFailureDialogMessage, ExceptionUtils.getRootCauseMessage(e)),
+            MessageDialog.ERROR, new String[] { Messages.ok }, 0);
         return dialog;
     }
 

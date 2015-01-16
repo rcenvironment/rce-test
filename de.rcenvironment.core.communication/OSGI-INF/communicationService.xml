@@ -1,21 +1,24 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="deactivate" immediate="true" name="Communication Service">
-	<implementation class="de.rcenvironment.rce.communication.internal.CommunicationServiceImpl" />
+	<implementation class="de.rcenvironment.core.communication.internal.CommunicationServiceImpl" />
 	<service>
-		<provide interface="de.rcenvironment.rce.communication.CommunicationService"/>
-		<provide interface="de.rcenvironment.core.communication.routing.NetworkTopologyChangeListener"/>
+		<provide interface="de.rcenvironment.core.communication.api.CommunicationService"/>
+		<provide interface="de.rcenvironment.core.utils.incubator.ListenerProvider"/>
+		<!--
+		<provide interface="de.rcenvironment.core.communication.spi.NetworkTopologyChangeListener"/>
+		-->
 	</service>
 	<reference
 		name="Platform Service"
-		interface="de.rcenvironment.rce.communication.PlatformService"
+		interface="de.rcenvironment.core.communication.api.PlatformService"
 		cardinality="1..1"
 		bind="bindPlatformService"
 		policy="dynamic"
 	/>
 	<reference
-		name="Remote Service Handler"
-		interface="de.rcenvironment.rce.communication.service.RemoteServiceHandler"
+		name="Service Proxy Factory"
+		interface="de.rcenvironment.core.communication.rpc.ServiceProxyFactory"
 		cardinality="1..1"
-		bind="bindRemoteServiceHandler"
+		bind="bindServiceProxyFactory"
 		policy="dynamic"
 	/>
 	<reference

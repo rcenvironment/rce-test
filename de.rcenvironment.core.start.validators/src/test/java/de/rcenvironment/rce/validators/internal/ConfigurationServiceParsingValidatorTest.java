@@ -13,9 +13,9 @@ import junit.framework.Assert;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import de.rcenvironment.rce.configuration.ConfigurationService;
-import de.rcenvironment.rce.configuration.ConfigurationServiceMessage;
-import de.rcenvironment.rce.configuration.ConfigurationServiceMessageEvent;
+import de.rcenvironment.core.configuration.ConfigurationService;
+import de.rcenvironment.core.configuration.ConfigurationServiceMessage;
+import de.rcenvironment.core.configuration.ConfigurationServiceMessageEvent;
 
 /**
  * Tests for {@link ConfigurationServiceParsingValidator}.

@@ -1,8 +1,0 @@
-<contexts>
-	<context id="MergerComponent_Merger" title="Merger Component Help">
-		<description>
-     		The Merger component is used to merge multiple inputs to one. The Merger component is used to merge multiple inputs to one.
-     	</description>
-     	<topic href="resources/help/html/usage.xhtml" label="Merger component usage"></topic>
-	</context>
-</contexts>

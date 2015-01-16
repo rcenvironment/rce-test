@@ -18,7 +18,7 @@ import junit.framework.Assert;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
-import de.rcenvironment.rce.configuration.ConfigurationService;
+import de.rcenvironment.core.configuration.ConfigurationService;
 
 
 /**

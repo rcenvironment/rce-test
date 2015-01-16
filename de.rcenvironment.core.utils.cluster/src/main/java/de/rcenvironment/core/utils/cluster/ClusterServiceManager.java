@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,6 +7,8 @@
  */
  
 package de.rcenvironment.core.utils.cluster;
+
+import java.util.Map;
 
 
 /**
@@ -17,18 +19,19 @@ package de.rcenvironment.core.utils.cluster;
 public interface ClusterServiceManager {
 
     /**
-     * Returns {@link ClusterService} which connects to the host via SSH. If no one was
-     * created for given system, host, port, and user a new one will be created, otherwise the
-     * existing cached one will be returned.
+     * Returns {@link ClusterService} which connects to the host via SSH. If no one was created for given system, host, port, and user a new
+     * one will be created, otherwise the existing cached one will be returned.
      * 
      * @param system target queuing system.
+     * @param pathsToQueuingSystemCommands paths to the queuing system commands on the server (optional; only needed if they are not known
+     *        by the environment established via ssh); key is command, value is path
      * @param host target host
      * @param port target server
      * @param sshAuthUser given SSH user
      * @param sshAuthPhrase given SSH password
      * @return {@link ClusterService}
      */
-    ClusterService retrieveSshBasedClusterJobInformationService(ClusterQueuingSystem system, String host, int port,
-        String sshAuthUser, String sshAuthPhrase);
+    ClusterService retrieveSshBasedClusterService(ClusterQueuingSystem system, Map<String, String> pathsToQueuingSystemCommands,
+        String host, int port, String sshAuthUser, String sshAuthPhrase);
     
 }

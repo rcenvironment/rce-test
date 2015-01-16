@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="de.rcenvironment.rce.validators.PathlengthValidator">
-   <implementation class="de.rcenvironment.rce.validators.internal.PathlengthValidator"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="Path Length Validator">
+   <implementation class="de.rcenvironment.core.validators.internal.PathlengthValidator"/>
    <service>
    		<provide interface="de.rcenvironment.core.start.common.validation.PlatformValidator"/>
    </service>

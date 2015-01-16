@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -13,20 +13,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import de.rcenvironment.core.communication.common.CommunicationException;
+import de.rcenvironment.core.communication.common.NetworkGraphLink;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
 import de.rcenvironment.core.communication.model.NetworkResponse;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
 import de.rcenvironment.core.communication.testutils.TestConfiguration;
-import de.rcenvironment.core.communication.testutils.TestStringRequestPayloadHandler;
+import de.rcenvironment.core.communication.testutils.TestNetworkRequestHandler;
 import de.rcenvironment.core.communication.testutils.VirtualInstance;
 import de.rcenvironment.core.communication.testutils.VirtualInstanceState;
 import de.rcenvironment.core.communication.transport.virtual.VirtualTransportTestConfiguration;
-import de.rcenvironment.rce.communication.CommunicationException;
 
 /**
  * @author Robert Mischke
@@ -77,7 +79,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
 
             // note: the third parameter in Arrays.copyOfRange() is exclusive and must be "last + 1"
             assertTrue("Instances did not converge at i=" + i,
-                instanceUtils.allInstancesConverged(Arrays.copyOfRange(allInstances, 0, newInstanceIndex + 1)));
+                instanceUtils.allInstancesHaveSameRawNetworkGraph(Arrays.copyOfRange(allInstances, 0, newInstanceIndex + 1)));
         }
     }
 
@@ -96,7 +98,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
         waitForNextMessage();
         waitForNetworkSilence();
 
-        assertTrue(instanceUtils.allInstancesConverged(allInstances));
+        assertTrue(instanceUtils.allInstancesHaveSameRawNetworkGraph(allInstances));
 
     }
 
@@ -119,7 +121,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
 
             // note: the third parameter in Arrays.copyOfRange() is exclusive and must be "last + 1"
             assertTrue("Instances did not converge at i=" + i,
-                instanceUtils.allInstancesConverged(Arrays.copyOfRange(allInstances, 0, newInstanceIndex + 1)));
+                instanceUtils.allInstancesHaveSameRawNetworkGraph(Arrays.copyOfRange(allInstances, 0, newInstanceIndex + 1)));
         }
     }
 
@@ -139,12 +141,11 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
         }
         waitForNextMessage();
         waitForNetworkSilence();
-        assertTrue(ERROR_MSG_INSTANCES_DID_NOT_CONVERGE, instanceUtils.allInstancesConverged(allInstances));
+        assertTrue(ERROR_MSG_INSTANCES_DID_NOT_CONVERGE, instanceUtils.allInstancesHaveSameRawNetworkGraph(allInstances));
     }
 
     /**
-     * Test a simple ring topology. In contrast to the non-duplex test, a double-connected ring
-     * should result, with N*2 channels.
+     * Test a simple ring topology. In contrast to the non-duplex test, a double-connected ring should result, with N*2 channels.
      * 
      * @throws Exception on uncaught exceptions
      */
@@ -159,14 +160,12 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
         waitForNetworkSilence();
 
         for (VirtualInstance vi : allInstances) {
-            assertEquals(ERROR_MSG_NUMBER_OF_NODES, testSize, vi.getTopologyMap().getNodeCount());
-            assertEquals(ERROR_MSG_NUMBER_OF_LINKS, testSize * 2, vi.getTopologyMap().getLinkCount());
+            assertNodeAndLinkCount(vi, testSize, testSize * 2);
         }
     }
 
     /**
-     * Test a simple chain topology. Although connections are only initiated in one direction, a
-     * double-connected chain should result.
+     * Test a simple chain topology. Although connections are only initiated in one direction, a double-connected chain should result.
      * 
      * @throws Exception on uncaught exceptions
      */
@@ -179,8 +178,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
         waitForNetworkSilence();
 
         for (VirtualInstance vi : allInstances) {
-            assertEquals(ERROR_MSG_NUMBER_OF_NODES, testSize, vi.getTopologyMap().getNodeCount());
-            assertEquals(ERROR_MSG_NUMBER_OF_LINKS, testSize * 2 - 2, vi.getTopologyMap().getLinkCount());
+            assertNodeAndLinkCount(vi, testSize, testSize * 2 - 2);
         }
     }
 
@@ -196,14 +194,13 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
         instanceUtils.connectToInwardStarTopology(allInstances);
         waitForNextMessage();
         waitForNetworkSilence();
-
+        
         for (VirtualInstance vi : allInstances) {
             // assertTrue(NETWORK_NOT_FULLY_CONVERGED, vi.isFullyConverged());
-            assertEquals((testSize - 1) * 2, vi.getTopologyMap().getLinkCount());
-            assertEquals(testSize, vi.getTopologyMap().getNodeCount());
+            assertNodeAndLinkCount(vi, testSize, (testSize - 1) * 2);
         }
 
-        assertTrue(ERROR_MSG_INSTANCES_DID_NOT_CONVERGE, instanceUtils.allInstancesConverged(allInstances));
+        assertTrue(ERROR_MSG_INSTANCES_DID_NOT_CONVERGE, instanceUtils.allInstancesHaveSameRawNetworkGraph(allInstances));
     }
 
     /**
@@ -223,8 +220,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
 
         for (VirtualInstance vi : allInstances) {
             // assertTrue(NETWORK_NOT_FULLY_CONVERGED, vi.isFullyConverged());
-            assertEquals(ERROR_MSG_NUMBER_OF_NODES, testSize, vi.getTopologyMap().getNodeCount());
-            assertEquals(ERROR_MSG_NUMBER_OF_LINKS, testSize * 2, vi.getTopologyMap().getLinkCount());
+            assertNodeAndLinkCount(vi, testSize, testSize * 2);
         }
 
         for (int i = 0; i < testSize; i++) {
@@ -232,16 +228,16 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
             VirtualInstance vi1 = instanceUtils.getRandomInstance(allInstances);
             VirtualInstance vi2 = instanceUtils.getRandomInstance(allInstances, vi1);
 
-            NetworkRoute route = vi1.getRouteTo(vi2);
+            List<? extends NetworkGraphLink> route = vi1.getRouteTo(vi2);
 
             // Route should exist
             assertTrue(String.format("Could not find a valid route from %s to %s",
                 vi1.getConfigurationService().getLocalNodeId(),
                 vi2.getConfigurationService().getLocalNodeId()),
-                route.validate());
+                route != null);
 
             // Route should not be larger than the number of nodes in the network
-            assertTrue(route.getLength() < allInstances[randomGenerator.nextInt(allInstances.length)].getTopologyMap().getNodeCount());
+            assertTrue(route.size() < instanceUtils.getRandomInstance(allInstances).getKnownNodeCount());
         }
     }
 
@@ -276,9 +272,8 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
 
             // check that everything is normal (e.g. ring topology)
             for (VirtualInstance vi : allInstances) {
-                assertEquals(ERROR_MSG_NUMBER_OF_NODES, testSize, vi.getTopologyMap().getNodeCount());
                 // TODO check removal of passive connections on shutdown
-                assertEquals(ERROR_MSG_NUMBER_OF_LINKS, testSize * 2, vi.getTopologyMap().getLinkCount());
+                assertNodeAndLinkCount(vi, testSize, testSize * 2);
             }
 
             prepareWaitForNextMessage();
@@ -290,8 +285,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
             for (VirtualInstance vi : allInstances) {
                 // assertTrue(NETWORK_NOT_FULLY_CONVERGED, vi.isFullyConverged());
                 if (!vi.equals(failingInstance)) {
-                    assertEquals(ERROR_MSG_NUMBER_OF_NODES, testSize - 1, vi.getTopologyMap().getNodeCount());
-                    assertEquals(ERROR_MSG_NUMBER_OF_LINKS, testSize * 2 - 4, vi.getTopologyMap().getLinkCount());
+                    assertNodeAndLinkCount(vi, testSize - 1, testSize * 2 - 4);
                 }
             }
 
@@ -306,7 +300,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
                 String.format("%s failed to send routed message to %s. \n\n %s",
                     instanceUtils.getFormattedName(sender),
                     instanceUtils.getFormattedName(receiver),
-                    sender.getFormattedNetworkGraph()),
+                    sender.getFormattedLegacyNetworkGraph()),
                 receiver.checkMessageReceivedByContent(message));
             // waitSomeTime(instances.length);
 
@@ -348,7 +342,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
             NetworkResponse response;
 
             response = firstNode.performRoutedRequest(messageContent, lastNode.getNodeId(), DEFAULT_REQUEST_TIMEOUT);
-            assertTrue(response.toString(), response.isSuccess());
+            assertTrue("Request failed: " + response.getResultCode(), response.isSuccess());
 
             // shutdown
             prepareWaitForNextMessage();
@@ -381,7 +375,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
             assertTrue(response.toString(), response.isSuccess());
 
             // LOGGER.info(failingInstance.getFormattedNetworkStats());
-            log.info(failingNode.getFormattedNetworkGraph());
+            log.info(failingNode.getFormattedLegacyNetworkGraph());
         }
 
     }
@@ -399,7 +393,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
         waitForNextMessage();
         waitForNetworkSilence();
 
-        log.info(allInstances[0].getFormattedNetworkGraph());
+        log.info(allInstances[0].getFormattedLegacyNetworkGraph());
 
         // note: added n repetitions to this test; arbitrary value
         for (int i = 0; i < testSize; i++) {
@@ -417,7 +411,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
             NetworkResponse response = sender.performRoutedRequest(requestBody, receiverId, DEFAULT_REQUEST_TIMEOUT);
             assertNotNull("Unexpected null response", response);
             assertTrue("Received failure response; code=" + response.getResultCode(), response.isSuccess());
-            assertEquals(TestStringRequestPayloadHandler.getTestResponse(requestBody, receiverId),
+            assertEquals(TestNetworkRequestHandler.getTestResponse(requestBody, receiverId),
                 response.getDeserializedContent());
 
             log.debug("Routed message delivered and confirmed; registered " + (getGlobalRequestCount() - trafficCountBefore)
@@ -522,8 +516,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
 
         for (VirtualInstance vi : allInstances) {
             if (!vi.equals(failingInstance)) {
-                assertEquals(ERROR_MSG_NUMBER_OF_NODES, testSize - 1, vi.getTopologyMap().getNodeCount());
-                assertEquals(ERROR_MSG_NUMBER_OF_LINKS, testSize * 2 - 2, vi.getTopologyMap().getLinkCount());
+                assertNodeAndLinkCount(vi, testSize - 1, testSize * 2 - 2);
             }
         }
 
@@ -552,8 +545,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
         waitForNetworkSilence();
 
         for (VirtualInstance vi : allInstances) {
-            assertEquals(ERROR_MSG_NUMBER_OF_NODES, testSize / 2, vi.getTopologyMap().getNodeCount());
-            assertEquals(ERROR_MSG_NUMBER_OF_LINKS, testSize, vi.getTopologyMap().getLinkCount());
+            assertNodeAndLinkCount(vi, testSize / 2, testSize);
         }
 
         // connect networks
@@ -563,8 +555,7 @@ public class LargeScaleScenarioDuplexTests extends AbstractLargeScaleTest {
         waitForNetworkSilence();
 
         for (VirtualInstance vi : allInstances) {
-            assertEquals(ERROR_MSG_NUMBER_OF_NODES, testSize, vi.getTopologyMap().getNodeCount());
-            assertEquals(ERROR_MSG_NUMBER_OF_LINKS, testSize * 2 + 2, vi.getTopologyMap().getLinkCount());
+            assertNodeAndLinkCount(vi, testSize, testSize * 2 + 2);
         }
 
     }

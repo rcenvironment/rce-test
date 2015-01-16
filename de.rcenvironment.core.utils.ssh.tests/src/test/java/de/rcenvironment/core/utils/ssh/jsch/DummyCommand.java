@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR SC, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -20,6 +20,7 @@ import org.apache.sshd.server.ExitCallback;
 
 /**
  * Provides test behavior for incoming commands.
+ * 
  * @author Doreen Seider
  */
 public class DummyCommand implements Command {
@@ -28,7 +29,11 @@ public class DummyCommand implements Command {
     public static final String EMPTY_STRING = "";
     
     /** Test constant. */
-    public static final String WORKDIR = "./temp/";
+    // TODO document: what is this relative to? - misc_ro, May 2013
+    public static final String WORKDIR_LOCAL = "./local-workdir/";
+
+    /** Test constant. */
+    public static final String WORKDIR_REMOTE = "./remote-workdir/";
     
     protected ExitCallback exitCallback;
 
@@ -37,8 +42,6 @@ public class DummyCommand implements Command {
     private String stderr;
     
     private int exitValue;
-    
-    private boolean failing = false;
     
     private OutputStream stdoutStream;
 
@@ -79,11 +82,7 @@ public class DummyCommand implements Command {
 
     @Override
     public void start(Environment env) throws IOException {
-        if (failing) {
-            throw new IOException();
-        }
-//        if (stdinStream != null) {
-//            IOUtils.copy(stdinStream, stdoutStream);
+
         if (stdout != null) {
             stdoutStream.write(stdout.getBytes());
         } else {

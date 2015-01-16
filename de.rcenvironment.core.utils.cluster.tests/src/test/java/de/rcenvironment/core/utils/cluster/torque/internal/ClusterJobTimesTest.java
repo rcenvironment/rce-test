@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -12,6 +12,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
+
+import de.rcenvironment.core.utils.cluster.internal.ClusterJobTimesInformation;
 
 /**
  * Test cases for {@link ClusterJobTimesInformation}.

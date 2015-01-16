@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -11,16 +11,16 @@ package de.rcenvironment.core.communication.transport.virtual;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.rcenvironment.core.communication.connection.NetworkConnectionEndpointHandler;
-import de.rcenvironment.core.communication.connection.NetworkConnectionIdFactory;
-import de.rcenvironment.core.communication.connection.ServerContactPoint;
-import de.rcenvironment.core.communication.model.BrokenConnectionListener;
-import de.rcenvironment.core.communication.model.NetworkConnection;
+import de.rcenvironment.core.communication.channel.MessageChannelIdFactory;
+import de.rcenvironment.core.communication.channel.ServerContactPoint;
+import de.rcenvironment.core.communication.common.CommunicationException;
+import de.rcenvironment.core.communication.common.NodeIdentifier;
+import de.rcenvironment.core.communication.messaging.RawMessageChannelEndpointHandler;
+import de.rcenvironment.core.communication.model.BrokenMessageChannelListener;
+import de.rcenvironment.core.communication.model.MessageChannel;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
-import de.rcenvironment.core.communication.model.NetworkNodeInformation;
-import de.rcenvironment.core.communication.model.NodeIdentifier;
+import de.rcenvironment.core.communication.model.InitialNodeInformation;
 import de.rcenvironment.core.communication.transport.spi.NetworkTransportProvider;
-import de.rcenvironment.rce.communication.CommunicationException;
 
 /**
  * A JVM-internal pseudo transport intended for unit testing.
@@ -37,12 +37,12 @@ public class VirtualNetworkTransportProvider implements NetworkTransportProvider
     private Map<NetworkContactPoint, ServerContactPoint> virtualServices =
         new HashMap<NetworkContactPoint, ServerContactPoint>();
 
-    private Map<NodeIdentifier, NetworkConnectionEndpointHandler> remoteInitiatedConnectionEndpointHandlerMap =
-        new HashMap<NodeIdentifier, NetworkConnectionEndpointHandler>();
+    private Map<NodeIdentifier, RawMessageChannelEndpointHandler> remoteInitiatedConnectionEndpointHandlerMap =
+        new HashMap<NodeIdentifier, RawMessageChannelEndpointHandler>();
 
     private boolean supportRemoteInitiatedConnections;
 
-    private NetworkConnectionIdFactory connectionIdFactory;
+    private MessageChannelIdFactory connectionIdFactory;
 
     /**
      * Constructor.
@@ -50,7 +50,7 @@ public class VirtualNetworkTransportProvider implements NetworkTransportProvider
      * @param supportRemoteInitiatedConnections whether the transport should simulate support for
      *        passive/inverse connections or not
      */
-    public VirtualNetworkTransportProvider(boolean supportRemoteInitiatedConnections, NetworkConnectionIdFactory connectionIdFactory) {
+    public VirtualNetworkTransportProvider(boolean supportRemoteInitiatedConnections, MessageChannelIdFactory connectionIdFactory) {
         this.supportRemoteInitiatedConnections = supportRemoteInitiatedConnections;
         this.connectionIdFactory = connectionIdFactory;
     }
@@ -61,35 +61,46 @@ public class VirtualNetworkTransportProvider implements NetworkTransportProvider
     }
 
     @Override
-    public synchronized NetworkConnection connect(NetworkContactPoint ncp, NetworkNodeInformation initiatingNodeInformation,
-        boolean allowDuplex, NetworkConnectionEndpointHandler initiatingEndpointHandler, BrokenConnectionListener brokenConnectionListener)
+    public synchronized MessageChannel connect(NetworkContactPoint ncp, InitialNodeInformation initiatingNodeInformation,
+        boolean allowDuplex, RawMessageChannelEndpointHandler initiatingEndpointHandler,
+        BrokenMessageChannelListener brokenConnectionListener)
         throws CommunicationException {
         // FIXME handle case of no matching server instance; causes a NPE in current implementation
         ServerContactPoint receivingSCP = virtualServices.get(ncp);
-        if (!receivingSCP.isAcceptingMessages()) {
-            // remote server was shut down or is simulating a crash
-            throw new CommunicationException("Failed to open connection: Remote SCP is not accepting messages");
+        if (receivingSCP == null) {
+            throw new IllegalStateException("No matching SCP found for NCP " + ncp + "; was the server stated before connecting to it?");
         }
-        NetworkConnectionEndpointHandler receivingEndpointHandler = receivingSCP.getEndpointHandler();
+        if (receivingSCP.isSimulatingBreakdown()) {
+            // remote server (in integration tests) is simulating a crash
+            throw new CommunicationException("Failed to open connection: " + receivingSCP + " is simulating breakdown");
+        }
+        RawMessageChannelEndpointHandler receivingEndpointHandler = receivingSCP.getEndpointHandler();
 
-        NetworkConnection activeConnection =
-            new VirtualNetworkConnection(initiatingNodeInformation, receivingEndpointHandler, receivingSCP);
-        NetworkNodeInformation receivingNodeInformation = receivingEndpointHandler.exchangeNodeInformation(initiatingNodeInformation);
-        activeConnection.setRemoteNodeInformation(receivingNodeInformation);
-        activeConnection.setConnectionId(connectionIdFactory.generateId(true));
+        MessageChannel newChannel =
+            new VirtualNetworkMessageChannel(initiatingNodeInformation, receivingEndpointHandler, receivingSCP);
+        InitialNodeInformation receivingNodeInformation = receivingEndpointHandler.exchangeNodeInformation(initiatingNodeInformation);
+        newChannel.setRemoteNodeInformation(receivingNodeInformation);
+        newChannel.setChannelId(connectionIdFactory.generateId(true));
 
         // TODO use brokenConnectionListener
 
         if (allowDuplex && supportRemoteInitiatedConnections) {
-            NetworkConnection passiveConnection =
-                new VirtualNetworkConnection(receivingNodeInformation, initiatingEndpointHandler, receivingSCP);
-            passiveConnection.setRemoteNodeInformation(initiatingNodeInformation);
-            passiveConnection.setConnectionId(connectionIdFactory.generateId(false));
-            passiveConnection.setInitiatedByRemote(true);
-            receivingEndpointHandler.onRemoteInitiatedConnectionEstablished(passiveConnection, receivingSCP);
+            MessageChannel remoteChannel =
+                new VirtualNetworkMessageChannel(receivingNodeInformation, initiatingEndpointHandler, receivingSCP);
+            remoteChannel.setRemoteNodeInformation(initiatingNodeInformation);
+            remoteChannel.setChannelId(connectionIdFactory.generateId(false));
+            remoteChannel.setInitiatedByRemote(true);
+
+            // cross-link "associated mirror channel" ids
+            remoteChannel.setAssociatedMirrorChannelId(newChannel.getChannelId());
+            newChannel.setAssociatedMirrorChannelId(remoteChannel.getChannelId());
+
+            remoteChannel.markAsEstablished();
+            receivingEndpointHandler.onRemoteInitiatedChannelEstablished(remoteChannel, receivingSCP);
         }
 
-        return activeConnection;
+        newChannel.markAsEstablished();
+        return newChannel;
     }
 
     @Override
@@ -101,12 +112,10 @@ public class VirtualNetworkTransportProvider implements NetworkTransportProvider
     public synchronized void startServer(ServerContactPoint scp) {
         // TODO naive implementation; check for collisions etc.
         virtualServices.put(scp.getNetworkContactPoint(), scp);
-        scp.setAcceptingMessages(true);
     }
 
     @Override
     public synchronized void stopServer(ServerContactPoint scp) {
-        scp.setAcceptingMessages(false);
         ServerContactPoint removed = virtualServices.remove(scp.getNetworkContactPoint());
         if (removed == null) {
             throw new IllegalStateException("No matching SCP registered: " + scp);

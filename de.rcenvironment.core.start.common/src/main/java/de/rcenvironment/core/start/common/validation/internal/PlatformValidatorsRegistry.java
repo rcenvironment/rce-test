@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2011 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -20,6 +20,7 @@ import de.rcenvironment.core.start.common.validation.PlatformValidator;
  * 
  * @author Sascha Zur
  */
+//TODO >5.0.0: rename - misc_ro
 public class PlatformValidatorsRegistry {
 
     protected static final String VALIDATORS_ID = "de.rcenvironment.rce.start.validations";

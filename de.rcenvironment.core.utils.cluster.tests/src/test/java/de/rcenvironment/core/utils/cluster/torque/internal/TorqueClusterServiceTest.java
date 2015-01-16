@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -23,8 +23,10 @@ import org.junit.Test;
 
 import de.rcenvironment.core.utils.cluster.ClusterJobInformation;
 import de.rcenvironment.core.utils.cluster.ClusterJobInformation.ClusterJobState;
-import de.rcenvironment.core.utils.cluster.internal.DistributedClusterJobSourceServiceImplTest;
-import de.rcenvironment.core.utils.cluster.internal.ModifyableClusterJobInformation;
+import de.rcenvironment.core.utils.cluster.internal.ClusterJobSourceServiceImpl;
+import de.rcenvironment.core.utils.cluster.internal.ClusterJobTimesInformation;
+import de.rcenvironment.core.utils.cluster.internal.ClusterJobSourceServiceImplTest;
+import de.rcenvironment.core.utils.cluster.internal.ClusterJobInformationImpl;
 import de.rcenvironment.core.utils.ssh.jsch.SshSessionConfiguration;
 import de.rcenvironment.core.utils.ssh.jsch.SshSessionConfigurationFactory;
 
@@ -34,10 +36,10 @@ import de.rcenvironment.core.utils.ssh.jsch.SshSessionConfigurationFactory;
  */
 public class TorqueClusterServiceTest {
     
-    private TorqueClusterService informationService;
+    private TorqueClusterService clusterService;
     
-    private DistributedClusterJobSourceServiceImplTest helperTestClass
-        = new DistributedClusterJobSourceServiceImplTest();
+    private ClusterJobSourceServiceImplTest helperTestClass
+        = new ClusterJobSourceServiceImplTest();
     
     /** Set up. */
     @Before
@@ -45,8 +47,8 @@ public class TorqueClusterServiceTest {
         String randomString = RandomStringUtils.random(5);
         SshSessionConfiguration sshConfiguration = SshSessionConfigurationFactory
             .createSshSessionConfigurationWithAuthPhrase(helperTestClass.localHost, helperTestClass.port, randomString, randomString);
-        informationService = new TorqueClusterService(sshConfiguration);
-        informationService.bindClusterJobSourceService(helperTestClass.createDistributedClusterJobSourceInformationService());
+        clusterService = new TorqueClusterService(sshConfiguration, new HashMap<String, String>());
+        clusterService.bindClusterJobSourceService(new ClusterJobSourceServiceImpl());
     }
     
     /**
@@ -55,9 +57,9 @@ public class TorqueClusterServiceTest {
      **/
     @Test
     public void testParseStdoutForClusterJobInformation() throws IOException {
-        final String stdout = IOUtils.toString(getClass().getResourceAsStream("/qstat"));
+        final String stdout = IOUtils.toString(getClass().getResourceAsStream("/torque_qstat"));
         
-        Map<String, ClusterJobInformation> jobInformation = informationService.parseStdoutForClusterJobInformation(stdout);
+        Map<String, ClusterJobInformation> jobInformation = clusterService.parseStdoutForClusterJobInformation(stdout);
         
         assertEquals(4, jobInformation.size());
         
@@ -92,26 +94,26 @@ public class TorqueClusterServiceTest {
      **/
     @Test
     public void testParseStdoutForClusterJobTimesInformation() throws IOException {
-        final String stdout = IOUtils.toString(getClass().getResourceAsStream("/showq"));
+        final String stdout = IOUtils.toString(getClass().getResourceAsStream("/torque_showq"));
         
-        Map<String, ClusterJobTimesInformation> jobTimesInformation = informationService.parseStdoutForClusterJobTimesInformation(stdout);
+        Map<String, ClusterJobTimesInformation> jobTimesInformation = clusterService.parseStdoutForClusterJobTimesInformation(stdout);
         
         assertEquals(3, jobTimesInformation.size());
         
         ClusterJobTimesInformation information = jobTimesInformation.get("606");
-        assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getQueueTime());
+        assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getQueueTime());
         assertEquals("Tue Aug 28 16:54:22", information.getStartTime());
         assertEquals("00:30:02", information.getRemainingTime());
         
         information = jobTimesInformation.get("569");
-        assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getQueueTime());
+        assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getQueueTime());
         assertEquals("Thu Aug 23 14:15:11", information.getStartTime());
         assertEquals("94:20:20:45", information.getRemainingTime());
         
         information = jobTimesInformation.get("607");
         assertEquals("Tue Aug 28 17:54:24", information.getQueueTime());
-        assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getStartTime());
-        assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getRemainingTime());
+        assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getStartTime());
+        assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getRemainingTime());
         
     }
     
@@ -132,7 +134,7 @@ public class TorqueClusterServiceTest {
         Map<String, ClusterJobTimesInformation> jobTimesInformation = new HashMap<String, ClusterJobTimesInformation>();
 
         for (String jobId : jobIds) {
-            ModifyableClusterJobInformation information = new ModifyableClusterJobInformation();
+            ClusterJobInformationImpl information = new ClusterJobInformationImpl();
             information.setJobId(jobId);
             jobInformation.put(jobId, information);
             if (jobId.equals(jobId1) || jobId.equals(jobId3)) {
@@ -150,31 +152,27 @@ public class TorqueClusterServiceTest {
         jobTimesInformation.get(jobId3).setRemainingTime(remainingTime3);
         jobTimesInformation.get(jobId3).setStartTime(startTime3);
         
-        Set<ClusterJobInformation> resultJobInformation = informationService
+        Set<ClusterJobInformation> resultJobInformation = clusterService
             .enhanceClusterJobInformation(jobInformation, jobTimesInformation);
         
         assertEquals(jobInformation.size(), resultJobInformation.size());
         for (ClusterJobInformation information : resultJobInformation) {
             if (information.getJobId().equals(jobId0)) {
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getQueueTime());
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getRemainingTime());
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getStartTime());
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getSubmittedFrom());
+                assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getQueueTime());
+                assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getRemainingTime());
+                assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getStartTime());
             } else if (information.getJobId().equals(jobId1)) {
                 assertEquals(queueTime1, information.getQueueTime());
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getRemainingTime());
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getStartTime());
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getSubmittedFrom());
+                assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getRemainingTime());
+                assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getStartTime());
             } else if (information.getJobId().equals(jobId2)) {
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getQueueTime());
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getRemainingTime());
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getStartTime());
-                assertEquals(helperTestClass.localSource, information.getSubmittedFrom());
+                assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getQueueTime());
+                assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getRemainingTime());
+                assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getStartTime());
             } else if (information.getJobId().equals(jobId3)) {
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getQueueTime());
+                assertEquals(ClusterJobInformationImpl.NO_VALUE_SET, information.getQueueTime());
                 assertEquals(remainingTime3, information.getRemainingTime());
                 assertEquals(startTime3, information.getStartTime());
-                assertEquals(ModifyableClusterJobInformation.NO_VALUE_SET, information.getSubmittedFrom());
             }
         }
         assertFalse(resultJobInformation.contains(jobId4));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR SC, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -27,34 +27,35 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.rcenvironment.commons.executor.CommandLineExecutor;
-import de.rcenvironment.commons.validation.ValidationFailureException;
+import de.rcenvironment.core.utils.common.validation.ValidationFailureException;
+import de.rcenvironment.core.utils.executor.CommandLineExecutor;
 import de.rcenvironment.core.utils.ssh.jsch.SshSessionConfiguration;
 import de.rcenvironment.core.utils.ssh.jsch.SshSessionConfigurationFactory;
 import de.rcenvironment.core.utils.ssh.jsch.DummyCommand;
 import de.rcenvironment.core.utils.ssh.jsch.DummyPasswordAuthenticator;
 import de.rcenvironment.core.utils.ssh.jsch.Utils;
 
-
 /**
- * Test cases for {@link JSchExecutorContext}.
+ * Test case for {@link JSchExecutorContext}.
+ * 
  * @author Doreen Seider
  */
 public class JschExecutorContextTest {
 
     private static final String LOCALHOST = "localhost";
 
-    private static final int PORT = 22;
-    
+    private static final int INVALID_PORT = -22;
+
     private static SshServer sshServer;
     
-    private volatile boolean failed = false;
+    private static int port;
 
-    private final SshSessionConfiguration staticConfiguration = SshSessionConfigurationFactory
-        .createSshSessionConfigurationWithAuthPhrase(LOCALHOST, PORT, DummyPasswordAuthenticator.USERNAME,
-            DummyPasswordAuthenticator.PASSWORD);
+    private volatile boolean failed = false;
     
-   
+    private final SshSessionConfiguration sshConfiguration = SshSessionConfigurationFactory
+        .createSshSessionConfigurationWithAuthPhrase(LOCALHOST, port, DummyPasswordAuthenticator.USERNAME,
+            DummyPasswordAuthenticator.PASSWORD);
+
     /**
      * Set up test environment. 
      * @throws IOException on error
@@ -62,8 +63,9 @@ public class JschExecutorContextTest {
     @SuppressWarnings("serial")
     @BeforeClass
     public static void setUp() throws IOException {
+        port = Utils.getRandomPortNumber();
         sshServer = SshServer.setUpDefaultServer();
-        sshServer.setPort(PORT);
+        sshServer.setPort(port);
         sshServer.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
         sshServer.setUserAuthFactories(new ArrayList<NamedFactory<UserAuth>>() {{ add(new UserAuthPassword.Factory()); }});
         sshServer.setPasswordAuthenticator(new DummyPasswordAuthenticator());
@@ -96,8 +98,8 @@ public class JschExecutorContextTest {
      * @throws ValidationFailureException on error
      **/
     @Test(timeout = Utils.TIMEOUT)
-    public void test() throws IOException, ValidationFailureException {
-        JSchExecutorContext context = new JSchExecutorContext(staticConfiguration);
+    public void testLifecycle() throws IOException, ValidationFailureException {
+        JSchExecutorContext context = new JSchExecutorContext(sshConfiguration);
         
         context.setUpSession();
         sshServer.setCommandFactory(new CommandFactory() {
@@ -140,7 +142,21 @@ public class JschExecutorContextTest {
      **/
     @Test(timeout = Utils.TIMEOUT)
     public void testForLifecycleFailure() throws IOException, ValidationFailureException {
-        JSchExecutorContext context = new JSchExecutorContext(staticConfiguration);
+        
+        SshSessionConfiguration invalidSshConfiguration = SshSessionConfigurationFactory
+            .createSshSessionConfigurationWithAuthPhrase(LOCALHOST, INVALID_PORT, DummyPasswordAuthenticator.USERNAME,
+                DummyPasswordAuthenticator.PASSWORD);
+        
+        JSchExecutorContext context = new JSchExecutorContext(invalidSshConfiguration);
+        
+        try {
+            context.setUpSession();
+            fail();
+        } catch (ValidationFailureException e) {
+            assertTrue(true);
+        }
+        
+        context = new JSchExecutorContext(sshConfiguration);
 
         try {
             context.setUpSandboxedExecutor();
@@ -156,7 +172,7 @@ public class JschExecutorContextTest {
             assertTrue(true);
         }
         
-        JSchExecutorContext context2 = new JSchExecutorContext(staticConfiguration);
+        JSchExecutorContext context2 = new JSchExecutorContext(sshConfiguration);
         context2.setUpSession();
         CommandLineExecutor executor = context2.setUpSandboxedExecutor();
         
@@ -176,7 +192,7 @@ public class JschExecutorContextTest {
      **/
     @Test
     public void testCreateUniqueTempDir() throws IOException, ValidationFailureException {
-        JSchExecutorContext context = new JSchExecutorContext(staticConfiguration);
+        JSchExecutorContext context = new JSchExecutorContext(sshConfiguration);
 
         String contextHint = RandomStringUtils.randomAlphanumeric(5);
         assertTrue(context.createUniqueTempDir(contextHint).contains(contextHint));

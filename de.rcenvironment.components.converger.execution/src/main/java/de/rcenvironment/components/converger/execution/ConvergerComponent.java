@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -7,102 +7,177 @@
  */
 package de.rcenvironment.components.converger.execution;
 
-import java.io.Serializable;
-import java.util.Deque;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.rcenvironment.rce.component.ComponentException;
-import de.rcenvironment.rce.component.ComponentInstanceInformation;
-import de.rcenvironment.rce.component.ComponentState;
-import de.rcenvironment.rce.component.DefaultComponent;
-import de.rcenvironment.rce.component.endpoint.Input;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
+
 import de.rcenvironment.components.converger.common.ConvergerComponentConstants;
+import de.rcenvironment.core.component.api.ComponentConstants;
+import de.rcenvironment.core.component.api.ComponentException;
+import de.rcenvironment.core.component.execution.api.ConsoleRow;
+import de.rcenvironment.core.component.model.spi.AbstractNestedLoopComponent;
+import de.rcenvironment.core.datamodel.types.api.FloatTD;
+
 /**
  * Component to get data to convergence.
+ * 
  * @author Sascha Zur
- *
+ * @author Doreen Seider
  */
-public class ConvergerComponent extends DefaultComponent{
+public class ConvergerComponent extends AbstractNestedLoopComponent {
 
-    private Map<String, Serializable> oldInputs;
+    private static final int NO_MAX_ITERATIONS = -1;
 
-    @Override
-    public void onPrepare(ComponentInstanceInformation incCompInstanceInformation) throws ComponentException {
-        super.onPrepare(incCompInstanceInformation);
-        oldInputs = new HashMap<String, Serializable>();
-    }
+    private Map<String, CircularFifoQueue<Double>> iterationsValues;
 
-    @Override
-    public boolean runInitial(boolean inputsConnected) throws ComponentException {
+    private double epsA;
 
-        for (String key : instInformation.getInputDefinitions().keySet()){
-            if (instInformation.getInputMetaData(key) != null
-                && instInformation.getInputMetaData(key).get(ConvergerComponentConstants.META_HAS_STARTVALUE) != null
-                && (Boolean) instInformation.getInputMetaData(key).get(ConvergerComponentConstants.META_HAS_STARTVALUE)) {
-                oldInputs.put(key, instInformation.getInputMetaData(key).get(ConvergerComponentConstants.META_STARTVALUE));
-                instInformation.getOutput(key).write((instInformation.getInputMetaData(key)
-                    .get(ConvergerComponentConstants.META_STARTVALUE)));
-            }
-        }
-        return inputsConnected;
-    }
+    private double epsR;
+
+    private int iterationsToConsider;
+
+    private int maxIterations = NO_MAX_ITERATIONS;
+
+    private int iterations = 1;
+
+    private Boolean[] isConverged;
 
     @Override
-    public boolean canRunAfterNewInput(Input newInput, Map<String, Deque<Input>> inputValues) throws ComponentException {
-        if (instInformation.getInputMetaData(newInput.getName()) != null
-            && instInformation.getInputMetaData(newInput.getName()).get(ConvergerComponentConstants.META_HAS_STARTVALUE) != null
-            && !(Boolean) instInformation.getInputMetaData(newInput.getName()).get(ConvergerComponentConstants.META_HAS_STARTVALUE)) {
-            if (oldInputs.get(newInput.getName()) == null) {
-                oldInputs.put(newInput.getName(), newInput.getValue());
-                instInformation.getOutput(newInput.getName()).write(newInput.getValue());
-                inputValues.get(newInput.getName()).removeFirst();
-            }
+    public void startHook() throws ComponentException {
+
+        epsA = Double.parseDouble(componentContext.getConfigurationValue(ConvergerComponentConstants.KEY_EPS_A));
+        epsR = Double.parseDouble(componentContext.getConfigurationValue(ConvergerComponentConstants.KEY_EPS_R));
+        String iterationsToConsiderAsString = componentContext.getConfigurationValue(ConvergerComponentConstants
+            .KEY_ITERATIONS_TO_CONSIDER);
+        iterationsToConsider = Integer.parseInt(iterationsToConsiderAsString);
+
+        String maxIterationsAsString = componentContext.getConfigurationValue(ConvergerComponentConstants.KEY_MAX_ITERATIONS);
+        if (maxIterationsAsString != null && !maxIterationsAsString.isEmpty()) {
+            maxIterations = Integer.parseInt(maxIterationsAsString);
         }
 
-        boolean canRun = super.canRunAfterNewInput(newInput, inputValues);
-        return canRun;
+        initializeIterationValues();
+
+        isConverged = new Boolean[2];
+        isConverged[0] = false;
+        isConverged[1] = false;
+    }
+
+    private void initializeIterationValues() {
+        iterationsValues = new HashMap<String, CircularFifoQueue<Double>>();
+        for (String inputName : componentContext.getInputs()) {
+            if (componentContext.isDynamicInput(inputName)
+                && componentContext.getDynamicInputIdentifier(inputName).equals(ConvergerComponentConstants.ID_VALUE_TO_CONVERGE)) {
+                iterationsValues.put(inputName, new CircularFifoQueue<Double>(iterationsToConsider + 1));
+            }
+        }
+    }
+
+    private void addValuesToLastIterationsValues() {
+        for (String key : iterationsValues.keySet()) {
+            iterationsValues.get(key).add(((FloatTD) componentContext.readInput(key)).getFloatValue());
+        }
+    }
+
+    private boolean areMaxIterationsReached() {
+        return maxIterations != NO_MAX_ITERATIONS && iterations >= maxIterations;
+    }
+
+    private Boolean[] isConverged() {
+
+        boolean isConvergedAbs = true;
+        boolean isConvergedRel = true;
+        for (String inputName : iterationsValues.keySet()) {
+            CircularFifoQueue<Double> values = iterationsValues.get(inputName);
+            int valueCount = values.size();
+            if (valueCount > iterationsToConsider) {
+                double maxValue = Collections.max(values);
+                double minValue = Collections.min(values);
+                if (Math.abs(maxValue - minValue) > epsA) {
+                    isConvergedAbs = false;
+                }
+                if (Math.abs((maxValue - minValue) / maxValue) > epsR) {
+                    isConvergedRel = false;
+                }
+                componentContext.printConsoleLine(String.format("%s -> min: %s; max: %s; converged abs: %s; converged rel: %s",
+                    inputName + iterations, minValue, maxValue, isConvergedAbs, isConvergedRel), ConsoleRow.Type.STDOUT);
+            } else {
+                isConvergedAbs = false;
+                isConvergedRel = false;
+                componentContext.printConsoleLine(
+                    String.format("%s -> skipped convergence check - not enough iterations yet (current: %s, required: %s)",
+                        inputName + iterations, iterations, iterationsToConsider), ConsoleRow.Type.STDOUT);
+            }
+        }
+        return new Boolean[] { isConvergedAbs, isConvergedRel };
     }
 
     @Override
-    public boolean runStep(Input newInput, Map<String, Deque<Input>> inputValues) throws ComponentException {
-
-
-        boolean convergedAbs = true;
-        boolean convergedRel = true;
-
-        for (String key : oldInputs.keySet()){
-            Serializable newInputValue = inputValues.get(key).removeFirst().getValue();
-            if (Math.abs((Double) oldInputs.get(key) - (Double) newInputValue) 
-                > (Double) instInformation.getConfigurationValue("epsA")){
-                convergedAbs = false;
-            }
-            if (Math.abs((Double) oldInputs.get(key) - (Double) newInputValue) / (Double) oldInputs.get(key)  
-                > (Double) instInformation.getConfigurationValue("epsR")){
-                convergedRel = false;
-            }
-            oldInputs.put(key, newInputValue);
-            instInformation.getOutput(key).write(oldInputs.get(key));
-        }
-
-
-        instInformation.getOutput("Converged absolute").write(convergedAbs);
-        instInformation.getOutput("Converged relative").write(convergedRel);
-
-        if (convergedAbs || convergedRel){
-            for (String key : instInformation.getOutputDefinitions().keySet()){
-                instInformation.getOutput(key).write(ComponentState.FINISHED.name());
+    protected void sendValuesHook() {
+        for (String inputName : iterationsValues.keySet()) {
+            if (!iterationsValues.get(inputName).isEmpty()) {
+                componentContext.writeOutput(inputName, typedDatumFactory.createFloat(iterationsValues.get(inputName)
+                    .get(iterationsValues.get(inputName).size() - 1)));
             }
         }
-
-
-        return true;
-
     }
-    
+
     @Override
-    public boolean canRunAfterRun(Input lastInput, Map<String, Deque<Input>> inputValues) throws ComponentException {
-        
-        return super.canRunAfterNewInput(lastInput, inputValues);
+    protected void resetInnerLoopHook() {
+        iterations = 1;
+        for (CircularFifoQueue<Double> queues : iterationsValues.values()) {
+            queues.clear();
+        }
+        isConverged[0] = false;
+        isConverged[1] = false;
     }
+
+    @Override
+    protected void finishLoopHook() {
+        componentContext.printConsoleLine("Finished: converged abs: " + isConverged[0]
+            + "; converged rel: " + isConverged[1] + "; reached max. iterations: "
+            + areMaxIterationsReached(), ConsoleRow.Type.STDOUT);
+    }
+
+    @Override
+    protected boolean isFinished() {
+        return isConverged[0] || isConverged[1] || areMaxIterationsReached();
+    }
+
+    @Override
+    protected void processInputsHook() {
+        addValuesToLastIterationsValues();
+        isConverged = isConverged();
+        iterations++;
+    }
+
+    @Override
+    protected String getLoopFinishedEndpointName() {
+        return ComponentConstants.ENDPOINT_NAME_OUTERLOOP_DONE;
+    }
+
+    @Override
+    protected void sendFinalValues() {
+        for (String key : iterationsValues.keySet()) {
+            int valueCount = iterationsValues.get(key).size();
+            if (valueCount > 0) {
+                componentContext.writeOutput(key + ConvergerComponentConstants.CONVERGED_OUTPUT_SUFFIX,
+                    typedDatumFactory.createFloat(iterationsValues.get(key).get(valueCount - 1)));
+            }
+        }
+        componentContext.writeOutput(ConvergerComponentConstants.CONVERGED, typedDatumFactory.createBoolean(
+            isConverged[0] | isConverged[1]));
+        componentContext.writeOutput(ConvergerComponentConstants.CONVERGED_ABSOLUTE, typedDatumFactory.createBoolean(isConverged[0]));
+        componentContext.writeOutput(ConvergerComponentConstants.CONVERGED_RELATIVE, typedDatumFactory.createBoolean(isConverged[1]));
+    }
+
+    @Override
+    protected void sendReset() {
+        for (String key : iterationsValues.keySet()) {
+            componentContext.resetOutput(key);
+        }
+    }
+
 }

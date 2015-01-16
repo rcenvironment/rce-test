@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -9,7 +9,7 @@ package de.rcenvironment.core.communication.transport.jms.common;
 
 import javax.jms.ConnectionFactory;
 
-import de.rcenvironment.core.communication.connection.ServerContactPoint;
+import de.rcenvironment.core.communication.channel.ServerContactPoint;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
 
 /**
@@ -29,7 +29,7 @@ public interface JmsArtifactFactory {
      *        connections that are created after remote nodes have made their "active" connections
      * @return the new broker instance
      */
-    JmsBroker createBroker(ServerContactPoint scp, RemoteInitiatedConnectionFactory remoteInitiatedConnectionFactory);
+    JmsBroker createBroker(ServerContactPoint scp, RemoteInitiatedMessageChannelFactory remoteInitiatedConnectionFactory);
 
     /**
      * Creates a JMS connection factory towards the given {@link NetworkContactPoint}.

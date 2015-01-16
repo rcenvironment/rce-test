@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,8 +8,12 @@
 
 package de.rcenvironment.core.gui.cluster.configuration.internal;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.swt.SWT;
@@ -28,6 +32,7 @@ import org.eclipse.swt.widgets.Text;
 
 import de.rcenvironment.core.utils.cluster.ClusterJobInformation;
 import de.rcenvironment.core.utils.cluster.ClusterQueuingSystem;
+import de.rcenvironment.core.utils.cluster.ClusterQueuingSystemConstants;
 
 /**
  * Dialog to create a new cluster connection configuration.
@@ -39,6 +44,12 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
     protected static final int CREATE = 2;
 
     protected Combo queuingSystemCombo;
+    
+    protected Text qstatPathText;
+    
+    protected Text showqPathText;
+    
+    protected Text qdelPathText;
     
     protected Text hostText;
 
@@ -60,6 +71,8 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
 
     private ClusterQueuingSystem queuingSystem;
     
+    private Map<String, String> pathsToClusterQueuingSystemCommands = new HashMap<>();
+    
     private String host;
 
     private int port;
@@ -71,6 +84,8 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
     private String configurationName;
     
     private boolean savePassword;
+
+    private Label showqPathLabel;
     
     public CreateClusterConnectionConfigurationDialog(Shell parentShell, List<String> existingConfigurationNames) {
         super(parentShell);
@@ -86,45 +101,71 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
 
     @Override
     protected Control createDialogArea(Composite parent) {
+        Composite control = (Composite) super.createDialogArea(parent);
+        Composite container = new Composite(control, SWT.NONE);
         
         GridLayout layout = new GridLayout();
         layout.numColumns = 2;
-        parent.setLayout(layout);
-
-        Label queuingSystemLabel = new Label(parent, SWT.NONE);
-        queuingSystemLabel.setText(Messages.queueingSystemLabel);
-
+        layout.makeColumnsEqualWidth = false;
+        container.setLayout(layout);
+        
         GridData gridData = new GridData();
         gridData.grabExcessHorizontalSpace = true;
         gridData.horizontalAlignment = GridData.FILL;
+        container.setLayoutData(gridData);
+        
+        Label queuingSystemLabel = new Label(container, SWT.NONE);
+        queuingSystemLabel.setText(Messages.queueingSystemLabel);
 
-        queuingSystemCombo = new Combo(parent, SWT.DROP_DOWN | SWT.READ_ONLY);
+        gridData = new GridData();
+        gridData.grabExcessHorizontalSpace = true;
+        gridData.horizontalAlignment = GridData.FILL;
+
+        queuingSystemCombo = new Combo(container, SWT.DROP_DOWN | SWT.READ_ONLY);
         queuingSystemCombo.setLayoutData(gridData);
-        queuingSystemCombo.setItems(new String[] { ClusterQueuingSystem.TORQUE.toString() });
+        for (ClusterQueuingSystem system : ClusterQueuingSystem.values()) {
+            queuingSystemCombo.add(system.name());            
+        }
+        queuingSystemCombo.addSelectionListener(new SelectionListener() {
+            
+            @Override
+            public void widgetSelected(SelectionEvent event) {
+                showqPathText.setEnabled(queuingSystemCombo.getSelectionIndex() == 1);
+                showqPathLabel.setEnabled(queuingSystemCombo.getSelectionIndex() == 1);
+            }
+            
+            @Override
+            public void widgetDefaultSelected(SelectionEvent event) {
+                widgetSelected(event);
+            }
+        });
+        
         queuingSystemCombo.select(0);
         
-        Label hostLabel = new Label(parent, SWT.NONE);
+        createQueuingSystemCommandPathsLabelsAndTexts(container);
+        
+        Label hostLabel = new Label(container, SWT.NONE);
         hostLabel.setText(Messages.hostLabel);
 
         gridData = new GridData();
         gridData.grabExcessHorizontalSpace = true;
         gridData.horizontalAlignment = GridData.FILL;
 
-        hostText = new Text(parent, SWT.BORDER);
+        hostText = new Text(container, SWT.BORDER);
         hostText.setLayoutData(gridData);
 
-        Label portLabel = new Label(parent, SWT.NONE);
+        Label portLabel = new Label(container, SWT.NONE);
         portLabel.setText(Messages.portLabel);
 
         gridData = new GridData();
         gridData.grabExcessHorizontalSpace = true;
         gridData.horizontalAlignment = GridData.FILL;
 
-        portText = new Text(parent, SWT.BORDER);
+        portText = new Text(container, SWT.BORDER);
         portText.setLayoutData(gridData);
         portText.setText(String.valueOf(ClusterJobInformation.DEFAULT_SSH_PORT));
         
-        Label usernameLabel = new Label(parent, SWT.NONE);
+        Label usernameLabel = new Label(container, SWT.NONE);
         usernameLabel.setText(Messages.usernameLabel);
 
         gridData = new GridData();
@@ -132,28 +173,28 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
         gridData.horizontalAlignment = GridData.FILL;
         gridData.verticalAlignment = GridData.VERTICAL_ALIGN_BEGINNING;
 
-        usernameText = new Text(parent, SWT.BORDER);
+        usernameText = new Text(container, SWT.BORDER);
         usernameText.setLayoutData(gridData);
 
-        Label passwordLabel = new Label(parent, SWT.NONE);
+        Label passwordLabel = new Label(container, SWT.NONE);
         passwordLabel.setText(Messages.passwordLabel);
 
         gridData = new GridData();
         gridData.grabExcessHorizontalSpace = true;
         gridData.horizontalAlignment = GridData.FILL;
 
-        passwordText = new Text(parent, SWT.BORDER | SWT.PASSWORD);
+        passwordText = new Text(container, SWT.BORDER | SWT.PASSWORD);
         passwordText.setLayoutData(gridData);
         passwordText.setEnabled(false);
 
         // placeholder label
-        new Label(parent, SWT.NONE);
+        new Label(container, SWT.NONE);
 
         gridData = new GridData();
         gridData.grabExcessHorizontalSpace = true;
         gridData.horizontalAlignment = GridData.FILL;
         
-        savePasswordCheckbox = new Button(parent, SWT.CHECK);
+        savePasswordCheckbox = new Button(container, SWT.CHECK);
         savePasswordCheckbox.setText(Messages.savePasswordCheckboxLabel);
         savePasswordCheckbox.setLayoutData(gridData);
         savePasswordCheckbox.addSelectionListener(new SelectionListener() {
@@ -169,25 +210,25 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
             }
         });
 
-        Label configurationNameLabel = new Label(parent, SWT.NONE);
+        Label configurationNameLabel = new Label(container, SWT.NONE);
         configurationNameLabel.setText(Messages.configurationNameLabel);
 
         gridData = new GridData();
         gridData.grabExcessHorizontalSpace = true;
         gridData.horizontalAlignment = GridData.FILL;
 
-        configurationNameText = new Text(parent, SWT.BORDER);
+        configurationNameText = new Text(container, SWT.BORDER);
         configurationNameText.setLayoutData(gridData);
         configurationNameText.setEnabled(false);
                 
         // placeholder label
-        new Label(parent, SWT.NONE);
+        new Label(container, SWT.NONE);
 
         gridData = new GridData();
         gridData.grabExcessHorizontalSpace = true;
         gridData.horizontalAlignment = GridData.FILL;
         
-        defaultConfigurationNameCheckbox = new Button(parent, SWT.CHECK);
+        defaultConfigurationNameCheckbox = new Button(container, SWT.CHECK);
         defaultConfigurationNameCheckbox.setText(Messages.useDefaultNameCheckboxLabel);
         defaultConfigurationNameCheckbox.setLayoutData(gridData);
         defaultConfigurationNameCheckbox.setSelection(true);
@@ -204,18 +245,63 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
             }
         });
         
-        return parent;
+        return container;
+    }
+    
+    private void createQueuingSystemCommandPathsLabelsAndTexts(Composite container) {
+        Label qstatPathLabel = new Label(container, SWT.NONE);
+        qstatPathLabel.setText("Path 'qstat' (optional)");
+
+        GridData gridData = new GridData();
+        gridData.grabExcessHorizontalSpace = true;
+        gridData.horizontalAlignment = GridData.FILL;
+
+        qstatPathText = new Text(container, SWT.BORDER);
+        qstatPathText.setLayoutData(gridData);
+        
+        Label qdelPathLabel = new Label(container, SWT.NONE);
+        qdelPathLabel.setText("Path 'qdel' (optional)");
+
+        gridData = new GridData();
+        gridData.grabExcessHorizontalSpace = true;
+        gridData.horizontalAlignment = GridData.FILL;
+
+        qdelPathText = new Text(container, SWT.BORDER);
+        qdelPathText.setLayoutData(gridData);
+        
+        showqPathLabel = new Label(container, SWT.NONE);
+        showqPathLabel.setText("Path 'showq' (optional)");
+
+        gridData = new GridData();
+        gridData.grabExcessHorizontalSpace = true;
+        gridData.horizontalAlignment = GridData.FILL;
+
+        showqPathText = new Text(container, SWT.BORDER);
+        showqPathText.setLayoutData(gridData);
+    }
+    
+    @Override
+    protected Control createButtonBar(Composite parent) {
+        final Composite buttonBar = new Composite(parent, SWT.NONE);
+
+        final GridLayout layout = new GridLayout();
+        layout.numColumns = 2;
+        layout.makeColumnsEqualWidth = false;
+        layout.horizontalSpacing = convertHorizontalDLUsToPixels(IDialogConstants.HORIZONTAL_SPACING);
+        buttonBar.setLayout(layout);
+
+        final GridData data = new GridData(SWT.FILL, SWT.BOTTOM, true, false);
+        data.grabExcessHorizontalSpace = true;
+        data.grabExcessVerticalSpace = false;
+        buttonBar.setLayoutData(data);
+        final Control buttonControl = super.createButtonBar(buttonBar);
+        buttonControl.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
+
+        return buttonBar;
     }
 
     @Override
     protected void createButtonsForButtonBar(Composite parent) {
-        GridData gridData = new GridData();
-        gridData.grabExcessHorizontalSpace = true;
-        gridData.grabExcessVerticalSpace = true;
-        gridData.horizontalAlignment = GridData.FILL;
-        gridData.verticalAlignment = GridData.FILL;
-        parent.setLayoutData(gridData);
-        
         createButton = createButton(parent, CREATE, Messages.createButtonTitle, true);
         createButton.addSelectionListener(new SelectionAdapter() {
 
@@ -236,8 +322,9 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
             }
         });
     }
-
+    
     private boolean isValidInput() {
+        
         boolean valid = true;
         if (hostText.getText().length() == 0) {
             setErrorMessage(Messages.maintainHostLabel);
@@ -295,6 +382,11 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
 
     private void saveInput() {
         queuingSystem = ClusterQueuingSystem.valueOf(queuingSystemCombo.getItem(queuingSystemCombo.getSelectionIndex()));
+        
+        saveQueuingSystemCommandPath(ClusterQueuingSystemConstants.COMMAND_QSTAT, qstatPathText);
+        saveQueuingSystemCommandPath(ClusterQueuingSystemConstants.COMMAND_QDEL, qdelPathText);
+        saveQueuingSystemCommandPath(ClusterQueuingSystemConstants.COMMAND_SHOWQ, showqPathText);
+        
         host = hostText.getText();
         port = Integer.valueOf(portText.getText());
         username = usernameText.getText();
@@ -307,15 +399,29 @@ public class CreateClusterConnectionConfigurationDialog extends TitleAreaDialog 
             configurationName = configurationNameText.getText();            
         }
     }
+    
+    private void saveQueuingSystemCommandPath(String command, Text commandPathText) {
+        String commandPath = commandPathText.getText();
+        if (!commandPath.isEmpty()) {
+            if (!commandPath.endsWith("/")) {
+                commandPath = commandPath + "/";
+            }
+            pathsToClusterQueuingSystemCommands.put(command, commandPath);
+        }
+    }
 
     public ClusterQueuingSystem getClusterQueuingSystem() {
         return queuingSystem;
     }
     
+    public Map<String, String> getPathsToClusterQueuingSystemCommands() {
+        return Collections.unmodifiableMap(pathsToClusterQueuingSystemCommands);
+    }
+    
     public String getHost() {
         return host;
     }
-
+    
     public int getPort() {
         return port;
     }

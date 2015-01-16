@@ -1,29 +1,30 @@
 /*
- * Copyright (C) 2006-2010 DLR, Fraunhofer SCAI, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
  * http://www.rcenvironment.de/
  */
- 
+
 package de.rcenvironment.core.start.common;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.PlatformUI;
-
 /**
  * Utilities class to govern the RCE platform.
  * 
  * @author Christian Weiss
+ * @author Robert Mischke
  */
+// TODO rename to "Instance" - misc_ro
 public class Platform {
 
     private static boolean isHeadless;
-    
+
     private static CountDownLatch shutdownLatch = new CountDownLatch(1);
+
+    private static InstanceRunner runner;
 
     protected Platform() {
         // do nothing
@@ -37,9 +38,35 @@ public class Platform {
     public static boolean isHeadless() {
         return isHeadless;
     }
-    
-    public static void setHeadless(boolean isHeadlessOn){
+
+    public static void setHeadless(boolean isHeadlessOn) {
         isHeadless = isHeadlessOn;
+    }
+
+    /**
+     * Injects the {@link InstanceRunner} to use for startup. Trying to call this method twice throws an exception (to detect invalid
+     * setups).
+     * 
+     * @param newRunner the new instance
+     */
+    public static synchronized void setRunner(InstanceRunner newRunner) {
+        if (runner != null) {
+            throw new IllegalStateException("Tried to set runner " + newRunner + " when one is already configured: "
+                + runner);
+        }
+        runner = newRunner;
+    }
+
+    /**
+     * Fetches the {@link InstanceRunner} to use for startup. Throws an exception if no runner has been set.
+     * 
+     * @return the runner instance (guaranteed to be non-null)
+     */
+    public static synchronized InstanceRunner getRunner() {
+        if (runner == null) {
+            throw new IllegalStateException("Internal error: No instance runner configured");
+        }
+        return runner;
     }
 
     /**
@@ -59,6 +86,7 @@ public class Platform {
      * @throws InterruptedException if the current thread is interrupted while waiting
      */
     public static void awaitShutdown(final long timeout, final TimeUnit unit) throws InterruptedException {
+        getRunner().beforeAwaitShutdown();
         shutdownLatch.await(timeout, unit);
     }
 
@@ -68,15 +96,9 @@ public class Platform {
      */
     public static void shutdown() {
         shutdownLatch.countDown();
-        if (!Platform.isHeadless()) {
-            Display.getDefault().asyncExec(new Runnable() {
-                public void run() {
-                    PlatformUI.getWorkbench().close();
-                }
-            });
-        }
+        getRunner().triggerShutdown();
     }
-    
+
     /**
      * Return whether or not the RCE platform has been shut down.
      * 
@@ -85,8 +107,8 @@ public class Platform {
     public static boolean isShutdown() {
         return shutdownLatch.getCount() == 0;
     }
-    
-    /* default */ static void resetShutdown() {
+
+    /* default */static void resetShutdown() {
         shutdownLatch = new CountDownLatch(1);
     }
 

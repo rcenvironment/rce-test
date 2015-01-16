@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2012 DLR, Germany
+ * Copyright (C) 2006-2014 DLR, Germany
  * 
  * All rights reserved
  * 
@@ -8,8 +8,9 @@
 
 package de.rcenvironment.core.communication.management;
 
+import de.rcenvironment.core.communication.common.CommunicationException;
+import de.rcenvironment.core.communication.model.MessageChannel;
 import de.rcenvironment.core.communication.model.NetworkContactPoint;
-import de.rcenvironment.rce.communication.CommunicationException;
 
 /**
  * Top-level service that coordinates actions like starting or stopping the whole communication
@@ -33,9 +34,11 @@ public interface CommunicationManagementService {
      * Synchronously connects to a network peer at the given contact point.
      * 
      * @param ncp the {@link NetworkContactPoint} to connect to
+     * @return the resulting {@link MessageChannel}
      * @throws CommunicationException on connection errors
      */
-    void connectToRuntimePeer(NetworkContactPoint ncp) throws CommunicationException;
+    @Deprecated
+    MessageChannel connectToRuntimePeer(NetworkContactPoint ncp) throws CommunicationException;
 
     /**
      * Asynchronously connects to a network peer at the given contact point. If the connection
@@ -43,6 +46,7 @@ public interface CommunicationManagementService {
      * 
      * @param ncp the {@link NetworkContactPoint} to connect to
      */
+    @Deprecated
     void asyncConnectToNetworkPeer(NetworkContactPoint ncp);
 
     /**
@@ -51,5 +55,11 @@ public interface CommunicationManagementService {
      */
     // TODO rename to shutDownCommunication[Layer]?
     void shutDownNetwork();
+
+    /**
+     * Intended for use by unit/integration tests; simulates a "hard"/unclean shutdown where the
+     * node does not send any network notifications before shutting down.
+     */
+    void simulateUncleanShutdown();
 
 }
